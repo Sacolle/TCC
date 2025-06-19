@@ -1,0 +1,13 @@
+Dummy18
+Dummy17
+Fritzen
+Vinicius
+Balreira
+Dennis
+Giovani
+dataset
+Dataset
+OCR
+PLN
+Tesseract
+Framework
