@@ -1,0 +1,36 @@
+% 5. PCL front
+\chapter{PCL-front}
+
+% 	5.1 PCL front's Borrow Checker
+\section{O Borrow Checker de PCL-front}
+
+% 	5.2 Syntax
+\section{Sintaxe}
+
+\begingroup
+\setlength{\jot}{-0.2ex} 
+	\begin{align*}
+		Types \ni \tau ::&= \KW{int} \OR \text{*}\tau \OR @\tau'a \OR (\bar\tau) \to \tau \\
+		Locals \ni l ::&= l^m \OR l^p &&\\ 
+		Value \ni v ::&= n \OR l && \\
+		BinOp \ni op ::&= + | - | * | < | > | = | \land | \lor \\
+		Expression \ni e ::&= x \OR v \\
+		&\NLOR e\; op\; e \OR !e  \\
+		&\NLOR \text{*}e \OR \&x \OR \KW{alias} \; x \OR \KW{alias}\text{*} \; x\\
+		&\NLOR e;e \OR \{e\} \\ 
+		&\NLOR \KW{new}\typearg\tau(e) \OR \KW{delete}(e, e) \; \\ 
+		&\NLOR \KW{var}\; x: \tau := e \OR e_1 := e_2 \\
+		&\NLOR e_1 :=: e_2 \OR e_1 :=:\!\text{*}\;e_2\\
+		&\NLOR \KW{if}(e) \; e \; \KW{else} \; e \; \OR \KW{while}(e) \; e \\
+		&\NLOR f(\bar e) \\ 
+		&\NLOR \KW{stop}\\ 
+		&\NLOR \KW{nullprt}\typearg{\tau} \OR \KW{nullalias}\typearg{\tau}\\ 
+		Function \ni F ::&= \KW{fn} \; f(\overline{x : \tau}) \to \tau \; e \; F \; | \; \mathbf{let}\;() \; e \\
+	\end{align*}
+\endgroup
+
+% 	5.3 Checagem de Tipos
+\section{Checagem de Tipos e Regiões}
+
+%   5.4 Definição via compilação
+\section{Definição via Compilação}

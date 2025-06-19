@@ -48,13 +48,17 @@
 \usepackage{todonotes}
 \usepackage{tikz}
 
+%pacotes locais
+\usepackage{bcprules}
+
+%debug line, remove before submission
 \overfullrule=5pt
 
 %
 % Informações gerais
 %
 \title{Porcelain: um Framework Semântico para Representar e Analisar Técnicas de Segurança de Memória.}
-\translatedtitle{Using \LaTeX\ to Prepare Documents at II/UFRGS}
+\translatedtitle{Porcelain: A Semantic Framework for Representing and Analyzing Memory Safety Techniques}
 
 \author{Colle}{Pedro Henrique Boniatti}
 % alguns documentos podem ter varios autores:
@@ -117,8 +121,15 @@
 \keyword{ABNT}
 \keyword{UFRGS}
 
+% novos comandos
 \newcommand{\db}[1]{\color{red} #1 \color{black}}
 \newcommand{\gb}[1]{\color{purple} #1 \color{black}}
+
+\newcommand{\OR}{\;|\;}
+\newcommand{\NLOR}{|\;}
+\newcommand{\St}[1]{\langle #1 \rangle}
+\newcommand{\typearg}[1]{\text{<}#1\text{>}}
+\newcommand{\KW}[1]{\mathbf{#1}}
 
 %
 % palavras-chave na lingua estrangeira
@@ -198,19 +209,15 @@ Ao Chico, que não pode ler isso.
 % na lista deve ser alfabética (como no exemplo abaixo).
 \todo[inline]{Fazer as abreviações do projeto, provavelmente no fim. }
 \begin{listofabbrv}{BLEU}
-    \item[OCR] \emph{Optical Character Recognition} (Reconhecimento Óptico de Caracteres)
-    \item[CER] \emph{Character Error Rate} (Taxa de Erro de Caracteres)
-    \item[LLM] \emph{Large Language Model} (Modelo de Linguagem de Grande Escala)
-    \item[WER] \emph{Word Error Rate} (Taxa de Erro de Palavras)
-    \item[BLEU] \emph{Bilingual Evaluation Understudy} (Avaliação Bilingue Substituta)
-    \item[PLN] Processamento de Linguagem Natural (\emph{Natural Language Processing} em inglês)
+    \item[GC] \emph{Gabage Collection} (Coletor de Lixo)
+    \item[PCL] \emph{Porcelain}
 \end{listofabbrv}
 
-% idem para a lista de símbolos
-% \begin{listofsymbols}{$\alpha\beta\pi\omega$}
-%     \item[$\sum{\frac{a}{b}}$] Somatório do produtório
-%     \item[$\alpha\beta\pi\omega$] Fator de inconstância do resultado
-% \end{listofsymbols}
+% segundo argumento do begin é o termo de maior tamanho do item, para o espaçamento
+\begin{listofsymbols}{$\alpha\beta\pi\omega$}
+    \item[$\sum{\frac{a}{b}}$] Somatório do produtório
+    \item[$\alpha\beta\pi\omega$] Fator de inconstância do resultado
+\end{listofsymbols}
 
 % sumario
 \tableofcontents
@@ -218,17 +225,40 @@ Ao Chico, que não pode ler isso.
 % aqui comeca o texto propriamente dito
 
 % introducao
-\include{chapters/01_introducao}
+\input{chapters/1-Introducao.tex}
+% 1. Introdução
+%	1.1 Motivação
+%	1.2 Related Work
+%	1.3 Objetivos
+%	1.4 Organização
+\input{chapters/2-Background.tex}
+% 2. Background
+%	2.1 O que é Semantica Operacional
+%   2.2 Erros de memória
+\input{chapters/3-PCL-back.tex}
+% 3. PCL back
+%	3.1 Syntax
+%	3.2 Memory Model
+%	3.3 Operational Semantics
+%	3.4 Error detection
+\input{chapters/4-Caso-de-uso.tex}
+% 4. Use Case: Borrow Checker (explica o borrow checker e o algoritmo do polonius)
+%	4.1 Rust and the Borrow Checker
+%	4.2 Tipos Lineares
+%	4.3 Polonius
+\input{chapters/5-PCL-front.tex}
+% 5. PCL front
+% 	5.1 PCL front's Borrow Checker
+% 	5.2 Syntax
+% 	5.3 Checagem de Tipos
+%   5.4 Definição via compilação
+\input{chapters/6-Propriedades.tex}
+% 6. Propriedades
+\input{chapters/7-Conclusao.tex}
+% 7. Conclusão
+% 	7.1 Limitações
+% 	7.2 Future Work
 
-\include{chapters/02_conceitos_basicos}
-
-\include{chapters/03_trabalhos_relacionados}
-
-\include{chapters/04_metodologia}
-
-\include{chapters/05_validacao}
-
-\include{chapters/06_conclusao}
 
 % referências
 % aqui será usado o environment padrao `thebibliography'; porém, sugere-se
@@ -240,6 +270,6 @@ Ao Chico, que não pode ler isso.
 % autores, ano, e diversas combinações desses
 
 \bibliographystyle{abntex2-alf}
-\bibliography{biblio}
+\bibliography{references}
 
 \end{document}

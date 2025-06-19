@@ -1,0 +1,350 @@
+@Techreport{Google24,
+  author =       "Alex Rebert and Christoph Kern",
+  year =         "2024",
+  title =        "Secure by Design: Google’s Perspective on Memory Safety",
+  institution =  "Google",
+  type =         "Google Security Engineering Technical Report",
+  number =       "",
+  address =      "",
+  month =        mar,
+  note =         "",
+}
+
+
+%%misc{Poker06,
+%%  author =       "Poker-Edge.Com",
+%%  year =         "2006",
+%%  month =        mar,
+%%  title =        "Stats and Analysis",
+%%  lastaccessed = "June 7, 2006",
+%%  url =          "http://www.poker-edge.com/stats.php",
+%%}
+@online{Apple22,
+  author = "Apple, Security Research",
+  organization = "Apple",
+  year =         "2022",
+  month =        oct,
+  title = "Towards the next generation of XNU memory safety: kalloc\_type",
+  lastaccessed = "June 14, 2025",
+  url = "https://security.apple.com/blog/towards-the-next-generation-of-xnu-memory-safety/",
+}
+
+@online{CWE,
+  title =        "Common Weakness Enumeration",
+  institution =  "CWE",
+  type =         "Website",
+  url =          "https://cwe.mitre.org/index.html",
+  lastaccessed = "June 14, 2025",
+}
+
+@online{CVE,
+  title =        "Common Vulnerabilities and Exposures",
+  institution =  "CVE",
+  type =         "Website",
+  url =          "https://www.cve.org/",
+  lastaccessed = "June 14, 2025",
+}
+
+@online{CWELIST,
+  title =        "CWE CATEGORY: Comprehensive Categorization: Memory Safety",
+  author = "CWE, Content Team ",
+  organization = "MITRE",
+  year = {2023},
+  month = apr,
+  institution =  "CWE",
+  type =         "Website",
+  url =          "https://cwe.mitre.org/data/definitions/1399.html",
+  lastaccessed = "June 14, 2025",
+}
+
+@article{7KINGDOMS,
+author = {Tsipenyuk, Katrina and Chess, Brian and McGraw, Gary},
+title = {Seven Pernicious Kingdoms: A Taxonomy of Software Security Errors},
+year = {2005},
+issue_date = {November 2005},
+publisher = {IEEE Educational Activities Department},
+address = {USA},
+volume = {3},
+number = {6},
+issn = {1540-7993},
+abstract = {Taxonomies can help software developers and security practitioners understand the common coding mistakes that affect security. The goal is to help developers avoid making these mistakes and more readily identify security problems whenever possible. Because developers today are by and large unaware of the security problems they can (unknowingly) introduce into code, a taxonomy of coding errors should provide a real tangible benefit to the software security community.},
+journal = {IEEE Security and Privacy},
+month = nov,
+pages = {81–84},
+numpages = {4},
+keywords = {taxonomy, phyla, kingdom, errors}
+}
+
+@inproceedings{tarditi2018checked,
+author = {Tarditi, David and Elliott, Archibald Samuel and Ruef, Andrew and Hicks, Michael},
+title = {Checked C: Making C Safe by Extension},
+booktitle = {IEEE Cybersecurity Development Conference 2018 (SecDev)},
+year = {2018},
+month = {September},
+abstract = {This paper presents Checked C, an extension to C designed to support spatial safety, implemented in Clang and LLVM. Checked C's design is distinguished by its focus on backward-compatibility, incremental conversion, developer control, and enabling highly performant code. Like past approaches to a safer C, Checked C employs a form of checked pointer whose accesses can be statically or dynamically verified. Performance evaluation on a set of standard benchmark programs shows overheads to be relatively low. More interestingly, Checked C introduces the notions of a checked region and bounds-safe interfaces.},
+publisher = {IEEE},
+url = {https://www.microsoft.com/en-us/research/publication/checkedc-making-c-safe-by-extension/},
+pages = {53-60},
+}
+
+@inproceedings{CYCLONE1,
+author = {Jim, Trevor and Morrisett, J. Greg and Grossman, Dan and Hicks, Michael W. and Cheney, James and Wang, Yanling},
+title = {Cyclone: A Safe Dialect of C},
+year = {2002},
+isbn = {1880446006},
+publisher = {USENIX Association},
+address = {USA},
+booktitle = {Proceedings of the General Track of the Annual Conference on USENIX Annual Technical Conference},
+pages = {275–288},
+numpages = {14},
+series = {ATEC '02}
+}
+
+@article{REGMEM,
+author = {Tofte, Mads and Birkedal, Lars and Elsman, Martin and Hallenberg, Niels},
+year = {2004},
+month = {09},
+pages = {245-265},
+title = {A Retrospective on Region-Based Memory Management},
+volume = {17},
+journal = {Higher-Order and Symbolic Computation},
+doi = {10.1023/B:LISP.0000029446.78563.a4}
+}
+
+@mastersthesis{Stjerna1684081,
+   author = {Stjerna, Amanda},
+   institution = {Uppsala University, Department of Information Technology},
+   pages = {59},
+   school = {Uppsala University, Department of Information Technology},
+   title = {Modelling Rust’s Reference Ownership Analysis Declaratively in Datalog},
+   series = {IT},
+   number = {20001},
+   abstract = {Rust is a modern systems programming language that offers improved memory safety over traditional languages like C or C++ as well as automatic memory managementwithout introducing garbage collection. In particular, it guarantees that well-typedprograms are free from data-races caused by memory-aliasing, use-after-frees, and accesses to deinitialised or uninitialised memory. At the heart of Rust's memory safety guarantees lies a system of memory ownership, verified statically in the compiler by aprocess called the borrow check. However, the current implementation of theborrow check is not expressive enough to prove several desirable programs safe,despite being so. This report introduces an improved borrow check called Polonius,which increases the resolution of the analysis to reason at the program statement level, and enables a more expressive formulation of the borrow check itself through the use of a domain-specific language, Datalog. To the best of our knowledge, Polonius is the first use of Datalog for type verification in the compiler of aproduction language. Specifically, this thesis extends Polonius with initialisation and liveness computationsfor variables, and constitutes the first complete description of Polonius in text. Finally,it describes an exploratory study of input data for Polonius generated by analysingcirca 12~000 popular Git repositories found on GitHub and the Crates.io Rustpackage index. Some central findings from the study are that deallocations are uncommon relative to other variable uses, and that a weaker (and therefore faster)analysis than Polonius is often sufficient to prove a program correct. Indeed, many functions (circa 64%) do not create any references at all, and therefore do not involve the reference-analysis part of the borrow check. },
+   year = {2020}
+}
+
+@article{FATPOINTERS,
+author = {Zhou, Jie and Criswell, John and Hicks, Michael},
+title = {Fat Pointers for Temporal Memory Safety of C},
+year = {2023},
+issue_date = {April 2023},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {7},
+number = {OOPSLA1},
+url = {https://doi.org/10.1145/3586038},
+doi = {10.1145/3586038},
+abstract = {Temporal memory safety bugs, especially use-after-free and double free bugs, pose a major security threat to C programs. Real-world exploits utilizing these bugs enable attackers to read and write arbitrary memory locations, causing disastrous violations of confidentiality, integrity, and availability. Many previous solutions retrofit temporal memory safety to C, but they all either incur high performance overhead and/or miss detecting certain types of temporal memory safety bugs.
+
+In this paper, we propose a temporal memory safety solution that is both efficient and comprehensive. Specifically, we extend Checked C, a spatially-safe extension to C, with temporally-safe pointers. These are implemented by combining two techniques: fat pointers and dynamic key-lock checks. We show that the fat-pointer solution significantly improves running time and memory overhead compared to the disjoint-metadata approach that provides the same level of protection. With empirical program data and hands-on experience porting real-world applications, we also show that our solution is practical in terms of backward compatibility---one of the major complaints about fat pointers.},
+journal = {Proc. ACM Program. Lang.},
+month = apr,
+articleno = {86},
+numpages = {32},
+keywords = {Checked C, Fat Pointers, Temporal Memory Safety}
+}
+
+@article{CCURED,
+author = {Necula, George C. and Condit, Jeremy and Harren, Matthew and McPeak, Scott and Weimer, Westley},
+title = {CCured: type-safe retrofitting of legacy software},
+year = {2005},
+issue_date = {May 2005},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {27},
+number = {3},
+issn = {0164-0925},
+url = {https://doi.org/10.1145/1065887.1065892},
+doi = {10.1145/1065887.1065892},
+abstract = {This article describes CCured, a program transformation system that adds type safety guarantees to existing C programs. CCured attempts to verify statically that memory errors cannot occur, and it inserts run-time checks where static verification is insufficient.CCured extends C's type system by separating pointer types according to their usage, and it uses a surprisingly simple type inference algorithm that is able to infer the appropriate pointer kinds for existing C programs. CCured uses physical subtyping to recognize and verify a large number of type casts at compile time. Additional type casts are verified using run-time type information. CCured uses two instrumentation schemes, one that is optimized for performance and one in which metadata is stored in a separate data structure whose shape mirrors that of the original user data. This latter scheme allows instrumented programs to invoke external functions directly on the program's data without the use of a wrapper function.We have used CCured on real-world security-critical network daemons to produce instrumented versions without memory-safety vulnerabilities, and we have found several bugs in these programs. The instrumented code is efficient enough to be used in day-to-day operations.},
+journal = {ACM Trans. Program. Lang. Syst.},
+month = may,
+pages = {477–526},
+numpages = {50},
+keywords = {Memory safety, libraries, pointer qualifier, subtyping}
+}
+
+@mastersthesis{WESSEL2019,
+    author={Nienke Wessel},
+    title={The Semantics of Ownership and Borrowing in the Rust Programming Language},
+    school={Radboud University},
+    year={2019},
+    type={Bachelor's Thesis}
+}
+
+@book{HASKELL,
+author = {Hutton, Graham},
+title = {Programming in Haskell},
+year = {2016},
+isbn = {1316626229},
+publisher = {Cambridge University Press},
+address = {USA},
+edition = {2nd},
+abstract = {Haskell is a purely functional language that allows programmers to rapidly develop clear, concise, and correct software. The language has grown in popularity in recent years, both in teaching and in industry. This book is based on the author's experience of teaching Haskell for more than twenty years. All concepts are explained from first principles and no programming experience is required, making this book accessible to a broad spectrum of readers. While Part I focuses on basic concepts, Part II introduces the reader to more advanced topics. This new edition has been extensively updated and expanded to include recent and more advanced features of Haskell, new examples and exercises, selected solutions, and freely downloadable lecture slides and example code. The presentation is clean and simple, while also being fully compliant with the latest version of the language, including recent changes concerning applicative, monadic, foldable, and traversable types.}
+}
+
+@book{RUSTBOOK,
+author = {Klabnik, Steve and Nichols, Carol},
+title = {The Rust Programming Language},
+year = {2018},
+isbn = {1593278284},
+publisher = {No Starch Press},
+address = {USA},
+abstract = {The Rust Programming Language is the official book on Rust, an open-source, community-developed systems programming language that runs blazingly fast, prevents segfaults, and guarantees thread safety. This is the undisputed go-to guide to Rust, written by two members of the Rust core team, with feedback and contributions from 42 members of the community. The book assumes that youve written code in another programming language but makes no assumptions about which one, meaning the material is accessible and useful to developers from a wide variety of programming backgrounds. Known by the Rust community as The Book, The Rust Programming Language includes concept chapters, where youll learn about a particular aspect of Rust, and project chapters, where youll apply what youve learned so far to build small programs. The Book opens with a quick hands-on project to introduce the basics then explores key concepts in depth, such as ownership, the type system, error handling, and fearless concurrency. Next come detailed explanations of Rust-oriented perspectives on topics like pattern matching, iterators, and smart pointers, with concrete examples and exercises--taking you from theory to practice. The Rust Programming Language will also show you how to:- Grasp important concepts unique to Rust, like ownership, borrowing, and lifetimes- Use Cargo, Rusts built-in package manager, to build and maintain your code, including downloading and building dependencies- Effectively use Rusts zero-cost abstractions and employ your own Youll learn to develop reliable code thats speed and memory efficient, while avoiding the infamous and arcane programming pitfalls common at the systems level. When you need to dive down into lower-level control, this guide will show you how without taking on the customary risk of crashes or security holes and without requiring you to learn the fine points of a fickle toolchain. Youll also learn how to create command line programs, build single- and multithreaded web servers, and much more. The Rust Programming Language fully embraces Rusts potential to empower its users. This friendly and approachable guide will help you build not only your knowledge of Rust but also your ability to program with confidence in a wider variety of domains.}
+}
+
+
+@inproceedings{CYCLONEMEM,
+author = {Hicks, Michael and Morrisett, Greg and Grossman, Dan and Jim, Trevor},
+title = {Experience with safe manual memory-management in cyclone},
+year = {2004},
+isbn = {1581139454},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/1029873.1029883},
+doi = {10.1145/1029873.1029883},
+abstract = {The goal of the Cyclone project is to investigate type safety for low-level languages such as C. Our most difficult challenge has been providing programmers control over memory management while retaining type safety. This paper reports on our experience trying to integrate and effectively use two previously proposed, type-safe memory management mechanisms: statically-scoped regions and unique pointers. We found that these typing mechanisms can be combined to build alternative memory-management abstractions, such as reference counted objects and arenas with dynamic lifetimes, and thus provide a flexible basis. Our experience---porting C programs and building new applications for resource-constrained systems---confirms that experts can use these features to improve memory footprint and sometimes to improve throughput when used instead of, or in combination with, conservative garbage collection.},
+booktitle = {Proceedings of the 4th International Symposium on Memory Management},
+pages = {73–84},
+numpages = {12},
+keywords = {unique pointers, regions, memory safety, memory management, cyclone},
+location = {Vancouver, BC, Canada},
+series = {ISMM '04}
+}
+
+@misc{Matsakis_2018, 
+    title={An alias-based formulation of the borrow checker}, 
+    url={https://smallcultfollowing.com/babysteps/blog/2018/04/27/an-alias-based-formulation-of-the-borrow-checker/}, 
+    journal={Baby Steps}, 
+    author={Matsakis, Niko}, 
+    year={2018}, 
+    month=apr
+} 
+
+@article{CSLINLOG,
+author = {Abramsky, Samson},
+title = {Computational interpretations of linear logic},
+year = {1993},
+issue_date = {April 12, 1993},
+publisher = {Elsevier Science Publishers Ltd.},
+address = {GBR},
+volume = {111},
+number = {1–2},
+issn = {0304-3975},
+url = {https://doi.org/10.1016/0304-3975(93)90181-R},
+doi = {10.1016/0304-3975(93)90181-R},
+journal = {Theor. Comput. Sci.},
+month = apr,
+pages = {3–57},
+numpages = {55}
+}
+
+@inproceedings{Wadler1990LinearTC,
+  title={Linear Types can Change the World!},
+  author={Philip Wadler},
+  booktitle={Programming Concepts and Methods},
+  year={1990},
+  url={https://api.semanticscholar.org/CorpusID:58535510}
+}
+
+@article{FEATHERJAVA,
+author = {Igarashi, Atsushi and Pierce, Benjamin C. and Wadler, Philip},
+title = {Featherweight Java: a minimal core calculus for Java and GJ},
+year = {2001},
+issue_date = {May 2001},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {23},
+number = {3},
+issn = {0164-0925},
+url = {https://doi.org/10.1145/503502.503505},
+doi = {10.1145/503502.503505},
+abstract = {Several recent studies have introduced lightweight versions of Java: reduced languages in which complex features like threads and reflection are dropped to enable rigorous arguments about key properties such as type safety. We carry this process a step further, omitting almost all features of the full language (including interfaces and even assignment) to obtain a small calculus, Featherweight Java, for which rigorous proofs are not only possible but easy. Featherweight Java bears a similar relation to Java as the lambda-calculus does to languages such as ML and Haskell. It offers a similar computational "feel," providing classes, methods, fields, inheritance, and dynamic typecasts with a semantics closely following Java's. A proof of type safety for Featherweight Java thus illustrates many of the interesting features of a safety proof for the full language, while remaining pleasingly compact. The minimal syntax, typing rules, and operational semantics of Featherweight Java make it a handy tool for studying the consequences of extensions and variations. As an illustration of its utility in this regard, we extend Featherweight Java with generic classes in the style of GJ (Bracha, Odersky, Stoutamire, and Wadler) and give a detailed proof of type safety. The extended system formalizes for the first time some of the key features of GJ.},
+journal = {ACM Trans. Program. Lang. Syst.},
+month = may,
+pages = {396–450},
+numpages = {55},
+keywords = {language semantics, language design, generic classes, Java, Compilation}
+}
+
+@article{RUSTBELT,
+author = {Jung, Ralf and Jourdan, Jacques-Henri and Krebbers, Robbert and Dreyer, Derek},
+title = {RustBelt: securing the foundations of the Rust programming language},
+year = {2017},
+issue_date = {January 2018},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {2},
+number = {POPL},
+url = {https://doi.org/10.1145/3158154},
+doi = {10.1145/3158154},
+abstract = {Rust is a new systems programming language that promises to overcome the seemingly fundamental tradeoff between high-level safety guarantees and low-level control over resource management. Unfortunately, none of Rust's safety claims have been formally proven, and there is good reason to question whether they actually hold. Specifically, Rust employs a strong, ownership-based type system, but then extends the expressive power of this core type system through libraries that internally use unsafe features. In this paper, we give the first formal (and machine-checked) safety proof for a language representing a realistic subset of Rust. Our proof is extensible in the sense that, for each new Rust library that uses unsafe features, we can say what verification condition it must satisfy in order for it to be deemed a safe extension to the language. We have carried out this verification for some of the most important libraries that are used throughout the Rust ecosystem.},
+journal = {Proc. ACM Program. Lang.},
+month = dec,
+articleno = {66},
+numpages = {34},
+keywords = {Rust, concurrency, logical relations, separation logic, type systems}
+}
+
+@article{RUSTSYMBOLIC,
+author = {Ho, Son and Fromherz, Aymeric and Protzenko, Jonathan},
+title = {Sound Borrow-Checking for Rust via Symbolic Semantics},
+year = {2024},
+issue_date = {August 2024},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {8},
+number = {ICFP},
+url = {https://doi.org/10.1145/3674640},
+doi = {10.1145/3674640},
+abstract = {The Rust programming language continues to rise in popularity, and as such,       warrants the close attention of the programming languages community. In this      work, we present a new foundational contribution towards the theoretical          understanding of Rust’s semantics. We prove that LLBC, a high-level, borrow-centric model                                                                previously proposed for Rust’s semantics and execution, is sound with regards to a low-level          pointer-based language \`{a} la CompCert. Specifically, we prove the                  following: that LLBC is a correct view over a traditional model of execution;     that LLBC’s symbolic semantics are a correct abstraction of LLBC programs;        and that LLBC’s symbolic semantics act as a borrow-checker for LLBC, i.e. that    symbolically-checked LLBC programs do not get stuck when executed on a            heap-and-addresses model of execution.                                            To prove these results, we introduce a new proof style that considerably          simplifies our proofs of simulation, which relies on a notion of hybrid           states. Equipped with this reasoning framework, we show that a new addition to    LLBC’s symbolic semantics, namely a join operation, preserves the abstraction     and borrow-checking properties. This in turn allows us to add support for         loops to the Aeneas framework; we show, using a series of examples and case       studies, that this unlocks new expressive power for Aeneas.},
+journal = {Proc. ACM Program. Lang.},
+month = aug,
+articleno = {251},
+numpages = {29},
+keywords = {Rust, Semantics, Verification}
+}
+
+@article{CHECKEDC,
+author = {Machiry, Aravind and Kastner, John and McCutchen, Matt and Eline, Aaron and Headley, Kyle and Hicks, Michael},
+title = {C to checked C by 3c},
+year = {2022},
+issue_date = {April 2022},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {6},
+number = {OOPSLA1},
+url = {https://doi.org/10.1145/3527322},
+doi = {10.1145/3527322},
+abstract = {Owing to the continued use of C (and C++), spatial safety violations (e.g., buffer overflows) still constitute one of today's most dangerous and prevalent security vulnerabilities. To combat these violations, Checked C extends C with bounds-enforced checked pointer types. Checked C is essentially a gradually typed spatially safe C - checked pointers are backwards-binary compatible with legacy pointers, and the language allows them to be added piecemeal, rather than necessarily all at once, so that safety retrofitting can be incremental. This paper presents a semi-automated process for porting a legacy C program to Checked C. The process centers on 3C, a static analysis-based annotation tool. 3C employs two novel static analysis algorithms - typ3c and boun3c - to annotate legacy pointers as checked pointers, and to infer array bounds annotations for pointers that need them. 3C performs a root cause analysis to direct a human developer to code that should be refactored; once done, 3C can be re-run to infer further annotations (and updated root causes). Experiments on 11 programs totaling 319KLoC show 3C to be effective at inferring checked pointer types, and experience with previously and newly ported code finds 3C works well when combined with human-driven refactoring.},
+journal = {Proc. ACM Program. Lang.},
+month = apr,
+articleno = {78},
+numpages = {29},
+keywords = {Checked C, Source Rewriter, Spatial Safety Prevention}
+}
+
+@book{CLANG,
+author = {Kernighan, Brian W. and Ritchie, Dennis M.},
+title = {The  C Programming Language},
+year = {1988},
+isbn = {0131103709},
+publisher = {Prentice Hall Professional Technical Reference},
+edition = {2nd},
+abstract = {From the Publisher: This second editon describes C as defined by the ANSI standard. This book is meant to help the reader learn how to program in C. The book assumes some familiarity with basic programming concepts like variables, assignment statements, loops, and functions. A novice programmer should be able to read along and pick up the language. FEATURES: All examples have been tested, which is in machine-readable form. It discusses various aspects of C in more detail, although the emphasis is on examples of complete programs, rather than isolated fragments. It deals with basic data types, operators and expressions. Covers functions and program structure, external variables, scope rules, multiple source files, and also touches on the preprocessor. It also describes an interface between C programs and the UNIX operating system, concentrating on input/output, the file system, and storage allocation. It also provides a language reference manual. The official statement of the syntax and semantics of C is the ANSI standard.}
+}
+
+@inproceedings{RUSTFORLINUX,
+author = {Li, Hongyu and Guo, Liwei and Yang, Yexuan and Wang, Shangguang and Xu, Mengwei},
+title = {An empirical study of rust-for-Linux: the success, dissatisfaction, and compromise},
+year = {2024},
+isbn = {978-1-939133-41-0},
+publisher = {USENIX Association},
+address = {USA},
+abstract = {Developed for over 30 years, Linux has already become the computing foundation for today's digital world; from gigantic, complex mainframes (e.g., supercomputers) to cheap, wimpy embedded devices (e.g., IoTs), countless applications are built on top of it. Yet, such an infrastructure has been plagued by numerous memory and concurrency bugs since the day it was born, due to many rogue memory operations are permitted by C language. A recent project Rust-for-Linux (RFL) has the potential to address Linux's safety concerns once and for all - by embracing Rust's static ownership and type checkers into the kernel code, the kernel may finally be free from memory and concurrency bugs without hurting its performance. While it has been gradually matured and even merged into Linux mainline, however, RFL is rarely studied and still remains unclear whether it has indeed reconciled the safety and performance dilemma for the kernel.To this end, we conduct the first empirical study on RFL to understand its status quo and benefits, especially on how Rust fuses with Linux and whether the fusion assures driver safety without overhead. We collect and analyze 6 key RFL drivers, which involve hundreds of issues and PRs, thousands of Github commits and mail exchanges of the Linux mailing list, as well as over 12K discussions on Zulip. We have found while Rust mitigates kernel vulnerabilities, it is beyond Rust's capability to fully eliminate them; what is more, if not handled properly, its safety assurance even costs the developers dearly in terms of both runtime overhead and development efforts.},
+booktitle = {Proceedings of the 2024 USENIX Conference on Usenix Annual Technical Conference},
+articleno = {27},
+numpages = {19},
+location = {Santa Clara, CA, USA},
+series = {USENIX ATC'24}
+}

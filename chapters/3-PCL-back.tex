@@ -1,0 +1,269 @@
+% 3. PCL back
+\chapter{PCL-back}
+
+
+
+%	3.1 Syntax
+\section{Sintaxe}
+\begingroup
+\setlength{\jot}{-0.2ex} 
+	\begin{align*}
+		Locals \ni l ::&= l^m \OR l^p &&\\ 
+		Value \ni v ::&= n \OR l && \\
+		BinOp \ni op ::&= + | - | * | < | > | = | \land | \lor \\
+		Expression \ni e ::&= x \OR v \\
+		&\NLOR e\; op\; e \OR !e  \\
+		&\NLOR \text{*}e \OR \&x \\
+		&\NLOR e;e \; \OR \{\,e\,\} \; \\ 
+		&\NLOR \mathbf{malloc}(e) \OR \mathbf{free}(e, e) \; \\ 
+		&\NLOR \mathbf{let}\; x[n] \OR e := e \; \\
+		&\NLOR \mathbf{if}(e) \; e \; \mathbf{else} \; e \; \OR \mathbf{while}(e) \; e \\
+		&\NLOR f(\bar e) \\ 
+		&\NLOR \mathbf{panic}\;pcode \\ 
+		PanicCodes \ni pcodes ::&= \mathbf{OutOfBoundsRead}\\
+		&\NLOR \mathbf{OutOfBoundsWrite}\\
+		&\NLOR \mathbf{NullPtrDereference}\\
+		&\NLOR \mathbf{UserError}\\
+		&\NLOR \mathbf{UseAfterFree}\\
+		&\NLOR \mathbf{UninitializedAcess}\\
+		&\NLOR \mathbf{FreeMemoryNotOnHeap}\\
+		&\NLOR \mathbf{PartialFree}\\
+		&\NLOR \mathbf{DoubleFree}\\
+		Function \ni F ::&= \mathbf{let} \; f(\overline{x})\; e \; F \; | \; \mathbf{let}\;() \; e \\
+		Globals \ni G ::&= \mathbf{global}\; x[n] \;G \;|\; F
+	\end{align*}
+\endgroup
+
+
+%	3.2 Memory Model
+\section{Modelo de Memória}
+
+\todo[inline]{Fazer essa uma sessão própria ou juntar com o texto anterior?}
+\subsection{Ponteiros}
+
+\subsection{Pilha}
+
+\subsection{Heap}
+
+%	3.3 Operational Semantics
+\section{Semântica Operacional}
+ \todo[inline]{Dar uma formatada mais legal nessas regras que tá meio feio}
+
+\infrule[Compose-s]
+    {F \vdash \St{e_1,a, p, m} \to \St{e_1',a', p', m'}}
+    {F \vdash \St{e_1;e_2,a, p, m} \to \St{e_1';e_2,a', p', m'}}
+
+\infrule[Compose]
+    {}
+    {F \vdash \St{v;e, a, p, m} \to \St{e, a, p, m}}
+\infrule[Escopo]
+    {}
+    {F \vdash \St{\{e\},(a,g), p, m} \to \\ \St{\mathbf{pop}\; e,(\{\} : a, g),stack : p, m}}
+\infrule[Pop-s]
+    {F \vdash \St{e,a, p, m} \to \St{e',a', p', m'}}
+    {F \vdash \St{\mathbf{pop}\;e,a, p, m} \to \St{\mathbf{pop}\;e',a', p', m'}} 
+ \infrule[Pop]
+    {\mathbf{pop}_{stack}(p) = p'}
+    {F \vdash \St{\mathbf{pop}\;v,(frame : a, g), p, m} \to\\\St{v,(a, g), p', m}}
+
+\infrule[Let]
+    {\mathbf{top}(p) = i \andalso \mathbf{newkey}() = k \andalso l = l^p\{i, k, 0, n\}}
+    {F \vdash \St{\mathbf{let}\; x[n],(fr : a, g), p, m} \to\\ \St{l, (fr[x \mapsto l] : a, g),(\bot, k)_n : p, m}} 
+
+\infrule[Atribui-deref-ls]
+    {F \vdash \St{e_1,a, p, m} \to \St{e_1', a', p', m'}}
+    {F \vdash \St{\text{*}e_1 := e_2, a, p, m} \to \St{\text{*}e_1' := e_2, a', p', m'}} 
+
+\infrule[Atribui-var-rs]
+    {F \vdash \St{e, a, p, m} \to \St{e', a', p', m'}}
+    {F \vdash \St{x := e, a, p, m} \to \St{x := e', a', p', m'}} 
+
+\infrule[Atribui-deref-rs]
+    {F \vdash \St{e,a, p, m} \to \St{e', a', p', m'}}
+    {F \vdash \St{\text{*}l := e, a, p, m} \to \St{\text{*}l := e', a', p', m'}} 
+
+\infrule[Atribui-var-obe]
+    {a(x) = l^p\{i, k, o, s\} \andalso 0 > o \ge s}
+    {F \vdash \St{x := v, a, p, m} \to \\ \St{\mathbf{panic}\;\mathbf{OutOfBoundsWrite}, a, p, m}}
+    
+\infrule[Atribui-var-uaf]
+    {a(x) = l^p\{i, k, o, s\} \\ 0 \leq o < s\andalso p(i + o) = (v_p, k_p) \andalso k \neq k_p }
+    {F \vdash \St{x := v, a, p, m} \to \\ \St{\mathbf{panic}\;\mathbf{UseAfterFree}, a, p, m}}
+
+\infrule[Atribui-var]
+    {a(x) = l^p\{i, k, o, s\} \\ 0 \leq o < s\quad p(i + o) = (v_p, k_p) \quad k = k_p }
+    {F \vdash \St{x := v, a, p, m} \to \St{v, a, p[i + o \mapsto v], m}} 
+
+\infrule[Atribui-deref-pilha-obe]
+    {0 > o \ge s}
+    {F\vdash\St{\text{*}l^p\{i, k, o, s\} := v, a, p, m} \to \\ \St{\mathbf{panic}\;\mathbf{OutOfBoundsWrite}, a, p, m}} 
+
+\infrule[Atribui-deref-pilha-uaf]
+    {0 \leq o < s\quad p(i + o) = (v_p, k_p) \quad k \neq k_p }
+    {F\vdash\St{\text{*}l^p\{i, k, o, s\} := v, a, p, m} \to\\ \St{\mathbf{panic}\;\mathbf{UseAfterFree}, a, p, m}} 
+    
+\infrule[Atribui-deref-pilha]
+    {0 \leq o < s\quad p(i + o) = (v_p, k_p) \quad k = k_p }
+    {F\vdash\St{\text{*}l^p\{i, k, o, s\} := v, a, p, m} \to\\ \St{v, a, p[i + o \mapsto v], m}} 
+
+\infrule[Atribui-deref-mem-npd]
+    {i = 0}
+    {F\vdash\St{\text{*}l^m\{i, k, o, s\} := v, a, p, m} \to\\ \St{\mathbf{panic}\;\mathbf{NullPtrDeref}, a, p, m}} 
+
+\infrule[Atribui-deref-mem-obe]
+    {i \neq 0 \quad 0 > o \ge s}
+    {F\vdash\St{\text{*}l^m\{i, k, o, s\} := v, a, p, m} \to\\ \St{\mathbf{panic}\;\mathbf{OutOfBoundsWrite}, a, p, m}} 
+
+\infrule[Atribui-deref-mem-uaf]
+    {i \neq 0 \quad 0 \leq o < s\quad m(i + o) = (v_m, k_m) \quad k \neq k_m }
+    {F\vdash\St{\text{*}l^m\{i, k, o, s\} := v, a, p, m} \to\\ \St{\mathbf{panic}\;\mathbf{UseAfterFree}, a, p, m}} 
+    
+\infrule[Atribui-deref-mem]
+    {i \neq 0 \quad 0 \leq o < s\quad m(i + o) = (v_m, k_m) \quad k = k_m }
+    {F\vdash\St{\text{*}l^m\{i, k, o, s\} := v, a, p, m} \to \\\St{v, a, p, m[i + o \mapsto v]}}
+
+\infrule[Malloc-s]
+    {F\vdash\St{e, a, p, m} \to\St{e', a', p', m'}}
+    {F\vdash\St{\mathbf{malloc}(e),a, p, m} \to\St{\mathbf{malloc}(e'),a', p', m'}}
+    
+\infrule[Malloc]
+    {\mathbf{loc}(m, n) = i \quad \mathbf{newkey}() = k \quad l = l^m\{i, k, 0, n\}}
+    {F\vdash\St{\mathbf{malloc}(n),a, p, m} \to\St{l, a, p, m[i_{0..n} \mapsto (\bot,k)]}} 
+    
+\infrule[Free-ls]
+    {F\vdash\St{e_1, a, p, m} \to\St{e_1', a', p', m'}}
+    {F\vdash\St{\mathbf{free}(e_1, e_2),a, p, m} \to\St{\mathbf{free}(e_1', e_2),a', p', m'}}
+    
+\infrule[Free-rs]
+    {F\vdash\St{e, a, p, m} \to\St{e', a', p', m'}}
+    {F\vdash\St{\mathbf{free}(l, e),a, p, m} \to\St{\mathbf{free}(l, e'),a', p', m'}} 
+
+\infrule[Free-mnh]
+    {}
+    {F\vdash\St{\mathbf{free}(l^p, n),a, p, m} \to\\ \St{\mathbf{panic}\;\mathbf{FreeMemoryNotOnHeap},a, p, m}}
+
+\infrule[Free-memory-null] 
+    {i = 0}
+    {F\vdash\St{\mathbf{free}(l^m\{i, k, o, s\}, n),a, p, m} \to\\ \St{\mathbf{panic}\;\mathbf{FreeMemoryNotOnHeap},a, p, m}}
+    
+\infrule[Free-pf] 
+    {i \neq 0 \quad o \neq 0 \lor s \neq n}
+    {F\vdash\St{\mathbf{free}(l^m\{i, k, o, s\}, n),a, p, m} \to\\ \St{\mathbf{panic}\;\mathbf{PartialFree},a, p, m}}
+    
+\infrule[Free-df]
+    {i \neq 0 \quad o = 0 \quad s = n \quad m(i) = (v_m, k_m) \quad k \neq k_m}
+    {F\vdash\St{\mathbf{free}(l^m\{i, k, o, s\}, n),a, p, m} \to\\ \St{\mathbf{panic}\;\mathbf{DoubleFree},a, p, m}}
+
+\infrule[Free]
+    {i \neq 0 \quad o = 0 \quad s = n \quad m(i) = (v_m, k_m) \quad k = k_m}
+    {F\vdash\St{\mathbf{free}(l^m\{i, k, o, s\}, n),a, p, m} \to\St{n,a, p, m[i_{0..n} \mapsto (-,0)]}}
+
+\infrule[BinOp-ls]
+    {F \vdash \St{e_1,a, p, m} \to \St{e_1', a', p', m'}}
+    {F \vdash \St{e_1 \;op\; e_2, a, p, m} \to \St{e_1' \;op\; e_2, a', p', m'}} 
+
+\infrule[BinOp-rs]
+    {F \vdash \St{e,a, p, m} \to \St{e', a', p', m'}}
+    {F \vdash \St{v \;op\; e, a, p, m} \to \St{v \;op\; e', a', p', m'}}
+
+\infrule[BinOp]
+    {\mathbf{binop}(op, v_1, v_2) = v'}
+    {F \vdash \St{v_1 \;op\; v_2, a, p, m} \to \St{v', a, p, m}}
+
+\infrule[Not-s]
+    {F \vdash \St{e,a, p, m} \to \St{e', a', p', m'}}
+    {F \vdash \St{!e, a, p, m} \to \St{!e', a', p', m'}}
+
+\infrule[Not]
+    {\mathbf{not}(v) = n}
+    {F \vdash \St{!v, a, p, m} \to \St{n, a, p, m}}
+
+\infrule[Var-obr]
+    {a(x) = l^p\{i, k, o, s\} \quad 0 > o \ge s}
+    {F \vdash \St{x, a, p, m} \to\\ \St{\mathbf{panic}\;\mathbf{OutOfBoundsRead}, a, p, m}}
+    
+\infrule[Var-uaf]
+    {a(x) = l^p\{i, k, o, s\} \\ 0 \leq o < s\quad p(i + o) = (v_p, k_p) \quad k \neq k_p}
+    {F \vdash \St{x, a, p, m} \to \St{\mathbf{panic}\;\mathbf{UseAfterFree}, a, p, m}}
+
+\infrule[Var-ua]
+    {a(x) = l^p\{i, k, o, s\} \\ 0 \leq o < s\quad p(i + o) = (v_p, k_p) \quad k = k_p \quad v_p = \bot}
+    {F \vdash \St{x, a, p, m} \to \\ \St{\mathbf{panic}\;\mathbf{UninitializedAcess}, a, p, m}} 
+
+\infrule[Var]
+    {a(x) = l^p\{i, k, o, s\} \\ 0 \leq o < s\quad p(i + o) = (v_p, k_p) \quad k = k_p \quad v_p \neq \bot}
+    {F \vdash \St{x, a, p, m} \to \St{v_p, a, p, m}}
+
+\infrule[Ref]
+    {a(x) = l^p}
+    {F \vdash \St{\&x, a, p, m} \to \St{l^p, a, p, m}}
+    
+\infrule[Deref-s]
+	{F \vdash \St{e,a, p, m} \to \St{e', a', p', m'}}
+	{F \vdash \St{\text{*}e, a, p, m} \to \St{\text{*}e', a', p', m'}} 
+
+\infrule[Deref-pilha-obr]
+    {0 > o \ge s}
+    {F \vdash \St{\text{*}l^p\{i, k, o, s\}, a, p, m} \to \\ \St{\mathbf{panic}\;\mathbf{OutOfBoundsRead}, a, p, m}}
+    
+\infrule[Deref-pilha-uaf]
+    {0 \leq o < s\quad p(i + o) = (v_p, k_p) \quad k \neq k_p}
+    {F \vdash \St{\text{*}l^p\{i, k, o, s\}, a, p, m} \to\\ \St{\mathbf{panic}\;\mathbf{UseAfterFree}, a, p, m}} 
+
+\infrule[Deref-pilha-ua]
+    {0 \leq o < s\quad p(i + o) = (v_p, k_p) \quad k = k_p \quad v_p = \bot}
+    {F \vdash \St{\text{*}l^p\{i, k, o, s\}, a, p, m} \to\\ \St{\mathbf{panic}\;\mathbf{UninitializedAcess}, a, p, m}}
+
+\infrule[Deref-pilha]
+    {0 \leq o < s\quad p(i + o) = (v_p, k_p) \quad k = k_p \quad v_p \neq \bot}
+    {F \vdash \St{\text{*}l^p\{i, k, o, s\}, a, p, m} \to \St{v_p, a, p, m}}
+
+\infrule[Deref-memória-null]
+    {i = 0}
+    {F \vdash \St{\text{*}l^m\{i, k, o, s\}, a, p, m} \to\\ \St{\mathbf{panic}\;\mathbf{NullPtrDeref}, a, p, m}}
+
+\infrule[Deref-memória-obr]
+    {i \neq 0 \quad 0 > o \ge s}
+    {F \vdash \St{\text{*}l^m\{i, k, o, s\}, a, p, m} \to\\ \St{\mathbf{panic}\;\mathbf{OutOfBoundsRead}, a, p, m}}
+    
+\infrule[Deref-memória-uaf]
+    {i \neq 0 \quad 0 \leq o < s\quad m(i + o) = (v_m, k_m) \quad k \neq k_m}
+    {F \vdash \St{\text{*}l^m\{i, k, o, s\}, a, p, m} \to\\ \St{\mathbf{panic}\;\mathbf{UseAfterFree}, a, p, m}}
+
+\infrule[Deref-memória-ua]
+    {i \neq 0 \quad 0 \leq o < s\quad m(i + o) = (v_m, k_m) \quad k = k_m \quad v_m = \bot}
+    {F \vdash \St{\text{*}l^m\{i, k, o, s\}, a, p, m} \to\\ \St{\mathbf{panic}\;\mathbf{UninitializedAcess}, a, p, m}} 
+    
+\infrule[Deref-memória]
+    {i \neq 0 \quad 0 \leq o < s\quad m(i + o) = (v_m, k_m) \quad k = k_m \quad v_m \neq \bot}
+    {F \vdash \St{\text{*}l^m\{i, k, o, s\}, a, p, m} \to \St{v_m, a, p, m}}
+
+\infrule[If-s]
+    {F \vdash \St{e_1,a, p, m} \to \St{e_1', a', p', m'}}
+    {F \vdash \St{\mathbf{if}\;(e_1)\; e_2\; \mathbf{else}\; e_3 ,a, p, m} \to\\ \St{\mathbf{if}\;(e_1')\; e_2\; \mathbf{else}\; e_3 ,a', p', m'}}
+    
+\infrule[If-true]
+    {\mathcal{N}(v) \neq 0}
+    {F \vdash \St{\mathbf{if}\;(v)\; e_1\; \mathbf{else}\; e_2 ,a, p, m} \to \St{e_1, a, p, m}} 
+\infrule[If-false]
+    {\mathcal{N}(v) = 0}
+    {F \vdash \St{\mathbf{if}\;(v)\; e_1\; \mathbf{else}\; e_2 ,a, p, m} \to \St{e_2, a, p, m}} 
+    
+\infrule[While]
+    {}
+    {F \vdash \St{\mathbf{while}\;(e_1)\; e_2, a, p, m} \to \\ \St{\mathbf{if}\;(e_1)\; (e_2;\mathbf{while}\;(e_1)\; e_2)\; \mathbf{else}\; 0, a, p, m}} 
+
+\infrule[LetFunction-collect]
+    {}
+    {\St{\mathbf{let} \; f(\overline{x_i})\; e \; F_0 ,F} \to_F \St{F_0, F[f \mapsto \St{[\overline{x_i}], e}]}}
+
+\infrule[Globals-collect]
+    {\mathbf{newkey}() = k \quad \mathbf{top}(p) = i}
+    {\St{\mathbf{global} \; x[n]\; G , g, p} \to_G\\ \St{G, g[x \mapsto l^p \{i, k, 0, n\}],(\bot, k)_n : p,}} 
+
+\infrule
+    {\St{P, \{\}, []} \to_G^* \St{F_0, g, p}\quad\St{F_0, \{\}} \to_F^* \St{\mathbf{let}\;()\;e , F}}
+    {F \vdash \St{\{e\}, ([],g),p,[]} \to^* \St{v, ([],g), p, m}} 
+
+%	3.4 Error detection
+\section{Detecção de Erros}
