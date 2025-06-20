@@ -1,7 +1,11 @@
 % 3. PCL back
 \chapter{PCL-back}
 
-
+% This work introduces $PCL_{back}$, a C-like core language de-
+% signed to detect memory safety violations and to classify
+% them. It is designed to be simple, for ease of developing
+% proofs, but expressive enough to express common memory
+% errors in C. Its syntax is defined as such:
 
 %	3.1 Syntax
 \section{Sintaxe}
@@ -34,20 +38,86 @@
 	\end{align*}
 \endgroup
 
+\noindent $x$ e $f$ são metavariáveis que cobrem nomes de variáveis e funções respectivamente.
+
+% In the Syntax, $pcodes$ are the types of memory safety violations, which are: 
+% \textit{Out of Bounds Read} and \textit{Out of Bounds Write}, for spacial safety; 
+% \textit{Use After Free}, \textit{Free Memory Not On Heap}, 
+% \textit{Partial Free} and \textit{Double Free}, for temporal safety;
+% \textit{Uninitialized Access} for initialization safety;
+% \textit{NullPtr Dereference} is a domain specify bug, because $PCL_{back}$ is modeling C;
+% \textit{User Error} is when the user wants to terminate the execution, such as an `exit(1)` in C.
+
+% The objective of $PCL_{back}$ is to be a compilation target for languages 
+% that implement memory safety solutions. By defining those languages via compilation 
+% to $PCL_{back}$, the kinds of proofs needed to validate those safety strategies is to, 
+% by structural induction on the compiled $PCL_{back}$, 
+% not reach the specific $pcodes$ related to violations they are attempting to mitigate.
 
 %	3.2 Memory Model
 \section{Modelo de Memória}
 
+% The interplay between permanent allocations, ones on the \textit{heap}, 
+% and scoped allocations, ones on the \textit{stack}, is an important component 
+% to reproduce memory related bugs. For the purpose of this modeling,
+% the memory in $PCL_{back}$ uses two disjunct environments, $p$,
+% for modeling a memory \textit{stack}, and $m$, for modeling a memory \textit{heap}. 
+
+
 \todo[inline]{Fazer essa uma sessão própria ou juntar com o texto anterior?}
 \subsection{Ponteiros}
 
+% With that distinction, the locations $l$, elements of the language responsible
+% for indexing the memory, hold a tag to specify which memory component is being
+% indexed, as in $l^p$ and $l^m$. These locations also hold metadata used for 
+% error detection. A location $l$ has a index $i$, the position in the memory;
+% a size $s$, the space indexable; an offset $o$, the element where additions 
+% and subtractions from the base are stored; and a unique key $k$, the checker
+% value for temporal safety bugs, generated with the function $\mathbf{newkey}$.
+
+\todo[inline]{Adicionar um diagrama para visualizar esse ponteiro}
+
 \subsection{Pilha}
+
+% The stack is a list of elements, which can be values $v \in \{l, n, \bot, -\}$ 
+% or control codes $c_{ctrl} \in \{\mathbf{stack},\mathbf{func}\}$. The functions 
+% $\mathbf{pop}_{stack}$ and $\mathbf{pop}_{func}$ use these control codes to know 
+% up to which element to remove, simulating the drop of variables at the end of a scope. 
+
+% The values $\bot$ and $-$ are used to detect initialization errors, meaning 
+% uninitialized and not allocated respectively, such as in \citet{WESSEL2019}. 
+% Every element of the stack is paired with a lock, which is use for temporal errors.
+% That results in the \textit{stack} being defined as $p := [(v\,|\,c_{ctrl}, lock)]$.
+
+% The \textit{stack} is indexable, with 0 being the base. $\mathbf{top}(p)$ is 
+% the size of the \textit{stack} $p$, which is also the index of the top element~+~1.
+% Indexing with $i \ge \mathbf{top}(p)$, results in $(-,0)$. 
+% To denote the assignment of a value $v$ to a position $i$ in the stack $p$,
+% one writes $p[i \mapsto v]$.
+
+% For the sake of notation, both the \textit{stack} and \textit{heap} can be
+% treated as lists from Haskell\cite{HASKELL}.
 
 \subsection{Heap}
 
+% The \textit{heap} is similar to the \textit{stack}, but without the control codes. 
+% Therefore a heap $m$ is defined as $m := [(v,lock)]$. In $PCL_{back}$, the heap is 
+% manually deallocated with $\mathbf{free}$ and allocated with $\mathbf{malloc}$. 
+% This last one uses a helper function $\mathbf{loc}(m,n)$ to find the in $m$, $n$ 
+% contiguous unallocated memory cells, returning the starting index of the region.
+
 %	3.3 Operational Semantics
 \section{Semântica Operacional}
- \todo[inline]{Dar uma formatada mais legal nessas regras que tá meio feio}
+
+% The language is defined by means of structural operational semantics, 
+% which specifies a one-step relation between configurations (states). 
+% One writes $F \vdash \St{e, a, p, m} \to \St{e', a', p', m'}$ to describe 
+% the transition of state $\St{e, a, p, m}$ towards state $\St{e', a', p', m'}$ 
+% under a global function definition environment $F$. 
+% Within the state, $e$ is the program, $a$ is the names environment, 
+% $p$ is the stack and $m$ is the heap. 
+
+\todo[inline]{Dar uma formatada mais legal nessas regras que tá meio feio}
 
 \infrule[Compose-s]
     {F \vdash \St{e_1,a, p, m} \to \St{e_1',a', p', m'}}
@@ -267,3 +337,19 @@
 
 %	3.4 Error detection
 \section{Detecção de Erros}
+
+% In order to detect these kinds of errors, the metadata attached to the pointers 
+% needs to uphold certain invariants.$\bullet$ If the offset $o$ of a pointer is 
+% bellow 0 or equal or greater than its size $s$ ($0 > o \ge s$), then it results 
+% in a \textit{Out of Bounds Read}, such as in (VAR-OBR), which is a Spacial Safety bug.
+% $\bullet$ If it is within bounds, but the key $k$ in the pointer does not match 
+% the lock $k'$ at the position ($k \neq k'$), then it results in a \textit{Use After Free}, such as in (VAR-UAF), which is a Temporal Safety bug. $\bullet$ With all that, if the value at position is $\bot$, then it results in a \textit{Uninitialized Access}, 
+% which is a Initialization safety bug.
+
+% There are a few other errors in the language that were omitted for space, 
+% but all of them follow the same principle. This way of approaching errors 
+% ends up defining them by the upholding of these invariants. 
+% A \textit{Use After Free} error is defined by an access where $k \neq k'$,
+% and a case of \textit{Use After Free} only indicates that $k \neq k'$,
+% showing that $\mathbf{UseAfterFree} \leftrightarrow k \neq k'$.
+

@@ -1,6 +1,22 @@
 % 5. PCL front
 \chapter{PCL-front}
 
+% The front-end language, $PCL_{front}$, aims to model a borrow checking system. 
+% However, due to the shape of $PCL_{back}$ and to ease compilation, 
+% two design decisions were taken that change the shape of $PCL_{front}$'s borrow checker.
+% $\mathbf{1\!\!:}$ Instead of using affine types, 
+% with automatic \textit{drop} call at the end of the scope, 
+% $PCL_{front}$ uses linear types\cite{CSLINLOG, Wadler1990LinearTC}, 
+% with the pointer type $\text{*}\tau$ being linear whilst the others are nonlinear. 
+% This decision simplifies compilation and also models Rust's \textit{Copy} and 
+% \textit{Clone} subtextual fling with linearity. $\mathbf{2\!\!:}$ Without parallelism, 
+% it lessens the necessity of only one mutable reference or, exclusively, many immutable 
+% references to a given pointer. With that, $PCL_{front}$ allows for multiple mutable 
+% references, called \textit{alias} ($@\tau'a$) in the type system.
+
+% The aim with this language is, when compiled to $PCL_{back}$, to never reach 
+% a derivation of $\KW{panic}\;\KW{UseAfterFree}$. The syntax of the language follows:
+
 % 	5.1 PCL front's Borrow Checker
 \section{O Borrow Checker de PCL-front}
 
@@ -29,8 +45,40 @@
 	\end{align*}
 \endgroup
 
+% $'a$, $x$ and $f$ are meta variables ranging over regions $r \in Regs$ in the program, 
+% variable names and function names respectively. $x$ is also used as a loan name 
+% $x \in Loans$, given that loans are from variable names.
+ 
+% One important aspect of $PCL_{front}$'s linear type system is how to deal with pointer
+% dereferences. Following Cyclone's rules for accessing linear pointers\cite{CYCLONEMEM},
+% a pointer $\text{*}\tau$ or $@\tau'a$ can be safely dereferenced if $\tau$ is nonlinear.
+% For other cases a swap and alias attached with a dereference are safe abstractions 
+% ($\mathbf{alias}\text{*}\;e$, $e_1 :=:\!\!\text{*} \;e_2$).
+
+% There are a few omissions of note. There are no tuple or recursive types. 
+% Even thought $PCL_{back}$ could represent them, they complicate the borrow checker 
+% and the compilation step. However the omission is mostly due to time constraints. 
+% This is the same reason for the missing of $\mathbf{while}$ and global declarations. 
+
+
 % 	5.3 Checagem de Tipos
 \section{Checagem de Tipos e Regiões}
+
+% The borrow checker implemented is based on the Polonius 
+% proposal\cite{Matsakis_2018, Stjerna1684081}. This implementation requires that 
+% a node in the derivation tree alter a state which will be used for the sequent 
+% assessment of other nodes. This imposes an evaluation order of depth first, 
+% which is shown in the notation by each assessment returning its computed type 
+% and its resulting environments. 
+
+% These environments are: $\Gamma$, the association between names and types; 
+% $U$, similar to $\Gamma$, but as an intermediary space between used value and 
+% restored value; $R$ is a set of region pairs $('a, 'b)$, such as 
+% $'a : 'b$ ($a$ outlives $b$), $R$ is transitive; $L$ is a set of region to 
+% loan relations, which propagates over $R$ in that 
+% $('a,'b) \in R \land ('a, x) \in L\to ('b, x) \in L$. Any access to an alias
+% $@\tau'a$ needs to validate that $'a$ has a valid loan, as in (\textsc{DerefAlias}). 
+
 
 %   5.4 Definição via compilação
 \section{Definição via Compilação}

@@ -1,6 +1,18 @@
 % 4. Use Case: Borrow Checker (explica o borrow checker e o algoritmo do polonius)
 \chapter{Caso de Uso: Borrow Checker}
 % O que é e o porque de um borrow checker
+% One of the most researched solutions for memory bugs has been 
+% Rust's borrow checker\cite{RUSTBOOK}. It promises a zero overhead Temporal Safety 
+% solution by constraining the ability to alias and adding code annotations 
+% to validate temporal memory access. Although, properly validating its claims 
+% has been a challenge\cite{RUSTBELT, RUSTSYMBOLIC}.
+
+% In the case of $PCL_{back}$, there is an interesting bijection between the key locks 
+% used to check for temporal safety and the lifetimes used for computing the correctness 
+% of an access. Therefore, one could postulate that to implement a front-end language 
+% with a borrow checking system $PCL_{front}$, it could be proven that 
+% no \textit{Use After Free} errors would occur in $PCL_{back}$, 
+% given a correct input program and a sound compilation.
 
 %	4.1 Rust and the Borrow Checker
 \section{O Borrow Checker do Rust}

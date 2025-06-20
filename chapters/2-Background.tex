@@ -7,5 +7,17 @@
 %   2.2 Erros de memória
 \section{Erros de Memória}
 
+% Memory safety bugs, as it concerns low level languages, can be subdivided in 5 classes: 
+% Spacial, Temporal, Type, Initialization and Data-Race Safety\cite{Apple22,Google24}. 
+% Even though memory safety bugs can be subdivided in many more ways \cite{7KINGDOMS,CWELIST},
+% each of those classes maps to a distinct mechanism for solving them. 
+% Spacial safety can be solved with dependent types \cite{tarditi2018checked} and 
+% runtime bounds checks\cite{CYCLONE1}; Temporal safety can be solved with 
+% Garbage Collection (GC), memory regions\cite{REGMEM}, a static alias 
+% analyzer\cite{Stjerna1684081}, key-lock systems \cite{FATPOINTERS, CCURED}, 
+% and more. Both Type and Initialization can be solved by imposing stricter
+% constraints on declarations and type conversions. Data-Race safety is beyond
+% the scope of this project.
+
 
 \todo[inline]{Adicionar aqui alguma coisa que faltar, mas a parte dos tipos lineares e borrow checker ficam pra depois no texto.}

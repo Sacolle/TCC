@@ -1,8 +1,29 @@
 % 1. Introdução
 \chapter{Introdução}
 
+% The C programming language\cite{CLANG} is the foundation of systems programming. 
+% Up to the adoption of Rust in early 2024\cite{RUSTFORLINUX}, 
+% it was the (only) language of the Linux kernel. 
+% Despite this great importance, C is still prone to many types of memory safety violations, 
+% with very little guarantees from the compiler.
+
+% At the start of the millennium, Cyclone\cite{CYCLONE1} started the trend of low-level
+% programming languages with safe memory systems without the broad use of 
+% Garbage Collection (GC). 
+% This was followed by CCured\cite{CCURED}, Rust\cite{RUSTBOOK} and more, 
+% each with its own memory safety solution. 
+
 %	1.1 Motivação
 \section{Motivação}
+
+% Given a memory safety solution, it is important for it to be formally proven correct, 
+% as was done by \citet{RUSTBELT} and \citet{RUSTSYMBOLIC} for Rust's borrow checker.
+% With that, this work introduces Porcelain: a Semantic Framework for Representing 
+% and Analyzing Memory Safety Techniques. 
+% The aim is to define a front-end language by compilation to porcelain's defined 
+% back-end language as a means to prove certain theorems about the front-end languages 
+% memory safety mechanisms.
+
 
 %	1.2 Related Work
 \section{Trabalhos Relacionado}
@@ -12,5 +33,9 @@
 
 %	1.4 Organização
 \section{Organização}
+
+%This project in its current state includes a back-end language defined
+% by a small-step operational semantics as well as a front-end language,
+% modeling a borrow checker, defined via compilation to the back-end language.
 
 \todo[inline]{Não tem necessidade de fazer essa sessão agora, muito menos o capítulo.}
