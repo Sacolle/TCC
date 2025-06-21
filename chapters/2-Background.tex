@@ -14,6 +14,7 @@ são elaborado no Capítulo \ref{chap4}.
 
 %   2.2 Erros de memória
 \section{Falhas de Memória}
+\label{sec:mem-error}
 
 \todo[inline]{Falar aqui de falhas, erro, fracasso, vindo do \emph{Basic Concepts and Taxonomy of Dependable and Secure Computing}} 
 
@@ -47,6 +48,7 @@ pensada independentemente.
 \todo[inline]{Anotar que os exemplos foram em parte retirados do site do \emph{CWE}}
 
 \subsection{Falhas Espaciais}
+\label{sec:mem-error:spacial}
 
 Essa classe de falhas ocorre quando há manipulação de memória a uma região 
 além do espaço alocado. Erros associados a acessos de memória em \emph{buffers} 
@@ -68,7 +70,7 @@ int get_val(int* list, int len, int idx){
 }
 \end{lstlisting}
 
-Falhas espaciais podem ser resolvidas de duas grandes formas. Há os tipos dependentes de Checked C\cite{CHECKEDC}, que verificam em tempo de compilação, usando informações de tipo, se um acesso está nos limites do buffer. Essa estratégia é menos comum, porém não adiciona nenhum impacto na performance do código. 
+Falhas espaciais podem ser resolvidas de duas grandes formas. Há os tipos dependentes de Checked C \cite{CHECKEDC}, que verificam em tempo de compilação, usando informações de tipo, se um acesso está nos limites do buffer. Essa estratégia é menos comum, porém não adiciona nenhum impacto na performance do código. 
 O método mais adotado atualmente é o de checagem de limite em tempo de execução. Nele, adiciona-se junto ao ponteiro a informação de tamanho do \emph{buffer} apontado, criando um \emph{fat-pointer} (ponteiro gordo). Assim, a cada acesso, verifica-se se este está dentro dos limites do \emph{buffer}, se não estiver, gera uma terminação controlada. Linguagens como Rust, Zig e Go se utilizam desse mecanismo, entretanto sob o nome de \emph{slices}.
 
 
@@ -113,12 +115,12 @@ A mitigação dessa classe de erros é a mais ampla e complexa desta lista. Desd
 % Memory regions\cite{REGMEM}
 \phantomsection
 \label{sec:mem-error:MemReg}
-Outra estratégia que emergiu do mundo de linguagens funcionais foi o de regiões de memória\cite{REGMEM}. Elas foram propostas como alternativa mais eficiente e previsível de gerência de memória que GC para MLKit. Nela, realiza-se as alocações em regiões, fazendo a gerência das regiões ao invés das alocações individuais. O projeto Cyclone trouxe esse conceito de regiões para lingaugens imperativas no começo do milenio\cite{CYCLONEMEM}, adicionado diversos mecânismos para adequar essa gerência para o novo meio.
+Outra estratégia que emergiu do mundo de linguagens funcionais foi o de regiões de memória \cite{REGMEM}. Elas foram propostas como alternativa mais eficiente e previsível de gerência de memória que GC para MLKit. Nela, realiza-se as alocações em regiões, fazendo a gerência das regiões ao invés das alocações individuais. O projeto Cyclone trouxe esse conceito de regiões para lingaugens imperativas no começo do milenio \cite{CYCLONEMEM}, adicionado diversos mecânismos para adequar essa gerência para o novo meio.
 
 %key-lock systems \cite{FATPOINTERS, CCURED},
 \phantomsection
 \label{sec:mem-error:KeyLock}
-Um contemporâneo de Cyclone, CCured\cite{CCURED}, utilizou-se de um sistema de \emph{key-lock} para evitar falhas temporais. Nele, mantinha-se uma tabela global com uma chave para cada alocação. Realiza-se um verificação, na hora do acesso, se a chave ainda era válida, caso não fosse, havia uma terminação controlada. Esse método se demonstrou muito ineficiente. Mais recentemente, um projeto adicionou um sistema similar usando fat-pointers em Checked C\cite{FATPOINTERS}, mantendo esses metadados mais próximos dos dados reais e aumentando significativamente a performance.
+Um contemporâneo de Cyclone, CCured \cite{CCURED}, utilizou-se de um sistema de \emph{key-lock} para evitar falhas temporais. Nele, mantinha-se uma tabela global com uma chave para cada alocação. Realiza-se um verificação, na hora do acesso, se a chave ainda era válida, caso não fosse, havia uma terminação controlada. Esse método se demonstrou muito ineficiente. Mais recentemente, um projeto adicionou um sistema similar usando fat-pointers em Checked C \cite{FATPOINTERS}, mantendo esses metadados mais próximos dos dados reais e aumentando significativamente a performance.
 
 %borrow checker
 \phantomsection
@@ -126,6 +128,7 @@ Um contemporâneo de Cyclone, CCured\cite{CCURED}, utilizou-se de um sistema de 
 Um metodo alternativo, com gerencia automática de memória é o borrow checker de Rust. Nele, limita-se o \emph{aliasing} de ponteiros e adiciona-se notações para que o acesso a memória possa ser validado em tempo de compilação. No Capítulo 4 \ref{chap4} será entrado em mais detalhes sobre esse sistema.
 
 \subsubsection{Free}
+\label{sec:mem-error:temporal:free}
 
 \newcommand{\FREE}{\lstinline[language=C]|free()| }
 
@@ -134,6 +137,7 @@ Um componente importante dessa classe são as falhas associadas a liberação de
 Um grande componente de soluções de memória temporal como o GC \ref{sec:mem-error:GC}, as Regiões de Memóriaz \ref{sec:mem-error:MemReg} e o \emph{Borrow Checker} \ref{sec:mem-error:BorrowChecker} é a dispensa da liberação manual de memória. Isso diminúi a superfície de falha do código, evitando possíveis erros.
 
 \subsubsection{Nullptr}
+\label{sec:mem-error:temporal:null}
 
 Acessar o ponteiro nulo é um caso interessante nessa taxonomia de classes. Não pode-se dizer que essa ação é, firmemente, uma falha de inicialização \ref{sec:mem-error:init} ou uma falha temporal \ref{sec:mem-error:temporal}. Afinal, o valor nunca é liberado ou inicializado em função do tempo. Mesmo assim, escalar essa falha ao erro tende fazer o OS interromper o programa. Em certos sistemas, pode ser usado para realizar ataques mais severos \cite[p.4]{MemErrorPastPresentFuture}.
 
