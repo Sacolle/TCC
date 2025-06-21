@@ -2,5 +2,16 @@
 	"workbench.colorCustomizations": {
 	},
 	"ltex.additionalRules.motherTongue": "pt-BR",
-	"ltex.language": "pt-BR"
+	"ltex.language": "pt-BR",
+	"editor.wordWrap": "on",
+	"ltex.enabled": [
+		"context",
+		"context.tex",
+		"html",
+		"latex",
+		"markdown",
+		"org",
+		"restructuredtext",
+		"rsweave"
+	]
 }

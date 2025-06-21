@@ -48,6 +48,9 @@
 \usepackage{todonotes}
 \usepackage{tikz}
 
+\usepackage{listings}
+\usepackage{xcolor}
+
 %pacotes locais
 \usepackage{bcprules}
 
@@ -130,6 +133,36 @@
 \newcommand{\St}[1]{\langle #1 \rangle}
 \newcommand{\typearg}[1]{\text{<}#1\text{>}}
 \newcommand{\KW}[1]{\mathbf{#1}}
+
+% cores do lstlisting
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+% NOTE: customizar a cor um pouco
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=4
+}
+
+\lstset{style=mystyle}
+
 
 %
 % palavras-chave na lingua estrangeira

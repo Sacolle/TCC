@@ -1,14 +1,37 @@
 % 2. Background
 \chapter{Background}
 
+Este capítulo introduz alguns conceitos e definições essenciais ao projeto. 
+Outros conceitos, específicos ao domínio do caso de uso da linguagem de front-end,
+são elaborado no Capítulo \ref{chap4}. 
+
 %	2.1 O que é Semantica Operacional
 \section{Semântica Operacional}
+\todo[inline]{Como \emph{definir} semântica operacional? }
 
 %   2.2 Erros de memória
-\section{Erros de Memória}
+\section{Falhas de Memória}
+
+\todo[inline]{Falar aqui de falhas, erro, fracasso}
+
+% aqui fica especificamente se tratando de memória, mas revisar 
+Falhas de memória ocorrem quando um acesso à memória consiste em comportamento
+indefinido (UB). Essas falhas, ou no coloquial \emph{bugs}, podem ser ativas, 
+gerando um Erro e movendo o programa para um estado incorreto; ou dormentes, 
+existindo como possíveis vetores de ataque para agentes maliciosos capazes de 
+ativar essa falha. 
+
+As falhas de memória podem ser classificas em 5 classes: falha Espacial, 
+Temporal, de Tipo, de Inicialização e de Condição de Corrida \cite{Apple22,Google24}.
+\emph{Bugs} de memória podem ser subdivididos de mais formas \cite{7KINGDOMS,CWELIST},
+tendo em conta falhas mais específicas ao domínio do programa. 
+O uso das classes é mais interessante para o domínio deste projeto:
+cada uma delas mapeia uma série de problemas para soluções específicas e disjuntas das demais. 
+Ou seja, a solução para os problemas advindos de cada uma dessas classes pode ser 
+pensada independentemente. 
 
 % Memory safety bugs, as it concerns low level languages, can be subdivided in 5 classes: 
-% Spacial, Temporal, Type, Initialization and Data-Race Safety\cite{Apple22,Google24}. 
+% Spacial, Temporal, Type, Initialization and Data-Race Safety. 
 % Even though memory safety bugs can be subdivided in many more ways \cite{7KINGDOMS,CWELIST},
 % each of those classes maps to a distinct mechanism for solving them. 
 % Spacial safety can be solved with dependent types \cite{tarditi2018checked} and 
@@ -18,6 +41,126 @@
 % and more. Both Type and Initialization can be solved by imposing stricter
 % constraints on declarations and type conversions. Data-Race safety is beyond
 % the scope of this project.
+\todo[inline]{Anotar que os exemplos foram em parte retirados do site do \emph{CWE}}
+
+\subsection{Falhas Espaciais}
+
+Essa classe de falhas ocorre quando há manipulação de memória a uma região 
+além do espaço alocado. Erros associados a acessos de memória em \emph{buffers} 
+podem ser classificados amplamente como \emph{Out-of-Bounds-Read} ou \emph{Out-of-Bounds-Write} 
+(leitura ou escrita fora dos limites). 
+Podendo ocorrer na pilha ou na memória, para o final ou para o começo do \emph{buffer}, 
+devido a um cálculo incorreto de tamanho do \emph{buffer} ou de índice de acesso. 
+Fundamentalmente, esses erros são associados ao acesso arbitrário a memória e 
+à falta de validação adequada.
+
+Um exemplo dessa falha é um \emph{Buffer Under-Read}, 
+leitura de um \emph{buffer} para uma posição anterior ao começo. No trecho a seguir
+não se checa se $idx \ge 0$, possivelmente acessando memória antes do ponteiro.
+
+\begin{lstlisting}[language=C ,label={lst:spacial-error-c}, caption=Exemplo de uma Falha Espacial]
+int get_val(int* list, int len, int idx){
+	if(idx < len) return list[idx];
+	else return -1;
+}
+\end{lstlisting}
+
+Falhas espaciais podem ser resolvidas de duas grandes formas. Há os tipos dependentes de Checked C\cite{CHECKEDC}, que verificam em tempo de compilação, usando informações de tipo, se um acesso está nos limites do buffer. Essa estratégia é menos comum, porém não adiciona nenhum impacto na performance do código. 
+O método mais adotado atualmente é o de checagem de limite em tempo de execução. Nele, adiciona-se junto ao ponteiro a informação de tamanho do \emph{buffer} apontado, criando um \emph{fat-pointer} (ponteiro gordo). Assim, a cada acesso, verifica-se se este está dentro dos limites do \emph{buffer}, se não estiver, gera uma terminação controlada. Linguagens como Rust, Zig e Go se utilizam desse mecanismo, entretanto sob o nome de \emph{slices}.
 
 
-\todo[inline]{Adicionar aqui alguma coisa que faltar, mas a parte dos tipos lineares e borrow checker ficam pra depois no texto.}
+\subsection{Falhas Temporais}
+\label{sec:mem-error:temporal}
+
+Essa classe de falhas ocorre quando há acesso a uma região de memória não mais ativa no momento. Ela engloba casos de \emph{Use-After-Free} e \emph{Use-After-Return}, assim como erros associados a função free de C. 
+O caso de \emph{Use-After-Free}, é uma descrição de todo e qualquer acesso a \emph{heap} quando o objeto que se encontrava no local já havia sido liberado. Quando ocorre na pilha pode ser descrito pelo nome mais específico 
+\emph{Return-of-Stack-Variable-Adress}, sendo o acesso a um endereço na pilha que já foi liberado pelo desempilhamento desta.
+
+Um exemplo dessa falha é o seguinte \emph{Use-After-Free}. Nele, num caminho de erro do código, libera-se o ponteiro $ptr$. Entretanto no momento de logar esse erro, utiliza-se esse mesmo ponteiro liberado, gerando uma falha que pode escalar a erro dependendo do contexto de execução:
+\begin{lstlisting}[language=C, label={lst:temporal-error-heap-c}, caption=Exemplo de uma Falha Temporal na \emph{Heap}]
+char* ptr = (char*)malloc (SIZE);  
+if (err) {
+	abrt = 1;  
+	free(ptr);
+}  
+...  
+if (abrt) {
+	logError("operation aborted before commit", ptr);
+}
+\end{lstlisting}
+
+Outro exemplo, agora de \emph{Return-of-Stack-Variable-Adress}, retorna um \emph{buffer} alocado na pilha. Acesso a esse elemento pode reescrever a pilha de outras funções, sendo uma falha grave.
+
+\begin{lstlisting}[language=C, label={lst:temporal-error-stack-c}, caption=Exemplo de uma Falha Temporal na Pilha]
+char* getName() {
+   char name[STR_MAX];  
+   fillInName(name);  
+   return name;
+}
+\end{lstlisting}
+
+Fundamentalmente, a classe lida com leitura e escrita a regiões de memória não estáticas, ou seja, alocações na pilha, que são removidos no fim do escopo; e alocações na memória, que podem ser arbitrariamente de-alocados.
+
+
+% Garbage Collection (GC)
+\phantomsection
+\label{sec:mem-error:GC}
+A mitigação dessa classe de erros é a mais ampla e complexa desta lista. Desde a sua invenção em 1959\todo{citar}, uma das soluções mais completas presente tem sido o uso de um GC (coletor de lixo). Esse mecanismo detecta e retorna automaticamente memória alocada e não mais utilizada para o OS. Em troca, o programa sofre breves pausa periódicas (GC \emph{pauses}) na execução e a gerência do GC custa processamento que certos ambientes não tem disponível para gastar.
+
+% Memory regions\cite{REGMEM}
+\phantomsection
+\label{sec:mem-error:MemReg}
+Outra estratégia que emergiu do mundo de linguagens funcionais foi o de regiões de memória\cite{REGMEM}. Elas foram propostas como alternativa mais eficiente e previsível de gerência de memória que GC para MLKit. Nela, realiza-se as alocações em regiões, fazendo a gerência das regiões ao invés das alocações individuais. O projeto Cyclone trouxe esse conceito de regiões para lingaugens imperativas no começo do milenio\cite{CYCLONEMEM}, adicionado diversos mecânismos para adequar essa gerência para o novo meio.
+
+%key-lock systems \cite{FATPOINTERS, CCURED},
+\phantomsection
+\label{sec:mem-error:KeyLock}
+Um contemporâneo de Cyclone, CCured\cite{CCURED}, utilizou-se de um sistema de \emph{key-lock} para evitar falhas temporais. Nele, mantinha-se uma tabela global com uma chave para cada alocação. Realiza-se um verificação, na hora do acesso, se a chave ainda era válida, caso não fosse, havia uma terminação controlada. Esse método se demonstrou muito ineficiente. Mais recentemente, um projeto adicionou um sistema similar usando fat-pointers em Checked C\cite{FATPOINTERS}, mantendo esses metadados mais próximos dos dados reais e aumentando significativamente a performance.
+
+%borrow checker
+\phantomsection
+\label{sec:mem-error:BorrowChecker}
+Um metodo alternativo, com gerencia automática de memória é o borrow checker de Rust. Nele, limita-se o \emph{aliasing} de ponteiros e adiciona-se notações para que o acesso a memória possa ser validado em tempo de compilação. No Capítulo 4 \ref{chap4} será entrado em mais detalhes sobre esse sistema.
+
+\subsubsection{Free}
+
+\newcommand{\FREE}{\lstinline[language=C]|free()| }
+
+Um componente importante dessa classe são as falhas associadas a liberação de memória, principalmente tratando-se da função \FREE da \emph{stdlib} de C. Falhas como \emph{Double-Free} (chamar \FREE para um endereço liberado), \emph{Free of Memory not on the Heap} (chamar \FREE em um ponteiro que não aponta para a \emph{heap}), \emph{Free of Pointer not at Start of Buffer} (chamar \FREE com um ponteiro que não inicia a lista) e \emph{Release of Invalid Pointer or Reference} (chamar uma função de liberação de memória para memória alocada com outro sistema) ocorrem devido a uma ação que corrompe a estrutura de dados usadas para gerir alocação. Assim, alocações subsequentes são UB e podem escalar a erros.
+
+Um grande componente de soluções de memória temporal como o GC \ref{sec:mem-error:GC}, as Regiões de Memóriaz \ref{sec:mem-error:MemReg} e o \emph{Borrow Checker} \ref{sec:mem-error:BorrowChecker} é a dispensa da liberação manual de memória. Isso diminúi a superfície de falha do código, evitando possíveis erros.
+
+\subsubsection{Nullptr}
+
+Acessar o ponteiro nulo é um caso interessante nessa taxonomia de classes. Não pode-se dizer que essa ação é, firmemente, uma falha de inicialização \ref{sec:mem-error:init} ou uma falha temporal \ref{sec:mem-error:temporal}. Afinal, o valor nunca é liberado ou inicializado em função do tempo. Mesmo assim, escalar essa falha ao erro tende fazer o OS interromper o programa. Em certos sistemas, pode ser usado para realizar ataques mais severos. 
+
+O ponteiro nulo é um elemento comum da maioria das linguagens, sendo elemento da linguagem mais influente da história. Entretanto, para lidar com referências é não necessário o seu uso. Linguagens funcionais, assim como inspiradas nelas - como Rust, se utilizam de tipos somatórios (\emph{tagged unions, variants, choice types, ...}) para representar a ausência de um valor, mantendo as referências não anuláveis.
+
+A seção se encontra aqui, pois há a interação que passar o ponteiro nulo para a função \FREE gera uma falha \emph{Free of Memory not on the Heap}, visto que o endereço do nulo tende a ser 0, que não é um valor na \emph{heap} do programa.
+
+
+\subsection{Falhas de Inicialização}
+\label{sec:mem-error:init}
+
+Essa classe de falhas ocorre quando há acesso a uma região de memória alocada, mas ainda não inicializada. Nesse caso, a leitura do espaço não inicializado gera valores incoerentes. No caso de ponteiros, pode-se acessar locais de memória arbitrários.
+
+Erros de inicialização podem existir em contextos estáticos ou dinâmicos. No caso de variáveis, somatórios (\emph{tuples, structs, records, ...}) e lista de tamanho fixo, pode-se avaliar a inicialização do campo com uma análise estática de árvore. Para listas de tamanho dinâmico não há como realizar essa avaliação a tempo de compilação, por isso é de preferência que a API da linguagem requeira que a lista seja inicializada com valores base para os campos, evitando acessos a campos não inicializados. Isso também se estende as estruturas estáticas compostas, a inicialização e uso parcial delas pode gerar erros e dificulta a análise. Uma gerência mais restritiva, obrigar o programador a inicializar toda a estrutura não é um regime restritivo e incentiva boas práticas de código.
+
+Um exemplo dessa falha é o acesso a \emph{string} em um caminho que não incializa ela, que vir ler valores arbitrários na \emph{heap}.
+
+\begin{lstlisting}[language=C, label={lst:initialization}, caption=Exemplo de uma Falha de Inicalização com Strings]
+char *test_string;
+if (i != err_val){
+	test_string = "Hello World!";
+}
+printf("%s", test_string);
+\end{lstlisting}
+
+
+\subsection{Falhas de Tipo}
+
+Essa classe de erros ocorre quando há acesso a uma região de memória com o tipo incorreto. Ela ocorre no caso de cast incorretos de pointers tanto para tipos de tamanhos diferentes, como com layouts diferentes. Essa classe de erros é interessante pois é nela em que há a maior intersecção com \emph{undefined behavior}. UB é um tópico complicado e um buraco sem fundo que não será elaborado sobre. Mas, brevemente, o erro no caso do cast pode ser de ler a memória incorretamente, mas também pode ser por alguma otimização do compilador, que ou mudou o layout do objeto de origem/destino, ou alterou o resultado da operação pois a ação era UB.
+
+\subsection{Falhas de Condição de Corrida}
+
+Essa classe de falhas compreende todas os problemas gerados com código concorrente/paralelo. Essa classe é extremamente complexa e está fora do escopo deste projeto. Caso fique de curiosidade ao leitor, o livro \todo{Citar um livro} trata bem desse assunto. 
