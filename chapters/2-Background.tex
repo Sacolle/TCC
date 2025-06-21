@@ -7,12 +7,15 @@ são elaborado no Capítulo \ref{chap4}.
 
 %	2.1 O que é Semantica Operacional
 \section{Semântica Operacional}
-\todo[inline]{Como \emph{definir} semântica operacional? }
+\todo[inline]{Como \emph{definir} semântica operacional? Usar o livro do Nielson e do Slonneger }
+
+\section{Julgamento de Tipos}
+\todo[inline]{Como \emph{definir} julgamento de tipos? Usar o livro do Pierce }
 
 %   2.2 Erros de memória
 \section{Falhas de Memória}
 
-\todo[inline]{Falar aqui de falhas, erro, fracasso}
+\todo[inline]{Falar aqui de falhas, erro, fracasso, vindo do \emph{Basic Concepts and Taxonomy of Dependable and Secure Computing}} 
 
 % aqui fica especificamente se tratando de memória, mas revisar 
 Falhas de memória ocorrem quando um acesso à memória consiste em comportamento
@@ -132,7 +135,7 @@ Um grande componente de soluções de memória temporal como o GC \ref{sec:mem-e
 
 \subsubsection{Nullptr}
 
-Acessar o ponteiro nulo é um caso interessante nessa taxonomia de classes. Não pode-se dizer que essa ação é, firmemente, uma falha de inicialização \ref{sec:mem-error:init} ou uma falha temporal \ref{sec:mem-error:temporal}. Afinal, o valor nunca é liberado ou inicializado em função do tempo. Mesmo assim, escalar essa falha ao erro tende fazer o OS interromper o programa. Em certos sistemas, pode ser usado para realizar ataques mais severos. 
+Acessar o ponteiro nulo é um caso interessante nessa taxonomia de classes. Não pode-se dizer que essa ação é, firmemente, uma falha de inicialização \ref{sec:mem-error:init} ou uma falha temporal \ref{sec:mem-error:temporal}. Afinal, o valor nunca é liberado ou inicializado em função do tempo. Mesmo assim, escalar essa falha ao erro tende fazer o OS interromper o programa. Em certos sistemas, pode ser usado para realizar ataques mais severos \cite[p.4]{MemErrorPastPresentFuture}.
 
 O ponteiro nulo é um elemento comum da maioria das linguagens, sendo elemento da linguagem mais influente da história. Entretanto, para lidar com referências é não necessário o seu uso. Linguagens funcionais, assim como inspiradas nelas - como Rust, se utilizam de tipos somatórios (\emph{tagged unions, variants, choice types, ...}) para representar a ausência de um valor, mantendo as referências não anuláveis.
 
