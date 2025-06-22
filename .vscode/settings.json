@@ -15,7 +15,9 @@
 	],
 	"ltex.latex.commands": {
 		"\\todo{}": "ignore",
-		"\\todo[]{}": "ignore"
+		"\\todo[]{}": "ignore",
+		"\\emph{}" : "ignore",
+		"\\infrule[]{}" : "ignore"
 	},
 	"ltex.checkFrequency": "edit",
 	"ltex.completionEnabled": false

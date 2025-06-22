@@ -11,3 +11,10 @@ OCR
 PLN
 Tesseract
 Framework
+GC
+MLKit
+Cyclone
+CCured
+fat
+Rust
+UB
