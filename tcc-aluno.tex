@@ -50,6 +50,7 @@
 
 \usepackage{listings}
 \usepackage{xcolor}
+\usepackage{placeins}
 
 %pacotes locais
 \usepackage{bcprules}
@@ -134,6 +135,7 @@
 \newcommand{\typearg}[1]{\text{<}#1\text{>}}
 \newcommand{\KW}[1]{\mathbf{#1}}
 
+\newcommand{\ignoreLtex}[1]{#1}
 % cores do lstlisting
 
 \definecolor{codegreen}{rgb}{0,0.6,0}
@@ -162,6 +164,9 @@
 }
 
 \lstset{style=mystyle}
+
+% NOTE: usado para o todonotes fazer o display correto
+\setlength{\marginparwidth}{2.5cm}
 
 
 %

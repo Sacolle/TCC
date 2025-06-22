@@ -7,57 +7,64 @@
 % proofs, but expressive enough to express common memory
 % errors in C. Its syntax is defined as such:
 
-Tendo em vista as falhas de memória descritas na seção \ref{sec:mem-error}, e visando analisá-las mais profundamente e prová-las, é necessário desenvolver uma linguagem alvo para atingir o projeto de prova via compilação. A meta desse projeto é ter uma base relativamente agnóstica a solução a ser provada. Assim, este trabalho introduz $PCL_{back}$, uma linguagem núcleo similar a C desenvolvida para detectar violações de segurança de memória e classificá-las. Ela é definida por sintaxe e semântica operacional \emph{small-step}. 
+Tendo em vista as falhas de memória descritas na seção \ref{sec:mem-error}, e visando analisá-las mais profundamente, é necessário desenvolver uma linguagem alvo para o fim de prova via compilação. A meta desse projeto é ter uma base relativamente agnóstica a solução a ser provada. Assim, introduz-se $PCL_{back}$, uma linguagem núcleo similar a C desenvolvida para detectar violações de segurança de memória e classificá-las. Ela é definida por sintaxe e semântica operacional \emph{small-step}. 
 
-A escolha de C como base serviu para englobar todos as falhas de memórias, visto que C é uma linguagem que permite acesso e manipulação (quase) irrestrita à memória. Ou seja, C consegue expressar todas as falhas na seção 2.3 \ref{sec:mem-error}. Essa é uma razão bem circular, as falhas são comuns em C porque este permite acesso brando a memória, assim elas são descritas e a linguagem que melhor reproduz elas é C, pois tem acesso \emph{laissez-faire} a memória.
+A escolha de C como base serviu para englobar todos as falhas de memórias, visto que C é uma linguagem que permite acesso e manipulação (quase) irrestrita à memória. Ou seja, pode-se expressar todas as falhas na seção \ref{sec:mem-error}. Essa é uma razão bem circular, as falhas são comuns em C porque este permite acesso brando a memória e assim elas são descritas; a linguagem que melhor reproduz elas é C, pois tem acesso \emph{laissez-faire} a memória.
+
 
 %	3.1 Syntax
 \section{Sintaxe}
 
-A sintaxe baseada em C também se demonstrou familiar e facilitou a compreensão dos problemas e exemplos. Adicionalmente, esta é uma linguagem de expressões, permitindo certos padrões funcionais. Mesmo destoando de C, essa caracteristica emergiu acidentalmente da implementação de funções na linguagem. Segue a sintaxe da linguagem:
+A sintaxe baseada em C também se demonstrou familiar e facilitou a compreensão dos problemas e exemplos. Adicionalmente, esta é uma linguagem de expressões, permitindo certos padrões funcionais. Mesmo destoando de C, essa característica emergiu acidentalmente da implementação de funções na linguagem. A  sintaxe é definida em \ref{fig:pclback:sintax}.
+\todo{Adicionar linebreak para fazer o split de das regras em várias páginas?}
+\begin{figure*}[ht]
+	\begingroup
+	%\setlength{\jot}{-0.2ex} 
+		\begin{align*}
+			Locals \ni l ::&= l^m \OR l^p &&\\ 
+			Value \ni v ::&= n \OR l && \\
+			BinOp \ni op ::&= + | - | * | < | > | = | \land | \lor \\
+			Expression \ni e ::&= x \OR v \\
+			&\NLOR e\; op\; e \OR !e  \\
+			&\NLOR \text{*}e \OR \&x \\
+			&\NLOR e;e \; \OR \{\,e\,\} \; \\ 
+			&\NLOR \mathbf{malloc}(e) \OR \mathbf{free}(e, e) \; \\ 
+			&\NLOR \mathbf{let}\; x[n] \OR e := e \; \\
+			&\NLOR \mathbf{if}(e) \; e \; \mathbf{else} \; e \; \OR \mathbf{while}(e) \; e \\
+			&\NLOR f(\bar e) \\ 
+			&\NLOR \mathbf{panic}\;pcode \\ 
+			PanicCodes \ni pcode ::&= \mathbf{OutOfBoundsRead}\\
+			&\NLOR \mathbf{OutOfBoundsWrite}\\
+			&\NLOR \mathbf{NullPtrDereference}\\
+			&\NLOR \mathbf{UserError}\\
+			&\NLOR \mathbf{UseAfterFree}\\
+			&\NLOR \mathbf{UninitializedAcess}\\
+			&\NLOR \mathbf{FreeMemoryNotOnHeap}\\
+			&\NLOR \mathbf{PartialFree}\\
+			&\NLOR \mathbf{DoubleFree}\\
+			Function \ni F ::&= \mathbf{let} \; f(\overline{x})\; e \; F \; | \; \mathbf{let}\;() \; e \\
+			Globals \ni G ::&= \mathbf{global}\; x[n] \;G \;|\; F
+		\end{align*}
+	\endgroup
+	\caption{Sintaxe de $PCL_{back}$}
+	\label{fig:pclback:sintax}
+\end{figure*}
+% NOTE: funciona, yeyyyyyy
+\FloatBarrier
 
-\begingroup
-\setlength{\jot}{-0.2ex} 
-	\begin{align*}
-		Locals \ni l ::&= l^m \OR l^p &&\\ 
-		Value \ni v ::&= n \OR l && \\
-		BinOp \ni op ::&= + | - | * | < | > | = | \land | \lor \\
-		Expression \ni e ::&= x \OR v \\
-		&\NLOR e\; op\; e \OR !e  \\
-		&\NLOR \text{*}e \OR \&x \\
-		&\NLOR e;e \; \OR \{\,e\,\} \; \\ 
-		&\NLOR \mathbf{malloc}(e) \OR \mathbf{free}(e, e) \; \\ 
-		&\NLOR \mathbf{let}\; x[n] \OR e := e \; \\
-		&\NLOR \mathbf{if}(e) \; e \; \mathbf{else} \; e \; \OR \mathbf{while}(e) \; e \\
-		&\NLOR f(\bar e) \\ 
-		&\NLOR \mathbf{panic}\;pcode \\ 
-		PanicCodes \ni pcode ::&= \mathbf{OutOfBoundsRead}\\
-		&\NLOR \mathbf{OutOfBoundsWrite}\\
-		&\NLOR \mathbf{NullPtrDereference}\\
-		&\NLOR \mathbf{UserError}\\
-		&\NLOR \mathbf{UseAfterFree}\\
-		&\NLOR \mathbf{UninitializedAcess}\\
-		&\NLOR \mathbf{FreeMemoryNotOnHeap}\\
-		&\NLOR \mathbf{PartialFree}\\
-		&\NLOR \mathbf{DoubleFree}\\
-		Function \ni F ::&= \mathbf{let} \; f(\overline{x})\; e \; F \; | \; \mathbf{let}\;() \; e \\
-		Globals \ni G ::&= \mathbf{global}\; x[n] \;G \;|\; F
-	\end{align*}
-\endgroup
-
-\noindent Na sintaxe, o termo $x$ cobre todos os possíveis nomes de variáveis em um programa. 
+Nela, o termo $x$ cobre todos os possíveis nomes de variáveis em um programa. 
 $f$ cobre todos os nomes de funções. O conjunto $PanicCodes$ são so tipos de falhas de memória, que podem ser divididos nas 5 classes (mais extras) da seguinte forma:
 \begin{enumerate}
-	\item $\mathbf{OutofBoundsRead}$ e $\mathbf{OutofBoundsWrite}$ são falhas espaciais \ref{sec:mem-error:spacial}, sendo leitura e escrita para além dos limites do \emph{buffer} respectivamente.
-	\item $\mathbf{UseAfterFree}$, $\mathbf{FreeMemoryNotOnHeap}$, $\mathbf{Partial ree}$ e $\mathbf{Double Free}$ são falhas temporais \ref{sec:mem-error:temporal}, sendo uso de uma região liberada de memória para o primeiro e corrupção da estrutura alocadora por diversos meios para os demais.
-	\item $\mathbf{UninitializedAccess}$ é uma falha de inicialização \ref{sec:mem-error:init}, sendo o acesso ao valor alocado, mas não inicializado. 
-	\item $\mathbf{NullPtrDereference}$ é uma falha específica ao domínio de C, em que essa linguagem se baseia \ref{sec:mem-error:temporal:null}, sendo o acesso ao ponteiro nulo.
+	\item $\mathbf{OutofBoundsRead}$ e $\mathbf{OutofBoundsWrite}$ são falhas espaciais (\ref{sec:mem-error:spacial}), sendo leitura e escrita para além dos limites do \emph{buffer} respectivamente.
+	\item $\mathbf{UseAfterFree}$, $\mathbf{FreeMemoryNotOnHeap}$, $\mathbf{Partial ree}$ e $\mathbf{Double Free}$ são falhas temporais (\ref{sec:mem-error:temporal}), sendo uso de uma região liberada de memória para o primeiro e corrupção da estrutura alocadora por diversos meios para os demais.
+	\item $\mathbf{UninitializedAccess}$ é uma falha de inicialização (\ref{sec:mem-error:init}), sendo o acesso ao valor alocado, mas não inicializado. 
+	\item $\mathbf{NullPtrDereference}$ é uma falha específica ao domínio de C, em que essa linguagem se baseia (\ref{sec:mem-error:temporal:null}), sendo o acesso ao ponteiro nulo.
 	\item $\mathbf{UserError}$ é uma interrupção manual de usuário, similar a \lstinline[language=C]|exit(1)| em C. É usado como mecanismo de emissão de erros controlados que terminam a execução.
 \end{enumerate}
 
-\noindent Acima há a omissão das falhas de tipos, pois $PCL_{back}$ não é tipada, e os seus valores, locais $l$ e número $n$, encaixam, independente do tamanho, em uma célula. Há também omissão das falhas de condição de corrida. Elas não são representáveis nessa linguagem, pois não possui mecanismos de paralelização.
+\noindent Acima há a omissão das falhas de tipos, pois $PCL_{back}$ não é tipado. Os seus valores, locais $l$ e números $n$, encaixam, independente do tamanho, em uma célula. Há também omissão das falhas de condição de corrida. Elas não são representáveis nessa linguagem, pois não possui mecanismos de paralelização.
 
-Esses códigos de pânico $pcode$ servem como interrupções na avaliação da linguagem, indicando uma falha de memória. Eles são um importante componente no processo de compilação e prova. Um método de segurança de memória não precisa ser compreensivo e cobrir todas as falhas geradas, mas se a sua compilação para $PCL_{back}$ não gerar o conjunto de $PanicCodes$ que almeja-se evitar, então afirma-se que o método é correto no que se propõem. Ou seja, dado um processo de indução estrutural em um $PCL_{back}$ compilado de uma linguagem que deseja evitar falhas espaciais, basta que na derivação nunca atinjam-se as expressões $\KW{panic}\;\KW{OutofBoundsRead}$ e $\KW{panic}\;\mathbf{OutofBoundsWrite}$.
+Esses códigos de pânico $pcode$ servem como interrupções na avaliação da linguagem, indicando uma falha de memória. Eles são um importante componente no processo de compilação e prova. Um método de segurança de memória não precisa ser compreensivo e cobrir todas as falhas geradas, mas se a sua compilação para $PCL_{back}$ não gerar o conjunto de $PanicCodes$ que se almeja evitar, então afirma-se que o método é correto no que se propõem. Ou seja, dado um processo de indução estrutural em um $PCL_{back}$ compilado de uma linguagem que deseja evitar falhas espaciais, basta que na derivação nunca se atinjam as expressões $\KW{panic}\;\KW{OutofBoundsRead}$ e $\KW{panic}\;\mathbf{OutofBoundsWrite}$.
 
 %	3.2 Memory Model
 \section{Modelo de Memória}
@@ -72,7 +79,14 @@ Com o intuito de modelar essa dinâmica, a memória em $PCL_{back}$ usa dois amb
 \label{sec:pcl-back:ptr}
 
 Com essa distinção, pode-se notar que o elemento da sintaxe responsável por indexar a memória, a localização $l$, é divida em $l^p$ e $l^m$. Nesse contexto, $p$ e $m$ são etiquetas de $l$ que indicam se essa localização é para a pilha ou para memória. Essas localizações também possuem outros metadados, utilizados na avaliação da linguagem para detectar as falhas. Assim, a representação interna dos locais pode ser escrita como:
-\[ l^p\{i, k, o, s \} \quad\quad l^m\{i, k, o, s \} \]
+\begin{figure*}[ht]
+	\begin{align*}
+		l^p\{i, k, o, s \} && l^m\{i, k, o, s \}
+	\end{align*}
+	\caption{Layout dos metadados dos locais.}
+	\label{fig:ptr:metada}
+\end{figure*}
+\todo{Fazer um diagrama mais legal?}
 
 Nela, $i$ é o índice de acesso à memória; $k$ é a uma chave única, gerada através da função $\mathbf{newkey}$, que serve para validar os acessos quanto a falhas temporais; $o$ é o \emph{offset} (desvio) do índice base $i$, que recebe o valor das somas e subtrações, ao invés de alterar o índice diretamente; e $s$ é o tamanho da região alocada na memória, que serve para validar os acessos quanto a falhas espaciais. Esses metadados não são acessíveis na escrita do código, mas na semântica operacional tem seus valores internos expostos à avaliação usando a anotação de chaves acima.
 
@@ -131,8 +145,8 @@ Para inserir um valor $v$ na posição $i$ da pilha $p$, escreve-se $p[i \mapsto
 \begin{figure}[ht]
 	\begin{align}
 	&p[i \mapsto v] = \mathbf{set}(i, \mathbf{top}(p) - 1, v) \label{fig:def:set1}\\
-	&\mathbf{set}(i, size, (v_p, k_p) : p_r) = \\
-	&\quad\quad\mathbf{if}\;i = size \;\mathbf{then}\;(v, k_p) : p_r\;\mathbf{else}\;(v_p, k_p) : \mathbf{set}(i, size - 1, p_r) \label{fig:def:set2}\\
+	&\mathbf{set}(i, size, (v_p, k_p) : p_r) = \mathbf{if}\;i = size \;\mathbf{then} \nonumber\\ 
+	&\quad\quad(v, k_p) : p_r\;\mathbf{else}\;(v_p, k_p) : \mathbf{set}(i, size - 1, p_r) \label{fig:def:set2}\\
 	&\mathbf{get}(\_, \_, []) = [] \label{fig:def:set3}
 	\end{align}
 	\caption{Função que insere o valor $v$ na posição $i$ da pilha $p$.}
@@ -144,27 +158,27 @@ Ela usa a notação de empilhamento ($:$) com toda a sua expressividade. Após e
 Uma notação alternativa, para quando se precisa alterar várias posições na pilha para um mesmo valor é $p[i_{m..n} \mapsto v]$. Similarmente a empilhar vários elementos do mesmo valor, essa definição altera os valores da posição $i + m$ até a posição $i + n - 1$ para o valor $v$.
 
 
-% The values $\bot$ and $-$ are used to detect initialization errors, meaning 
-% uninitialized and not allocated respectively, such as in \citet{WESSEL2019}. 
-% Every element of the stack is paired with a lock, which is use for temporal errors.
-% That results in the \textit{stack} being defined as $p := [(v\,|\,c_{ctrl}, lock)]$.
+\subsection{\emph{Heap}}
 
-% The \textit{stack} is indexable, with 0 being the base. $\mathbf{top}(p)$ is 
-% the size of the \textit{stack} $p$, which is also the index of the top element~+~1.
-% Indexing with $i \ge \mathbf{top}(p)$, results in $(-,0)$. 
-% To denote the assignment of a value $v$ to a position $i$ in the stack $p$,
-% one writes $p[i \mapsto v]$.
+A memória (\emph{heap}) é extremamente similar a pilha, porém sem os códigos de controle. Partindo disso, a memória $m$ é uma lista de pares, valor $v \in \{n, l, \bot, -\}$ fechadura $k \in \mathbb{N}$, podendo ser escrito na forma $m := [(v, k)]$. Essa lista pode ser imaginada infinitamente grande, tendo todas as células inicializadas com o valor $-$.
 
-% For the sake of notation, both the \textit{stack} and \textit{heap} can be
-% treated as lists from Haskell\cite{HASKELL}.
+As células da memória são manualmente liberadas com a função $\mathbf{free}$ e alocadas com a função $\mathbf{malloc}$. Essa última usa uma função auxiliar $mathbf{loc(m,n)}$ para encontrar na memória $m$, $n$ células contíguas não alocadas (com o valor $-$) e retorna o índice do começo dessa região. Ela é descrita mais formalmente da seguinte forma:
 
-\subsection{Heap}
+\begin{figure}[ht]
+	\begin{align}
+	&\mathbf{loc}(m,n) = \mathbf{loc}'(m, n, 0, 1) \label{fig:def:loc1}\\
+	& \mathbf{loc}'(m, n_0 , n_1, i) = \mathbf{if}\; m(i + n_1) \neq (-,0) \; \mathbf{then}\nonumber \\
+	&\quad\mathbf{loc}'(m, n_0, 0, i + n_1 + 1)\; \mathbf{else} \nonumber\\
+	&\quad\quad(\mathbf{if}\; n_0 = n_1 \; \mathbf{then}\; i \;\mathbf{else}\; \mathbf{loc}'(m, n_0, n_1 + 1, i)) \label{fig:def:loc2}
+	\end{align}
+	\caption{Função encontra em $m$, $n$ contíguas células não alocadas.}
+	\label{fig:def:loc}
+\end{figure}
 
-% The \textit{heap} is similar to the \textit{stack}, but without the control codes. 
-% Therefore a heap $m$ is defined as $m := [(v,lock)]$. In $PCL_{back}$, the heap is 
-% manually deallocated with $\mathbf{free}$ and allocated with $\mathbf{malloc}$. 
-% This last one uses a helper function $\mathbf{loc}(m,n)$ to find the in $m$, $n$ 
-% contiguous unallocated memory cells, returning the starting index of the region.
+\noindent Ela primeiro chama uma função auxiliar em \ref{fig:def:loc1}, com 0 para $n_1$, o tamanho atual da região encontrada,  e 1 para $i$, o índice de início de busca. Parte-se do índice de número um, mesmo a indexação da lista iniciando no 0, pois se reserva esse espaço para a implementação do ponteiro nulo. Em \ref{fig:def:loc2} realiza-se a computação: se o valor no índice $i$ da memória $m$ mais o tamanho da região atual encontrada $n_1$ não for o par $(-,0)$ (célula não alocada), então reinicia a busca, partindo no índice seguinte ao analisado nesse teste; se não for o caso, verifica-se se já se encontrou a região do tamanho esperado, se sim, retorna o índice $i$, que é o índice do começo desta, se não, avalia-se a célula seguinte, chamando $\mathbf{loc}'$ recursivamente, incrementando o valor da região encontrada em 1.
+
+Na definição dessa função, utilizou-se a expressão $m(i)$ para indicar o acesso ao elemento de índice $i$ da memória $m$. Assim como o acesso na pilha, essa operação pode ser vista como uma simples indexação a um \emph{buffer}. Neste caso, como há a intuição da memória ser infinita, para qualquer índice $i$ há uma célula correspondente na memória. Como todas elas iniciam com o valor $(-,0)$, o comportamento de acessar para além do espaço alocado é o mesmo de quando isso acontece na pilha. A atribuição segue o mesmo padrão, inserir o valor $v$ no índice $i$ da memória $m$ é escrito como $m[i \mapsto v]$. Aqui omiti-se a definição porque estas são (quase) idênticas às definições da pilha, visto que a memória não pode ser realmente infinita. O mesmo segue para a atribuição de várias células com a notação $m[i_{m..n} \mapsto v]$ cujo comportamento é o mesmo que na pilha, porém no contexto da memória essa função é mais usada, visto que é  instrumental as definições de $\mathbf{malloc}$ e $\mathbf{free}$.
+
 
 %	3.3 Operational Semantics
 \section{Semântica Operacional}
@@ -177,8 +191,35 @@ Uma notação alternativa, para quando se precisa alterar várias posições na 
 % Within the state, $e$ is the program, $a$ is the names environment, 
 % $p$ is the stack and $m$ is the heap. 
 
+subdivido em 3 transições para avaliar um programa P
+\ignoreLtex{
+\infrule
+    {\St{P, \{\}, []} \to_G^* \St{F_0, g, p}\quad\St{F_0, \{\}} \to_F^* \St{\mathbf{let}\;()\;e , F}}
+    {F \vdash \St{\{e\}, ([],g),p,[]} \to^* \St{v, ([],g), p, m}} 
+}
+
+\subsection{Globais}
+
+\ignoreLtex{
+\infrule[Globals-collect]
+    {\mathbf{newkey}() = k \quad \mathbf{top}(p) = i}
+    {\St{\mathbf{global} \; x[n]\; G , g, p} \to_G\\ \St{G, g[x \mapsto l^p \{i, k, 0, n\}],(\bot, k)_n : p,}} 
+}
+
+\subsection{Funções}
+
+\ignoreLtex{
+\infrule[LetFunction-collect]
+    {}
+    {\St{\mathbf{let} \; f(\overline{x_i})\; e \; F_0 ,F} \to_F \St{F_0, F[f \mapsto \St{[\overline{x_i}], e}]}}
+}
+
+\subsection{Expressões}
+
+
 \todo[inline]{Dar uma formatada mais legal nessas regras que esta meio feio}
 
+\ignoreLtex{
 \infrule[Compose-s]
     {F \vdash \St{e_1,a, p, m} \to \St{e_1',a', p', m'}}
     {F \vdash \St{e_1;e_2,a, p, m} \to \St{e_1';e_2,a', p', m'}}
@@ -382,18 +423,7 @@ Uma notação alternativa, para quando se precisa alterar várias posições na 
 \infrule[While]
     {}
     {F \vdash \St{\mathbf{while}\;(e_1)\; e_2, a, p, m} \to \\ \St{\mathbf{if}\;(e_1)\; (e_2;\mathbf{while}\;(e_1)\; e_2)\; \mathbf{else}\; 0, a, p, m}} 
-
-\infrule[LetFunction-collect]
-    {}
-    {\St{\mathbf{let} \; f(\overline{x_i})\; e \; F_0 ,F} \to_F \St{F_0, F[f \mapsto \St{[\overline{x_i}], e}]}}
-
-\infrule[Globals-collect]
-    {\mathbf{newkey}() = k \quad \mathbf{top}(p) = i}
-    {\St{\mathbf{global} \; x[n]\; G , g, p} \to_G\\ \St{G, g[x \mapsto l^p \{i, k, 0, n\}],(\bot, k)_n : p,}} 
-
-\infrule
-    {\St{P, \{\}, []} \to_G^* \St{F_0, g, p}\quad\St{F_0, \{\}} \to_F^* \St{\mathbf{let}\;()\;e , F}}
-    {F \vdash \St{\{e\}, ([],g),p,[]} \to^* \St{v, ([],g), p, m}} 
+}
 
 %	3.4 Error detection
 \section{Detecção de Erros}

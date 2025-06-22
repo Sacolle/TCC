@@ -17,7 +17,11 @@
 		"\\todo{}": "ignore",
 		"\\todo[]{}": "ignore",
 		"\\emph{}" : "ignore",
-		"\\infrule[]{}" : "ignore"
+		"\\infrule[]{}" : "ignore",
+		"\\layoutrule{}{}" : "ignore",
+		"\\lstinline[]||" : "ignore",
+		"\\infrule[]{}{}" : "ignore",
+		"\\ignoreLtex{}" : "ignore"
 	},
 	"ltex.checkFrequency": "edit",
 	"ltex.completionEnabled": false
