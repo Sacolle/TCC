@@ -27,11 +27,11 @@ A sintaxe baseada em C também se demonstrou familiar e facilitou a compreensão
 			Expression \ni e ::&= x \OR v \\
 			&\NLOR e\; op\; e \OR !e  \\
 			&\NLOR \text{*}e \OR \&x \\
-			&\NLOR e;e \; \OR \{\,e\,\} \; \\ 
+			&\NLOR e;e \; \OR \{\,e\,\} \OR \KW{pop}\;e\; \\ 
 			&\NLOR \mathbf{malloc}(e) \OR \mathbf{free}(e, e) \; \\ 
 			&\NLOR \mathbf{let}\; x[n] \OR e := e \; \\
 			&\NLOR \mathbf{if}(e) \; e \; \mathbf{else} \; e \; \OR \mathbf{while}(e) \; e \\
-			&\NLOR f(\bar e) \\ 
+			&\NLOR f(\bar e) \OR \KW{Fpop}\;e\\ 
 			&\NLOR \mathbf{panic}\;pcode \\ 
 			PanicCodes \ni pcode ::&= \mathbf{OutOfBoundsRead}\\
 			&\NLOR \mathbf{OutOfBoundsWrite}\\
@@ -91,6 +91,7 @@ Com essa distinção, pode-se notar que o elemento da sintaxe responsável por i
 Nela, $i$ é o índice de acesso à memória; $k$ é a uma chave única, gerada através da função $\mathbf{newkey}$, que serve para validar os acessos quanto a falhas temporais; $o$ é o \emph{offset} (desvio) do índice base $i$, que recebe o valor das somas e subtrações, ao invés de alterar o índice diretamente; e $s$ é o tamanho da região alocada na memória, que serve para validar os acessos quanto a falhas espaciais. Esses metadados não são acessíveis na escrita do código, mas na semântica operacional tem seus valores internos expostos à avaliação usando a anotação de chaves acima.
 
 \subsection{Pilha}
+\label{sec:pcl-back:pilha}
 
 A pilha é uma lista de elementos, que podem ser valores $v \in \{l, n, \bot, -\}$ ou códigos de controle $c_{ctrl} \in \{\mathbf{stack},\mathbf{func}\}$. Dentre os valores, $l$ e $n$ são os elementos de locais e números da sintaxe da linguagem. $\bot$ e $-$, assim como em \citet{WESSEL2019}, são elementos utilizados na representação da inicialização de um valor, representando um espaço alocado, mas ainda não inicializado, e um espaço não alocado, respectivamente. 
 
@@ -159,6 +160,7 @@ Uma notação alternativa, para quando se precisa alterar várias posições na 
 
 
 \subsection{\emph{Heap}}
+\label{sec:pcl-back:mem}
 
 A memória (\emph{heap}) é extremamente similar a pilha, porém sem os códigos de controle. Partindo disso, a memória $m$ é uma lista de pares, valor $v \in \{n, l, \bot, -\}$ fechadura $k \in \mathbb{N}$, podendo ser escrito na forma $m := [(v, k)]$. Essa lista pode ser imaginada infinitamente grande, tendo todas as células inicializadas com o valor $-$.
 
@@ -183,22 +185,52 @@ Na definição dessa função, utilizou-se a expressão $m(i)$ para indicar o ac
 %	3.3 Operational Semantics
 \section{Semântica Operacional}
 
-% The language is defined by means of structural operational semantics, 
-% which specifies a one-step relation between configurations (states). 
-% One writes $F \vdash \St{e, a, p, m} \to \St{e', a', p', m'}$ to describe 
-% the transition of state $\St{e, a, p, m}$ towards state $\St{e', a', p', m'}$ 
-% under a global function definition environment $F$. 
-% Within the state, $e$ is the program, $a$ is the names environment, 
-% $p$ is the stack and $m$ is the heap. 
+A linguagem $PCL_{back}$ é definida por meios de semântica operacional estrutural, que especifica uma relação de um passo entre configurações (estados). Ela é subdividida em 3 avaliações: a avaliação dos globais, com o fecho transitivo $\to_G$, a avaliação das funções, com o fecho transitivo $\to_F$ e a avaliação das expressões, ou melhor, o programa em si, com o fecho $\to$. Um programa $P$ de $PCL_{front}$ pode ser visto como uma lista de declarações de variáveis globais, seguida de uma lista de declarações de funções globais, seguida da função de entrada do programa, como demonstra \ref{fig:tree-structure}.
 
-subdivido em 3 transições para avaliar um programa P
+\begin{figure*}[ht]
+	\centering
+	\begin{tikzpicture}[
+		squarednode/.style={rectangle, draw=red!60, fill=red!5, very thick, minimum size=5mm},
+	]
+		%Nodes
+		\node (G0) {$\KW{global}\;x[n]\; G$};
+		\node (GtoF) [right=of G0] {$\;\KW{global}\;x[n]\; F$};
+		\node (F0) [below=of GtoF] {$\KW{let}\;f(\bar x)\;e\;F$};
+		\node (FtoE) [right=of F0] {$\;\KW{let}\;()$};
+		\node (E) [right=0cm of FtoE] {$e$};
+		
+		%Lines
+		\draw[->] (G0.east) -- (GtoF.west) node[at end, above] () {$*$} node[at end, below] () {G};
+
+		\draw[->] (F0.east) -- (FtoE.west) node[at end, above] () {$*$} node[at end, below] () {F};
+
+		\draw[->] (GtoF.south)  -- (F0.north);
+
+		\node[draw, dotted, fit=(G0) (GtoF) (F0) (FtoE) (E), inner sep=0.1cm, label={[anchor=south east, xshift=12mm]north west:Globais}] {};
+
+		\node[draw, dashed, fit=(F0) (FtoE) (E), inner sep=0.1cm, label={[anchor=south east, xshift=12mm]north west:Funções}] {};
+
+		\node[draw, fit=(E), inner sep=0.1cm, label={[anchor=south east, xshift=12mm]north west:Programa}] {};
+	\end{tikzpicture}
+	\caption{Árvore de um programa em $PCL_{back}$.}
+	\label{fig:tree-structure}
+\end{figure*}
+
+Dessa forma, um programa $P$ coleta primeiro todas as globais, depois coleta todas as funções e com essas informações computa o resultado do programa $e$. O asterisco indicado acima dos fechos transitivos indica que $n$ ou mais passos foram tomados até atingir o resultado a direita. O diagrama pode ser mais formalmente descrito como:
+
 \ignoreLtex{
-\infrule
+\infrule[Run]
     {\St{P, \{\}, []} \to_G^* \St{F_0, g, p}\quad\St{F_0, \{\}} \to_F^* \St{\mathbf{let}\;()\;e , F}}
     {F \vdash \St{\{e\}, ([],g),p,[]} \to^* \St{v, ([],g), p, m}} 
 }
+\label{rule:run}
+\noindent Dizendo que, para avaliar a expressão $e$ sob um escopo $\{\}$, é necessário primeiro avaliar sequencialmente as globais e as funções, usando essas informações na computação de $e$.
+
+Essa computação de $e$ é o fecho transitivo $\to$, que descreve a transição do estado $\St{e, a, p, m}$ para o estado $\St{e', a', p', m'}$ sob a definição do ambiente global de funções $F$. Isso totaliza a expressão $F \vdash \St{e, a, p, m} \to \St{e', a', p', m'}$. Nesse contexto, $F$ é o ambiente global de funções, $e$ é o programa (expressão) a ser computado, $a$ é o ambiente de nomes, $p$ é a pilha, como descrita em \ref{sec:pcl-back:pilha}, e $m$ é a memória, como descrita em \ref{sec:pcl-back:mem}.
 
 \subsection{Globais}
+
+As globais do programa são declaradas todas juntas no começo do programa. Para isso, define-se o fecho transitivo $\to_G$ da seguinte forma:
 
 \ignoreLtex{
 \infrule[Globals-collect]
@@ -206,18 +238,46 @@ subdivido em 3 transições para avaliar um programa P
     {\St{\mathbf{global} \; x[n]\; G , g, p} \to_G\\ \St{G, g[x \mapsto l^p \{i, k, 0, n\}],(\bot, k)_n : p,}} 
 }
 
+\noindent Dada a declaração $\KW{global}\;x[n]$, empilha-se no topo da pilha $n$ vezes a dupla $(\bot, k)$ representando $n$ posições alocadas, mas não inicializadas, que só podem ser acessadas com um ponteiro que tenha uma chave de valor $k$. Para associar o nome $x$ a essa posição na pilha, salva o local construído com os metadados gerados no ambiente de nomes globais $g$.
+
+Esse ambiente, $g$, é um mapa de nomes a locais na pilha, podendo ser escrito como $g := Map\;nome\;l^p$. Obter o valor associado a um nome $x$ no mapa $g$, escreve $g(x)$. Essa operação  retorna $-$ quando $x \notin g$. Atribuir um valor no mapa usa a mesma notação das atribuições nos demais ambiente. Para atribuir o local $l^p$ ao nome $x$ no mapa $g$, escreve-se $g[x \mapsto l^p]$. 
+
+A regra (\hyperref[rule:run]{GLOBALS-COLLECT}) executa até que o elemento $G$ sequente seja uma função (\ref{fig:tree-structure}). Ao chegar nesse ponto, a execução está finalizada e o ambiente de nomes globais foi construído e os valores foram empilhados na base da pilha. O ambiente gerado $g$ é apenas um elemento da dupla que compõe o ambiente de nomes na execução do programa. 
+
+A outra parte é o ambiente de nomes locais $a_l$. Este, é uma pilha de mapas, nome - local na pilha, e códigos de controle $STOP$. Esses mapas são definidos exatamente igual ao ambiente global de nomes. O uso do $STOP$ serve para delimitar acessos apenas as variáveis alcançáveis naquele ponto do programa, fazendo $PCL_{back}$ ter um escopo estático. Adicionar elementos no topo de $a_l$ usa a mesma notação de lista usada na pilha. Para encontrar o valor associado com o nome $x$ em $a_l$, realiza-se uma busca nos mapas em ordem até ou chegar a um código de controle $STOP$, ou até chegar na base da pilha. Dessa forma, define-se o acesso ao valor associado a uma variável $x$ no ambiente de nomes completo $a$, que é o par $(a_l, g)$, como $a(x)$, descrito como:
+
+\begin{figure}[ht]
+	\begin{align}
+		&(map : a_l, g)(x) = \mathbf{if}\; map(x) \neq - \;\mathbf{then}\; map(x) \;\mathbf{else}\; (a_r, g)(x)\label{fig:def:amb:acess1}\\
+		&(STOP \;:\;a_l, g)(x) = g(x) \label{fig:def:amb:acess2}\\
+		&([], g)(x) = g(x)\label{fig:def:amb:acess3}
+	\end{align}
+	\caption{Função que obtém o local da pilha em $a$ associado a variável $x$. }
+	\label{fig:def:amb:acess}
+\end{figure}
+
+Em \ref{fig:def:amb:acess1}, se $x$ existir no mapa no topo de $a_l$, retorna esse valor. Se não, repete para o restante de $a_l$ até encontrar um valor ou parar, via código de controle $STOP$ (\ref{fig:def:amb:acess2}) ou via fim de $a_l$ (\ref{fig:def:amb:acess3}). No caso de parada, obtém-se o valor associado de $x$ no ambiente de nomes globais.
+
+Não há função específica para alterar o valor de um nome $x$ em $a$. Para realizar essa operação, obtém-se o valor no topo da pilha, que é um mapa, e usa-se a notação de atribuição de mapa para esse processo. Isso limita a atribuição em $a$ para apenas o mapa no topo da pilha, ou próximo do topo. Isso não é problema, pois no contexto de $PCL_{back}$, o valor associado a um nome no ambiente não é modificado após a sua inserção inicial, que sempre ocorrerá no topo. A remoção de nomes consiste em desempilhar o topo de $a_l$, casando o padrão e retornando a cauda.
+
 \subsection{Funções}
+
+O passo seguinte, após a avaliação das globais, é o de captura das funções. Para isso, define-se o fecho transitivo $\to_F$ da seguinte forma:
 
 \ignoreLtex{
 \infrule[LetFunction-collect]
     {}
     {\St{\mathbf{let} \; f(\overline{x_i})\; e \; F_0 ,F} \to_F \St{F_0, F[f \mapsto \St{[\overline{x_i}], e}]}}
 }
+\noindent O fecho apenas captura a lista de nomes de argumentos $\bar x_i$ e o corpo da função $e$ e associa eles ao nome $f$ desta no ambiente $F$, tal como $F[f \mapsto \St{[\bar x_i], e}]$. Tanto a notação de atribuição quanto a notação de acesso são iguais ao do ambiente global de nomes $g$, pois $F$ também é um mapa, só que este é um mapa de nomes de funções $f$ para duplas, lista dos nomes dos argumentos - corpo da função, $\St{[\bar x_i], e}$. Ou seja, pode-se definir $F$ com a expressão $F := Map\;f\; \St{[\bar x_i], e}$.
+
+Essa operação de coleta continua até chegar na função principal do programa, escrita como $\KW{let}\;()\; e$. A esse ponto, realiza-se a avaliação do programa sob o ambiente de funções globais $F$ gerado. 
 
 \subsection{Expressões}
 
+A avaliação das expressões começa com um ambiente de funções globais já formado, assim como uma pilha e ambiente de nomes com valores advindos da avaliação das globais. A memória é inicializada vazia, mas como elaborado em \ref{sec:pcl-back:mem}, virtualmente todas as células já possuem o valor $(-, 0)$.
 
-\todo[inline]{Dar uma formatada mais legal nessas regras que esta meio feio}
+\todo[inline]{falar aqui das transições e tal}
 
 \ignoreLtex{
 \infrule[Compose-s]
@@ -423,6 +483,29 @@ subdivido em 3 transições para avaliar um programa P
 \infrule[While]
     {}
     {F \vdash \St{\mathbf{while}\;(e_1)\; e_2, a, p, m} \to \\ \St{\mathbf{if}\;(e_1)\; (e_2;\mathbf{while}\;(e_1)\; e_2)\; \mathbf{else}\; 0, a, p, m}} 
+
+
+\infrule[CallFunc-s(j,0)]
+	{F \vdash \St{e_0,a, p, m} \to \St{e_0',a', p', m'}}
+	{F \vdash \St{f(e_0, e_{1..j}), a, p, m} \to \St{f(e_0', e_{1..j}), a, p, m}} 
+
+\infrule[CallFunc-s(j,i)]
+	{F \vdash \St{e_i,a, p, m} \to \St{e_i',a', p', m'}}
+	{F \vdash \St{f(v_{0..i}, e_i, e_{(i + 1)..j}), a, p, m} \to\\ \St{f(v_{0..i}, e_i', e_{(i + 1)..j}), a', p', m'}}
+
+\infrule[CallFunc]
+	{F(f) = \St{[\overline{x_i}], e}}
+	{F \vdash \St{f(\overline{v_i}), a, p, m} \to \\\St{\mathbf{Fpop}\,\{\ \overline{\mathbf{let}\;x_i[1]; x_i := v_i;} e\}, (STOP : a, g), \mathbf{func} : p, m}} 
+
+	
+\infrule[Fpop-s]
+	{F \vdash \St{e,a, p, m} \to \St{e',a', p', m'}}
+	{F \vdash \St{\mathbf{Fpop}\;e,a, p, m} \to \St{\mathbf{Fpop}\;e',a', p', m'}} 
+
+\infrule[Fpop-s]
+	{\mathbf{pop}_{func}(p) = p'}
+	{F \vdash \St{\mathbf{Fpop}\; v, (h : a, g), p, m} \to \St{v, (a, g), p', m}} 
+
 }
 
 %	3.4 Error detection

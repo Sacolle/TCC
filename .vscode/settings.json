@@ -18,6 +18,7 @@
 		"\\todo[]{}": "ignore",
 		"\\emph{}" : "ignore",
 		"\\infrule[]{}" : "ignore",
+		"\\hyperref[]{}" : "ignore",
 		"\\layoutrule{}{}" : "ignore",
 		"\\lstinline[]||" : "ignore",
 		"\\infrule[]{}{}" : "ignore",
