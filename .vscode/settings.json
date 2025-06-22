@@ -1,7 +1,6 @@
 {
 	"workbench.colorCustomizations": {
 	},
-	"ltex.additionalRules.motherTongue": "pt-BR",
 	"ltex.language": "pt-BR",
 	"editor.wordWrap": "on",
 	"ltex.enabled": [
@@ -13,5 +12,11 @@
 		"org",
 		"restructuredtext",
 		"rsweave"
-	]
+	],
+	"ltex.latex.commands": {
+		"\\todo{}": "ignore",
+		"\\todo[]{}": "ignore"
+	},
+	"ltex.checkFrequency": "edit",
+	"ltex.completionEnabled": false
 }

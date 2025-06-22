@@ -7,7 +7,7 @@
 % proofs, but expressive enough to express common memory
 % errors in C. Its syntax is defined as such:
 
-Tendo em vista as falhas de memória descritas na seção 2.3 \ref{sec:mem-error}, e com o objetivo de analisá-las mais profundamente e prová-las, é necessário desenvolver uma linguagem alvo para atingir o projeto de prova via compilação. A meta desse projeto é ter uma base relativamente agnóstica a solução a ser provada. Assim, este trabalho introduz $PCL_{back}$, uma linguagem núcleo similar a C desenvolvida para detectar violações de segurança de memória e classificá-las. Ela é definida através de sintaxe e de uma semântica operacional \emph{small-step}. 
+Tendo em vista as falhas de memória descritas na seção \ref{sec:mem-error}, e com o objetivo de analisá-las mais profundamente e prová-las, é necessário desenvolver uma linguagem alvo para atingir o projeto de prova via compilação. A meta desse projeto é ter uma base relativamente agnóstica a solução a ser provada. Assim, este trabalho introduz $PCL_{back}$, uma linguagem núcleo similar a C desenvolvida para detectar violações de segurança de memória e classificá-las. Ela é definida através de sintaxe e de uma semântica operacional \emph{small-step}. 
 
 A escolha de C como base serviu para englobar todos as falhas de memórias, visto que C é uma linguagem que permite acesso e manipulação (quase) irrestrita à memória. Ou seja, C consegue expressar todas as falhas na seção 2.3 \ref{sec:mem-error}. Essa é uma razão bem circular, as falhas são comuns em C porque este permite acesso brando a memória, assim elas são descritas e a linguagem que melhor reproduz elas é C, pois tem acesso \emph{laissez-faire} a memória.
 
@@ -76,15 +76,6 @@ Com essa distinção, pode-se notar que o elemento da sintaxe responsável por i
 
 Nela, $i$ é o índice de acesso a memória; $k$ é a uma chave única, gerada através da função $\mathbf{newkey}$, que serve para validar os acessos quanto a falhas temporais; $o$ é o \emph{offset} (desvio) do índice base $i$, que recebe o valor das somas e subtrações, ao ínves de alterar o índice diretamente; e $s$ é o tamanho da região alocada na memória, que serve para validar os acessos quanto a falhas espaciais. Esses metadados não são acessíveis na escrita do código, mas na semântica operacional tem seus valores internos expostos a avaliação usando a anotação de chaves acima.
 
-% With that distinction, the locations $l$, elements of the language responsible
-% for indexing the memory, hold a tag to specify which memory component is being
-% indexed, as in $l^p$ and $l^m$. These locations also hold metadata used for 
-% error detection. A location $l$ has a index $i$, the position in the memory;
-% a size $s$, the space indexable; an offset $o$, the element where additions 
-% and subtractions from the base are stored; and a unique key $k$, the checker
-% value for temporal safety bugs, generated with the function $\mathbf{newkey}$.
-
-
 \subsection{Pilha}
 
 A pilha é uma lista de elementos, que podem ser valores $v \in \{l, n, \bot, -\}$ ou códigos de controle $c_{ctrl} \in \{\mathbf{stack},\mathbf{func}\}$. Dentre os valores, $l$ e $n$ são os elementos de locais e números da sintaxe da linguagem. $\bot$ e $-$, assim como em \citet{WESSEL2019}, são elementos utilizados na representação da inicialização de um valor, representando um espaço alocado, mas ainda não inicializado, e um espaço não alocado, respectivamente. 
@@ -93,7 +84,7 @@ Junto desses elementos guarda-se uma fechadura $k \in \mathbb{N}\text{*}$. Esse 
 
 Os códigos de controle citados existem para essa lista se comportar como um pilha de um sistema. Quando inicia-se um escopo, coloca-se no fim da lista um código de controle. Chegando no final desse escopo, remove-se elementos do final da lista até atingir o código escolhido, emulando a impermanencia dos elementos de uma pilha. Na semântica, utiliza-se das funções $\mathbf{pop}_{stack}(p)$ e $\mathbf{pop}_{func}(p)$ para descrever a ação de remover os elementos da lista até o código de controle $\mathbf{stack}$ ou $\mathbf{func}$. Elas são definidas da seguinte forma:
 
-\begin{figure}[h]
+\begin{figure}[ht]
 	\begin{align}
 		&\mathbf{pop}_{stack}(p) = \mathbf{pop}(p, stack) \label{fig:def:pop1}\\
 		&\mathbf{pop}_{func}(p) = \mathbf{pop}(p, func) \label{fig:def:pop2}\\
@@ -110,11 +101,11 @@ Outras funções similares existem para descrever o acesso, inserção de elemen
 
 O acesso a pilha $p$ na posição $i$, $p(i)$ é descrito pela função:
 
-\begin{figure}[h]
+\begin{figure}[ht]
 	\begin{align}
 	&p(i) = \mathbf{get}(i, \mathbf{top}(p) - 1, p) \label{fig:def:px1}\\
 	&\mathbf{get}(i, size, p_v : p_r) = \mathbf{if}\;i = size \;\mathbf{then}\;p_v\;\mathbf{else}\;\mathbf{get}(i, size - 1, p_r) \label{fig:def:px2}\\
-	&\mathbf{get}(\_, \_, []) = (-,0) \label{fig:def:px3}\\
+	&\mathbf{get}(\_, \_, []) = (-,0) \label{fig:def:px3}
 	\end{align}
 	\caption{Função que define a operação de acesso $p(i)$.}
 	\label{fig:def:px}
@@ -124,7 +115,7 @@ A notação é similar a \ref{fig:def:pop}, usando a primeira expressão, \ref{f
 
 A função auxiliar $\mathbf{top}(p)$ utilizada em \ref{fig:def:px1} retorna o tamanho da lista. Esse tamanho também pode ser interpretado como índice para o elemento acima do último elemento da lista. Esse fato é usado na notação da semântica operacional para gerar o índice das alocações na pilha \todo{Referir-se a regra let.}. Uma definição com a notação atual pode ser escrita como:
 
-\begin{figure}[h]
+\begin{figure}[ht]
 	\begin{align}
 	&\mathbf{top}(\_ : t) = 1 + \mathbf{top}(t) \label{fig:def:top1}\\
 	&\mathbf{top}([]) = 0 \label{fig:def:top2}
@@ -135,8 +126,22 @@ A função auxiliar $\mathbf{top}(p)$ utilizada em \ref{fig:def:px1} retorna o t
 
 Essa é a definição classica de calcular o tamanho de uma lista recursivamente. Adcionando 1 ao resultado até o final da lista, que retorna 0 para a conta.
 
-\todo[inline]{u should not check here}
+Para inserir um valor $v$ na posição $i$ da pilha $p$, escreve-se $p[i \mapsto v]$. Essa operação retorna uma nova pilha $p'$ com o valor atualizado na posição. Ela é melhor visualizada como a operação de indexação e atribuição a um \emph{buffer} em C, da forma \lstinline[language=C]|p[i] = v|. Mas a quesito de rigorosidade, também se define no estilo funcional da seguinte forma:
 
+\begin{figure}[ht]
+	\begin{align}
+	&p[i \mapsto v] = \mathbf{set}(i, \mathbf{top}(p) - 1, v) \label{fig:def:set1}\\
+	&\mathbf{set}(i, size, (v_p, k_p) : p_r) = \\
+	&\quad\quad\mathbf{if}\;i = size \;\mathbf{then}\;(v, k_p) : p_r\;\mathbf{else}\;(v_p, k_p) : \mathbf{set}(i, size - 1, p_r) \label{fig:def:set2}\\
+	&\mathbf{get}(\_, \_, []) = [] \label{fig:def:set3}
+	\end{align}
+	\caption{Função que insere o valor $v$ na posição $i$ da pilha $p$.}
+	\label{fig:def:set}
+\end{figure}
+
+Ela usa a notação de empilhamento ($:$) com toda a sua expressividade. Após em \ref{fig:def:set1} definir através de uma função auxiliar a operação, \ref{fig:def:set2} checa se $i = size$, se for troca o topo da lista atual para uma dupla com a chave anterior e o novo valor. Se $i \neq size$, concatena o topo atual da pilha com o restante da operação. Isso resulta em uma pilha nova final $p'$ cujo único elemento diferente é o da posição de índice $i$. Caso o índice seja para fora da pilha, eventualmente \ref{fig:def:set3} será atingido, terminando a execução e retornando a pilha inalterada.
+
+Uma notação alternativa, para quando precisa-se alterar várias posições na pilha para um mesmo valor é $p[i_{m..n} \mapsto v]$. Similarmente a empilhar varios elementos do mesmo valor, essa definição altera os valores da posição $i + m$ até a posição $i + n - 1$ para o valor $v$.
 
 
 % The values $\bot$ and $-$ are used to detect initialization errors, meaning 
