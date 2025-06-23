@@ -18,3 +18,5 @@ CCured
 fat
 Rust
 UB
+dereferência
+booleana

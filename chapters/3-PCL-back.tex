@@ -299,7 +299,7 @@ Mesmo sendo uma semântica de expressões, a linguagem segue o padrão de C e po
 \labelRule{\label{rule:escopo}}{
 	\infrule[Escopo]
 		{}
-		{F \vdash \St{\{e\},(a,g), p, m} \to \\ \St{\mathbf{pop}\; e,(\{\} : a, g),stack : p, m}}
+		{F \vdash \St{\{e\},(a,g), p, m} \to \\ \St{\mathbf{pop}\; e,(\{\} : a, g),\mathbf{stack} : p, m}}
 }
 
 \labelRule{\label{rule:pop-s}}{
@@ -316,13 +316,21 @@ Mesmo sendo uma semântica de expressões, a linguagem segue o padrão de C e po
 
 As regras \hyperref[rule:pop-s]{(COMPOSE-S)} e \hyperref[rule:compose-s]{(POP-S)} indicam o passo (\emph{step}) de avaliação da regra. Assim, a composição, por exemplo, primeiro avalia o primeiro elemento até que este seja um valor, descartando esse e resultando no segunda elemento, como descreve \hyperref[rule:compose]{(COMPOSE)}. Como convenção deste trabalho, regras terminadas por S são regras de passo e se prefixadas com R ou L indicam um passo do elemento da direita (\emph{right}) ou do elemento da esquerda (\emph{left}) respectivamente.
 
-A regra \hyperref[rule:escopo]{(ESCOPO)} utiliza-se da expressão auxiliar $\KW{pop}$ para diferenciar a sua inicialização, empilhar um mapa novo em $a$ e o código de controle $\mathbf{stack}$ em $p$, da avaliação desse escopo, pois a inicialização só acontece uma vez. No fim, com a regra \hyperref[rule:pop]{(POP)}, remove-se o mapa inserido em $a$ por \hyperref[rule:escopo]{(ESCOPO)}, assim como todos os elementos colocados no topo da pilha acima do $\mathbf{stack}$ inserido.
+A regra \hyperref[rule:escopo]{(ESCOPO)} utiliza-se da expressão auxiliar $\KW{pop}$ para diferenciar a sua inicialização, empilhar um mapa novo em $a$ e o código de controle $\mathbf{stack}$ em $p$, da avaliação desse escopo, pois a inicialização só acontece uma vez. No fim, com a regra \hyperref[rule:pop]{(POP)}, remove-se o mapa inserido em $a$ por \hyperref[rule:escopo]{(ESCOPO)}, assim como todos os elementos colocados no topo da pilha acima do código de controle $\mathbf{stack}$ inserido, e retorna-se o valor avaliado dentro do escopo.
+
+\subsubsection{Regras de Declaração e Atribuição}
+
+As declarações de variáveis na pilha, com a palavra-chave $\KW{let}$, operam muito similarmente a regra \hyperref[rule:globals-collect]{(GLOBALS-COLLECT)}. Entretanto \hyperref[rule:let]{(LET)} salva o local gerado no mapa no topo de $a_l$ de $a$. 
 
 \labelRule{\label{rule:let}}{
 	\infrule[Let]
 		{\mathbf{top}(p) = i \andalso \mathbf{newkey}() = k \andalso l = l^p\{i, k, 0, n\}}
 		{F \vdash \St{\mathbf{let}\; x[n],(fr : a, g), p, m} \to\\ \St{l, (fr[x \mapsto l] : a, g),(\bot, k)_n : p, m}} 
 }
+
+Como $PCL_{back}$ é uma linguagem de expressões, todas elas precisam retornar algum valor. \hyperref[rule:let]{(LET)} avalia para o endereço alocado na pilha $l$. A decisão de qual elemento a expressão seria avaliada, para os casos menos comuns, foi baseada no comportamento de C. Se a expressão equivalente não avalia para um valor em C, decidiu-se basear no comportamento em OCaml, principalmente para as regras \hyperref[rule:if-true]{(IF-TRUE)}, \hyperref[rule:if-false]{(IF-FALSE)} e \hyperref[rule:while]{(WHILE)}.
+
+Para as atribuições, pode-se realizá-las quando o elemento da esquerda avalia para uma variável ou para um local, prefixado pelo operador de dereferência, tal como $\text{*}l := e$. A ordem dessa operação é definida como primeiramente avalia-se completamente o termo da esquerda para depois avaliar o termo da direita, exemplificado por \hyperref[rule:atribui-deref-ls]{(ATRIBUI-DEREF-LS)} e \hyperref[rule:atribui-deref-rs]{(ATRIBUI-DEREF-RS)}.
 
 \labelRule{\label{rule:atribui-deref-ls}}{
 	\infrule[Atribui-deref-ls]
@@ -402,6 +410,13 @@ A regra \hyperref[rule:escopo]{(ESCOPO)} utiliza-se da expressão auxiliar $\KW{
 		{F\vdash\St{\text{*}l^m\{i, k, o, s\} := v, a, p, m} \to \\\St{v, a, p, m[i + o \mapsto v]}}
 }
 
+Várias dessas regras tratam do sistema de detecção de memória, que será elaborado em \ref{sec:pcl-back:errors}. Mas a avaliação final de uma atribuição, como na regra \hyperref[rule:atribui-var]{(ATRIBUI-VAR)}, consiste em atribuir o valor no espaço de memória especificado, avaliando para esse mesmo valor a fim de permitir padrões como $x := y := 2$, que atribui para $x$ e $y$ o número 2.
+
+\subsubsection{Funções de Memória}
+\label{sec:pcl-back:semantica:mem-func}
+
+As funções de memória $\KW{malloc}$ e $\KW{free}$ operam sobre o ambiente $m$. $\KW{malloc}(e)$ recebe como argumentos quantas células de memórias serão alocadas, usando a função auxiliar \hyperref[fig:def:loc]{$\KW{loc}$}. $\KW{free}(e_1, e_2)$ por sua vez recebe dois argumentos, o local que inicia a região a ser liberada em $e_1$ e o número de células a serem liberadas em $e_2$. Esse segundo argumento é necessário, pois não se utiliza de mecanismo macro para guardar quais alocações foram feitas no programa, apenas a visão micro de quais células foram alocadas.
+
 \labelRule{\label{rule:malloc-s}}{
 	\infrule[Malloc-s]
 		{F\vdash\St{e, a, p, m} \to\St{e', a', p', m'}}
@@ -456,6 +471,63 @@ A regra \hyperref[rule:escopo]{(ESCOPO)} utiliza-se da expressão auxiliar $\KW{
 		{F\vdash\St{\mathbf{free}(l^m\{i, k, o, s\}, n),a, p, m} \to\St{n,a, p, m[i_{0..n} \mapsto (-,0)]}}
 }
 
+\subsubsection{Expressões Aritméticas}
+
+As expressões aritméticas de $PCL_{back}$ são as operações binárias $op \in BinOp$, assim como o operador unário $!$, a negação booleana. No caso das operações binárias, elas avaliam primeiro o elemento da esquerda completamente para depois avaliar o elemento da direita. Para simplificar a definição dessas regras, utiliza-se de algumas funções auxiliares: $\mathbf{binop}(op, v_1, v_2)$, $\mathcal{N}(n)$ e $\mathcal{N}^{-1}(N)$. 
+
+$\mathcal{N}(n)$ é a função que converte o símbolo da linguagem $n$ em um número matemático $N \in \mathbb{z}$. O inverso, ir de um número matemático $N$ para um número da sintaxe, é realizado com a operação $\mathcal{N}^{-1}(N)$. A função $\mathbf{binop}(op, v_1, v_2)$ define a operação $op$ entre valores $v_1$ e $v_2$ da linguagem, sendo definido da seguinte forma:
+
+\begin{figure}[ht]
+	\begin{align}
+		& \mathbf{binop}(op, n_1, n_2) = \mathcal{N}^{-1}(\mathbf{binop}'(op, \mathcal{N}(n_1), \mathcal{N}(n_2))) \\
+		& \mathbf{binop}(op, n, l^{local}\{i, k, o, s\}) = l^{local}\{i, k, \mathbf{binopnptr}(op, \mathcal{N}(n), o), s\} \\
+		& \mathbf{binop}(op, l^{local}\{i, k, o, s\}, n) = l^{local}\{i, k, \mathbf{binopnptr}(op, \mathcal{N}(n), o), s\} \\
+		& \mathbf{binop}(op, l^p\{i_1, k_1, o_1, s_1\}, l^p\{i_2, k_2, o_2, s_2\}) = \nonumber \\ 
+		&\quad\quad\mathcal{N}^{-1}(\mathbf{binopcomp}(op, i_1 + o_1, i_2 + o_2)) \\
+		& \mathbf{binop}(op, l^m\{i_1, k_1, o_1, s_1\}, l^m\{i_2, k_2, o_2, s_2\}) = \nonumber \\ 
+		&\quad\quad\mathcal{N}^{-1}(\mathbf{binopcomp}(op, i_1 + o_1, i_2 + o_2)) 
+	\end{align}
+	\caption{Definição da base de $\mathbf{binop}$}
+	\label{fig:def:binop:base}
+\end{figure}
+
+Ela define as operações por tipo de dados. Todos os $op \in BinOp$ são definidos para dois números, identificado pela função $\KW{binop}'$ (\ref{fig:def:binop1} a \ref{fig:def:binop2}). Apenas soma e subtração são definidos entre ponteiros e números, identificado pela função $\KW{binopnptr}$ (\ref{fig:def:binop3} e \ref{fig:def:binop4}). Pode-se observar na notação que os metadados do ponteiro são números matemáticos, então não é necessário chamar $\mathbb{N}$ neles. Por fim, entre ponteiros para o mesmo ambiente é definido operações de comparação, definida para a base $i$ mais o desvio $o$, retornando um número. Essa operação é definida pela função $\KW{binopcomp}$ (\ref{fig:def:binop5}, \ref{fig:def:binop6} e \ref{fig:def:binop7}). A linguagem usa o número 0 como o valor de falsidade e qualquer outro inteiro como o valor de veracidade.
+
+\begin{figure}[ht]
+	\begin{align}
+		& \mathbf{binop}'(+, N_1, N_2) = N_1 + N_2 \label{fig:def:binop1}\\
+		& \mathbf{binop}'(-, N_1, N_2) = N_1 + N_2\\
+		& \mathbf{binop}'(*, N_1, N_2) = N_1 + N_2\\
+		& \mathbf{binop}'(<, N_1, N_2) = \mathbf{if}\; N_1 < N_2 \;\mathbf{then}\; 1 \;\mathbf{else} \;0\\
+		& \mathbf{binop}'(>, N_1, N_2) = \mathbf{if}\; N_1 > N_2 \;\mathbf{then}\; 1 \;\mathbf{else} \;0\\
+		& \mathbf{binop}'(=, N_1, N_2) = \mathbf{if}\; N_1 = N_2 \;\mathbf{then}\; 1 \;\mathbf{else} \;0\\
+		& \mathbf{binop}'(\land, N_1, N_2) = \mathbf{if}\; N_1 \neq 0 \;\mathbf{then}\; (\mathbf{if}\; N_2 \neq 0 \;\mathbf{then}\; 1 \;\mathbf{else} \;0) \;\mathbf{else} \;0\\
+		& \mathbf{binop}'(\lor, N_1, N_2) = \mathbf{if}\; N_1 \neq 0 \;\mathbf{then}\; 1 \;\mathbf{else} \;(\mathbf{if}\; N_2 \neq 0 \;\mathbf{then}\; 1 \;\mathbf{else} \;0) \label{fig:def:binop2}\\
+		\nonumber \\
+		& \mathbf{binopnptr}(+, N_1, N_2) = N_1 + N_2  \label{fig:def:binop3}\\
+		& \mathbf{binopnptr}(-, N_1, N_2) = N_1 + N_2  \label{fig:def:binop4}\\
+		\nonumber \\
+		& \mathbf{binopcomp}(<, N_1, N_2) = \mathbf{if}\; N_1 < N_2 \;\mathbf{then}\; 1 \;\mathbf{else} \;0  \label{fig:def:binop5}\\
+		& \mathbf{binopcomp}(>, N_1, N_2) = \mathbf{if}\; N_1 > N_2 \;\mathbf{then}\; 1 \;\mathbf{else} \;0  \label{fig:def:binop6}\\
+		& \mathbf{binopcomp}(=, N_1, N_2) = \mathbf{if}\; N_1 = N_2 \;\mathbf{then}\; 1 \;\mathbf{else} \;0  \label{fig:def:binop7}
+	\end{align}
+	\caption{Definição das funções auxiliares a $\mathbf{binop}$}
+	\label{fig:def:binop:extra}
+\end{figure}
+\FloatBarrier
+
+Além disso, existe também a função $\KW{not}$ nega o valor de um número, tal como: 
+\begin{figure}[ht]
+	\begin{align}
+		\mathbf{not}(n) = \mathcal{N}^{-1}(\mathbf{if}\; \mathcal{N}(n) \neq 0 \;\mathbf{then}\; 0 \;\mathbf{else} \;1)
+	\end{align}
+	\caption{Função auxiliar $\mathbf{not}$}
+	\label{fig:def:not}
+\end{figure}
+\FloatBarrier
+
+Com essas funções, pode-se definir as regras da seguinte forma:
+
 \labelRule{\label{rule:binop-ls}}{
 	\infrule[BinOp-ls]
 		{F \vdash \St{e_1,a, p, m} \to \St{e_1', a', p', m'}}
@@ -482,9 +554,11 @@ A regra \hyperref[rule:escopo]{(ESCOPO)} utiliza-se da expressão auxiliar $\KW{
 
 \labelRule{\label{rule:not}}{
 	\infrule[Not]
-		{\mathbf{not}(v) = n}
-		{F \vdash \St{!v, a, p, m} \to \St{n, a, p, m}}
+		{\mathbf{not}(n) = n'}
+		{F \vdash \St{!n, a, p, m} \to \St{n', a, p, m}}
 }
+
+\subsubsection{Acesso a Valores}
 
 \labelRule{\label{rule:var-obr}}{
 	\infrule[Var-obr]
@@ -576,6 +650,12 @@ A regra \hyperref[rule:escopo]{(ESCOPO)} utiliza-se da expressão auxiliar $\KW{
 		{F \vdash \St{\text{*}l^m\{i, k, o, s\}, a, p, m} \to \St{v_m, a, p, m}}
 }
 
+\subsubsection{Condicionais}
+
+while retorna 0
+
+if devolve o valor nos braços
+
 \labelRule{\label{rule:if-s}}{
 	\infrule[If-s]
 		{F \vdash \St{e_1,a, p, m} \to \St{e_1', a', p', m'}}
@@ -584,14 +664,14 @@ A regra \hyperref[rule:escopo]{(ESCOPO)} utiliza-se da expressão auxiliar $\KW{
 
 \labelRule{\label{rule:if-true}}{
 	\infrule[If-true]
-		{\mathcal{N}(v) \neq 0}
-		{F \vdash \St{\mathbf{if}\;(v)\; e_1\; \mathbf{else}\; e_2 ,a, p, m} \to \St{e_1, a, p, m}} 
+		{\mathcal{N}(n) \neq 0}
+		{F \vdash \St{\mathbf{if}\;(n)\; e_1\; \mathbf{else}\; e_2 ,a, p, m} \to \St{e_1, a, p, m}} 
 }
 
 \labelRule{\label{rule:if-false}}{
 	\infrule[If-false]
-		{\mathcal{N}(v) = 0}
-		{F \vdash \St{\mathbf{if}\;(v)\; e_1\; \mathbf{else}\; e_2 ,a, p, m} \to \St{e_2, a, p, m}} 
+		{\mathcal{N}(n) = 0}
+		{F \vdash \St{\mathbf{if}\;(n)\; e_1\; \mathbf{else}\; e_2 ,a, p, m} \to \St{e_2, a, p, m}} 
 }
     
 \labelRule{\label{rule:while}}{
@@ -599,6 +679,12 @@ A regra \hyperref[rule:escopo]{(ESCOPO)} utiliza-se da expressão auxiliar $\KW{
 		{}
 		{F \vdash \St{\mathbf{while}\;(e_1)\; e_2, a, p, m} \to \\ \St{\mathbf{if}\;(e_1)\; (e_2;\mathbf{while}\;(e_1)\; e_2)\; \mathbf{else}\; 0, a, p, m}} 
 }
+
+\subsubsection{Chamada de Funções}
+
+Ordem de avaliação
+
+substituição no escopo
 
 \labelRule{\label{rule:callfunc-s(j,0)}}{
 	\infrule[CallFunc-s(j,0)]
@@ -631,7 +717,7 @@ A regra \hyperref[rule:escopo]{(ESCOPO)} utiliza-se da expressão auxiliar $\KW{
 
 %	3.4 Error detection
 \section{Detecção de Erros}
-
+\label{sec:pcl-back:errors}
 % In order to detect these kinds of errors, the metadata attached to the pointers 
 % needs to uphold certain invariants.$\bullet$ If the offset $o$ of a pointer is 
 % bellow 0 or equal or greater than its size $s$ ($0 > o \ge s$), then it results 
