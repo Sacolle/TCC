@@ -230,6 +230,7 @@ Dessa forma, um programa $P$ coleta primeiro todas as globais, depois coleta tod
 Essa computação de $e$ é o fecho transitivo $\to$, que descreve a transição do estado $\St{e, a, p, m}$ para o estado $\St{e', a', p', m'}$ sob a definição do ambiente global de funções $F$. Isso totaliza a expressão $F \vdash \St{e, a, p, m} \to \St{e', a', p', m'}$. Nesse contexto, $F$ é o ambiente global de funções, $e$ é o programa (expressão) a ser computado, $a$ é o ambiente de nomes, $p$ é a pilha, como descrita em \ref{sec:pcl-back:pilha}, e $m$ é a memória, como descrita em \ref{sec:pcl-back:mem}.
 
 \subsection{Globais}
+\label{sec:pcl-back:semantica:globals}
 
 As globais do programa são declaradas todas juntas no começo do programa. Para isso, define-se o fecho transitivo $\to_G$ da seguinte forma:
 
@@ -319,6 +320,7 @@ As regras \hyperref[rule:pop-s]{(COMPOSE-S)} e \hyperref[rule:compose-s]{(POP-S)
 A regra \hyperref[rule:escopo]{(ESCOPO)} utiliza-se da expressão auxiliar $\KW{pop}$ para diferenciar a sua inicialização, empilhar um mapa novo em $a$ e o código de controle $\mathbf{stack}$ em $p$, da avaliação desse escopo, pois a inicialização só acontece uma vez. No fim, com a regra \hyperref[rule:pop]{(POP)}, remove-se o mapa inserido em $a$ por \hyperref[rule:escopo]{(ESCOPO)}, assim como todos os elementos colocados no topo da pilha acima do código de controle $\mathbf{stack}$ inserido, e retorna-se o valor avaliado dentro do escopo.
 
 \subsubsection{Regras de Declaração e Atribuição}
+\label{sec:pcl-back:semantica:atribui}
 
 As declarações de variáveis na pilha, com a palavra-chave $\KW{let}$, operam muito similarmente a regra \hyperref[rule:globals-collect]{(GLOBALS-COLLECT)}. Entretanto \hyperref[rule:let]{(LET)} salva o local gerado no mapa no topo de $a_l$ de $a$. 
 
@@ -559,6 +561,9 @@ Com essas funções, pode-se definir as regras da seguinte forma:
 }
 
 \subsubsection{Acesso a Valores}
+\label{sec:pcl-back:semantica:acessa}
+
+O acesso a valores consiste nas regras de acesso a valores de variáveis \hyperref[rule:var]{(VAR)}, dereferência de valores na pilha \hyperref[rule:deref-pilha]{(DEREF-PILHA)} e na memória \hyperref[rule:deref-mem]{(DEREF-MEM)}. Elas acessam a respectiva memória do valor associado, retornando o valor. 
 
 \labelRule{\label{rule:var-obr}}{
 	\infrule[Var-obr]
@@ -582,12 +587,6 @@ Com essas funções, pode-se definir as regras da seguinte forma:
 	\infrule[Var]
 		{a(x) = l^p\{i, k, o, s\} \\ 0 \leq o < s\quad p(i + o) = (v_p, k_p) \quad k = k_p \quad v_p \neq \bot}
 		{F \vdash \St{x, a, p, m} \to \St{v_p, a, p, m}}
-}
-
-\labelRule{\label{rule:ref}}{
-	\infrule[Ref]
-		{a(x) = l^p}
-		{F \vdash \St{\&x, a, p, m} \to \St{l^p, a, p, m}}
 }
 
 \labelRule{\label{rule:deref-s}}{
@@ -650,11 +649,18 @@ Com essas funções, pode-se definir as regras da seguinte forma:
 		{F \vdash \St{\text{*}l^m\{i, k, o, s\}, a, p, m} \to \St{v_m, a, p, m}}
 }
 
+\labelRule{\label{rule:ref}}{
+	\infrule[Ref]
+		{a(x) = l^p}
+		{F \vdash \St{\&x, a, p, m} \to \St{l^p, a, p, m}}
+}
+
+Adicionalmente há a regra para se obter o endereço de uma variável \hyperref[rule:ref]{(REF)}. Ela é similar a \hyperref[rule:var]{(VAR)}, porém ao invés de pegar o valor do local associado ao nome $x$, ela retorna esse local.
+
 \subsubsection{Condicionais}
 
-while retorna 0
+A linguagem se usa de um $\KW{if}$ expressão\emph{lazy}. Ou seja, ele computa o caminho a ser tomado, avaliando o condicional \hyperref[rule:if-s]{(IF-S)}, e retorna a expressão correspondente sem avaliar, \hyperref[rule:if-true]{(IF-TRUE)} e \hyperref[rule:if-false]{(IF-FALSE)}. Dessa forma, a expressão $x := \KW{if}\;(1)\; 1 + 1 \;\KW{else}\; 0$ avalia, em um passo, para $x := 1 + 1$.
 
-if devolve o valor nos braços
 
 \labelRule{\label{rule:if-s}}{
 	\infrule[If-s]
@@ -674,17 +680,19 @@ if devolve o valor nos braços
 		{F \vdash \St{\mathbf{if}\;(n)\; e_1\; \mathbf{else}\; e_2 ,a, p, m} \to \St{e_2, a, p, m}} 
 }
     
-\labelRule{\label{rule:while}}{
+\labelRule{\label{rule:while1}}{
 	\infrule[While]
 		{}
 		{F \vdash \St{\mathbf{while}\;(e_1)\; e_2, a, p, m} \to \\ \St{\mathbf{if}\;(e_1)\; (e_2;\mathbf{while}\;(e_1)\; e_2)\; \mathbf{else}\; 0, a, p, m}} 
 }
 
+O $\KW{while}$ é definido em função do $\KW{if}$, tal qual a regra \hyperref[rule:while1]{(WHILE)} descreve. Ele se deriva em um passo para um condicional que se verdadeiro resulta no corpo do $\KW{while}$ seguido da expressão inicial e se falso no valor 0. Seguindo o modelo OCaml \cite{leroy3ocaml}, $\KW{while}$ deveria retornar o tipo $Unit$. Como $PCL_{back}$ não possui tipos, pode-se interpretar o 0 como o $Unit$. Talvez uma interpretação melhor para o retorno de 0 no caso falso é que 0 é o valor da condicional computada quando se para de iterar o loop.
+
 \subsubsection{Chamada de Funções}
 
-Ordem de avaliação
+Por fim, basta elaborar sobre as regras de chamada de função. Usando as funções salvas no ambiente global, uma chamada de $f(\bar e)$ quando $f \in F$ computa a função de nome $f$ do programa. A avaliação dos componentes da função é \emph{eager}, ou seja, primeiro avaliam-se completamente os argumentos em ordem passados a função para depois computar o corpo desta. Essa avaliação é definida pelas regras \hyperref[rule:callfunc-s(j,0)]{(CALLFUNC-S(J,0))} e \hyperref[rule:callfunc-s(j,i)]{(CALLFUNC-S(J,I))}. Essas regras, diferentes das demais, não são exaustivas, mas apenas representam a avaliação do elemento de índice 0 de uma função com $j$ argumentos e a avaliação do argumento de índice $i$ de uma função com $j$ argumentos respectivamente. Elas demonstram que para avaliar um argumento de índice $i$ em uma função com $j$ argumentos, é necessário ter avaliado os argumentos de 0 até $i$ anteriormente.
 
-substituição no escopo
+Com todos os argumentos avaliados, realiza-se a regra \hyperref[rule:callfunc]{(CALLFUNC)}. Nela, obtém-se os nomes dos argumentos da função $f$ assim como o seu corpo $e$, declarando-os dentro da expressão $\KW{Fpop}$ e num escopo $\{\}$. A atribuição dos valores dos argumentos ao nome das respectivas posições é feito usando os operadores de $\KW{let}$ para criar o espaço para os nomes na pilha dentro da função e de $:=$ para atribuir os valores aos nomes dentro da função. Essa forma de realizar a passagem de parâmetros simplifica a semântica da linguagem, fazendo construtos serem dependentes de outros construtos da linguagem, sem criar novos sem necessidade, mas também é capaz de realizar funções recursivas sem nenhum problema.
 
 \labelRule{\label{rule:callfunc-s(j,0)}}{
 	\infrule[CallFunc-s(j,0)]
@@ -710,10 +718,12 @@ substituição no escopo
 }
 
 \labelRule{\label{rule:fpop}}{
-	\infrule[Fpop-s]
+	\infrule[Fpop]
 		{\mathbf{pop}_{func}(p) = p'}
 		{F \vdash \St{\mathbf{Fpop}\; v, (h : a, g), p, m} \to \St{v, (a, g), p', m}} 
 }
+
+A palavra-chave $\KW{Fpop}$ empilhada é utilizada no ambiente de nomes $a$, como descrito em \ref{sec:pcl-back:semantica:globals}. A regra \hyperref[rule:callfunc]{(CALLFUNC)} adiciona $STOP$ no ambiente de nomes locais $a_l$ e cabe a regra final de $\KW{Fpop}$ \hyperref[rule:fpop]{(FPOP)} remover esse elemento do topo.
 
 %	3.4 Error detection
 \section{Detecção de Erros}
