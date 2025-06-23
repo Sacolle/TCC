@@ -53,6 +53,9 @@
 \usepackage{listings}
 \usepackage{xcolor}
 \usepackage{placeins}
+\usepackage{subcaption}
+\usepackage{caption}
+\usepackage{pgffor} % For \foreach
 
 %pacotes locais
 \usepackage{bcprules}
@@ -138,6 +141,10 @@
 \newcommand{\KW}[1]{\mathbf{#1}}
 
 \newcommand{\ignoreLtex}[1]{#1}
+\newcommand{\labelRule}[2]{
+	\phantomsection #1 #2
+}
+
 % cores do lstlisting
 
 \definecolor{codegreen}{rgb}{0,0.6,0}
