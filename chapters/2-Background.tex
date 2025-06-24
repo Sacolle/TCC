@@ -7,25 +7,26 @@ são elaborado no Capítulo \ref{chap4}.
 
 %	2.1 O que é Semantica Operacional
 \section{Semântica Operacional}
-\todo[inline]{Como \emph{definir} semântica operacional? Usar o livro do Nielson e do Slonneger }
+
+Semântica operacional é uma forma de definir como será realizada a execução de um programa de uma certa sintaxe. Ela pode ser dividida em \emph{Natural Semantics} (Semântica Natural) e em \emph{Structural Operacional Semantics} (Semântica Operacional Estrutural). Esses dois modos também são conhecidos como semântica \emph{Big Step} e semântica \emph{Small Step}, respectivamente \cite{NIELSON}.
+
+O significado dos programas é definido por um sistema de transições. No caso da Semântica \emph{Small Step}, utilizada na definição das linguagens deste trabalho, esse sistema de transições que leva um programa $P$ e um estado $s$ para um novo programa $P'$ e um novo estado $s'$, da forma $\St{P, s} \to \St{P', s'}$. Essas transições são definidas pela estrutura do programa $P$. Pode-se nomear cada estado possível do programa $P$ como $\gamma$. Alguns desses $\gamma$ são ditos estados terminais, por simbolizarem o fim da computação. Por outro lado, podem existir $\gamma$ não possui transição na semântica, dito que está \emph{stuck} (preso). Uma execução de um programa $P$ é uma sequência de derivações de estados $\gamma$ finitas, até que atinja um estado terminal ou preso. Essa sequência também pode ser infinita, sem nunca chegar nos estados que param a avaliação. Um fecho que executa $i$ transições pode ser descrito como $\gamma_0 \to^i \gamma_i$. Mais comumente, utiliza-se a notação $\gamma_0 \to^* \gamma_k$ para indicar que em 0 ou mais passos foi-se de uma configuração $\gamma_0$ para uma configuração $\gamma_k$. Assim, pode-se anotar a execução finita de um programa $P$, representado pelo estado inicial $\gamma_0$, para um estado final ou preso $\gamma_f$, como $\gamma_0 \to^* \gamma_f$.
 
 \section{Julgamento de Tipos}
-\todo[inline]{Como \emph{definir} julgamento de tipos? Usar o livro do Pierce }
+
+Julgamentos de tipos, ou relações de tipo, de algum elemento $e$ com um tipo $\tau$ é dada na forma $e:\tau$. Essas regras são descritas como um conjunto de regras de inferência que atribuem tipos a termos. 
+
+\todo[inline]{Aqui tinha uma seção sobre julgamento de tipos, mas não sei. Livro do Pierce. }
 
 %   2.2 Erros de memória
 \section{Falhas de Memória}
 \label{sec:mem-error}
 
-\todo[inline]{Falar aqui de falhas, erro, fracasso, vindo do \emph{Basic Concepts and Taxonomy of Dependable and Secure Computing}} 
+Uma falha de memória é composto de duas partes, a falha e a de memória. A parte falha advém da definição da estrutura hierárquica fracasso, erro, falha, descrita em \citet{FAULTS}. Nele, elabora-se que: ``(...) um fracasso de serviço significa que pelo menos um (ou mais) estados externos do sistema desviaram do estado correto do serviço. Esse desvio é chamado de erro. A julgada ou hipotisada causa de um erro é chamada de falha.''\cite[p. 13, tradução nossa.]{FAULTS}.
 
-Basic Concepts and Taxonomy of Dependable and Secure Computing
 
 % aqui fica especificamente se tratando de memória, mas revisar 
-Falhas de memória ocorrem quando um acesso à memória consiste em comportamento
-indefinido (UB). Essas falhas, ou no coloquial \emph{bugs}, podem ser ativas, 
-gerando um Erro e movendo o programa para um estado incorreto; ou dormentes, 
-existindo como possíveis vetores de ataque para agentes maliciosos capazes de 
-ativar essa falha. 
+A parte de memória, quato a falhas, ocorrem quando um acesso à memória consiste em comportamento indefinido (UB). Essas falhas, ou no coloquial \emph{bugs}, podem ser ativas, gerando um Erro e movendo o programa para um estado incorreto; ou dormentes, existindo como possíveis vetores de ataque para agentes maliciosos capazes de ativar essa falha. 
 
 As falhas de memória podem ser classificas em 5 classes: falha Espacial, 
 Temporal, de Tipo, de Inicialização e de Condição de Corrida \cite{Apple22,Google24}.
