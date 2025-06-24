@@ -186,6 +186,7 @@ Na definição dessa função, utilizou-se a expressão $m(i)$ para indicar o ac
 
 %	3.3 Operational Semantics
 \section{Semântica Operacional}
+\label{sec:pcl-back:semantica}
 
 A linguagem $PCL_{back}$ é definida por meios de semântica operacional estrutural, que especifica uma relação de um passo entre configurações (estados). Ela é subdividida em 3 avaliações: a avaliação dos globais, com o fecho transitivo $\to_G$, a avaliação das funções, com o fecho transitivo $\to_F$ e a avaliação das expressões, ou melhor, o programa em si, com o fecho $\to$. Um programa $P$ de $PCL_{front}$ pode ser visto como uma lista de declarações de variáveis globais, seguida de uma lista de declarações de funções globais, seguida da função de entrada do programa, como demonstra \ref{fig:tree-structure}.
 
@@ -680,13 +681,13 @@ A linguagem se usa de um $\KW{if}$ expressão\emph{lazy}. Ou seja, ele computa o
 		{F \vdash \St{\mathbf{if}\;(n)\; e_1\; \mathbf{else}\; e_2 ,a, p, m} \to \St{e_2, a, p, m}} 
 }
     
-\labelRule{\label{rule:while1}}{
+\labelRule{\label{rule:while}}{
 	\infrule[While]
 		{}
 		{F \vdash \St{\mathbf{while}\;(e_1)\; e_2, a, p, m} \to \\ \St{\mathbf{if}\;(e_1)\; (e_2;\mathbf{while}\;(e_1)\; e_2)\; \mathbf{else}\; 0, a, p, m}} 
 }
 
-O $\KW{while}$ é definido em função do $\KW{if}$, tal qual a regra \hyperref[rule:while1]{(WHILE)} descreve. Ele se deriva em um passo para um condicional que se verdadeiro resulta no corpo do $\KW{while}$ seguido da expressão inicial e se falso no valor 0. Seguindo o modelo OCaml \cite{leroy3ocaml}, $\KW{while}$ deveria retornar o tipo $Unit$. Como $PCL_{back}$ não possui tipos, pode-se interpretar o 0 como o $Unit$. Talvez uma interpretação melhor para o retorno de 0 no caso falso é que 0 é o valor da condicional computada quando se para de iterar o loop.
+O $\KW{while}$ é definido em função do $\KW{if}$, tal qual a regra \hyperref[rule:while]{(WHILE)} descreve. Ele se deriva em um passo para um condicional que se verdadeiro resulta no corpo do $\KW{while}$ seguido da expressão inicial e se falso no valor 0. Seguindo o modelo OCaml \cite{leroy3ocaml}, $\KW{while}$ deveria retornar o tipo $Unit$. Como $PCL_{back}$ não possui tipos, pode-se interpretar o 0 como o $Unit$. Talvez uma interpretação melhor para o retorno de 0 no caso falso é que 0 é o valor da condicional computada quando se para de iterar o loop.
 
 \subsubsection{Chamada de Funções}
 
@@ -726,8 +727,45 @@ Com todos os argumentos avaliados, realiza-se a regra \hyperref[rule:callfunc]{(
 A palavra-chave $\KW{Fpop}$ empilhada é utilizada no ambiente de nomes $a$, como descrito em \ref{sec:pcl-back:semantica:globals}. A regra \hyperref[rule:callfunc]{(CALLFUNC)} adiciona $STOP$ no ambiente de nomes locais $a_l$ e cabe a regra final de $\KW{Fpop}$ \hyperref[rule:fpop]{(FPOP)} remover esse elemento do topo.
 
 %	3.4 Error detection
-\section{Detecção de Erros}
+\section{Detecção de Falhas}
 \label{sec:pcl-back:errors}
+
+Em várias regras descritas na seção anterior (\ref{sec:pcl-back:semantica}) há a geração da expressão $\KW{panic}$ seguida de algum código de erro dado algumas pré-condições. Nesta sessão será discorrido o porquê desses erros e quais mecanismos usados. 
+
+
+A detecção de falhas é completamente associada as regras que acessam memória, ou seja, as regras das seções \ref{sec:pcl-back:semantica:atribui}, \ref{sec:pcl-back:semantica:mem-func} e \ref{sec:pcl-back:semantica:acessa}. A detecção parte dos metadados associados aos locais $l\{i, k, o, s\}$. Inicialmente, valida-se se o acesso à memória está dentro da região delimitada. Para isso, o valor de $o$ do local deve ser igual ou maior que 0 e menor que o seu valor de $s$, da forma $ 0 \le o < s$. Caso contrário, essa é uma falha temporal de \emph{Out-of-Bounds-Read} ou \emph{Out-of-Bounds-Write}, dependendo da regra associada, como em \hyperref[rule:deref-mem-obr]{(DEREF-MEM-OBR)} e \hyperref[rule:atribui-deref-mem-obe]{(ATRIBUI-DEREF-MEM-OBE)} respectivamente. Se o aceso for dentro dos limites, então deve-se validar se a chave $k$ do local $l$ é igual à fechadura $k'$ da célula associada na memória, da forma $k = k'$. Caso contrário, essa é uma falha temporal de \emph{Use-After-Free}, podendo ser de um valor da pilha como em \hyperref[rule:deref-pilha-uaf]{(DEREF-PILHA-UAF)} ou de um valor na memória como em \hyperref[rule:deref-mem-uaf]{(DEREF-MEM-UAF)}.
+
+No contexto de acesso a um valor na memória (\ref{sec:pcl-back:semantica:acessa}) também deve-se validar se o valor acessado é inicializado, da forma $v \neq \bot$. Caso contrário, essa é uma falha de inicialização de \emph{Uninitialized-Access}, como em \hyperref[rule:var-ua]{(VAR-UA)}. Nota-se que em nenhuma regra há a validação de se a célula acessada é não inicializada, ou seja, não se valida se $v \neq -$. Isso se deve ao fato das checagem de falhas serem sequenciais. Só se realiza a operação $v \neq \bot$ após saber que o acesso é a um valor dentro do espaço alocado e esse espaço não foi liberado ainda no momento de acesso. Dessa forma, o espaço foi alocado por uma operação de $\KW{Let}$ ou $\KW{malloc}$ em algum ponto, atribuindo o valor $\bot$ a região e uma operação de limpeza, $\KW{pop}$ e $\KW{free}$, ainda não foi realizada na região, impedindo que o valor pudesse ser redefinido para $-$.
+
+Por fim vale uma atenção especial às falhas detectadas na função $\KW{free}$. No contexto de $PCL_{back}$, a ausência de uma estrutura global para acompanhar as alocações limita a paridade da operação \lstinline[language=C]|free(void*)| de C com o $\KW{free}(l^m, n)$ de $PCL_{back}$. Mesmo assim, vários das falhas descritas em \ref{sec:mem-error:temporal:free} tem paralelos com possíveis falhas de $\KW{free}$ em $PCL_{back}$. Passar o local nulo ou um local com a etiqueta da pilha, são similares a \emph{Free-Memory-Not-On-Heap}, pois em C a pilha e o ponteiro nulo também não são parte da \emph{heap}. Um \emph{Partial-Free} e \emph{Double-Free} não corromperiam a execução de um programa em $PCL_{back}$, porém pode-se usar os metadados de um local $l\{i, k, o, s\}$ para emitir um $\KW{panic}$ quando uma situação que geraria esse tipo de falha em C acontecer em $PCL_{back}$. Para o \emph{Partial-Free}, que acontece na regra \hyperref[rule:free-partial]{(FREE-PARTIAL)}, basta checar que o desvio $o$ é 0 (o local é para o início da região) e o tamanho da região liberada $n$ é igual ao tamanho da região $s$ associada ao local, da forma $s = n$. Escolheu-se, por simplicidade, gerar esse mesmo erro quando se escolhe um $n > s$. Mesmo essa situação não ocorrendo em C, é uma continuação clara dessa falha para $PCL_{back}$. Para o \emph{Double-Free}, que acontece na regra \hyperref[rule:free-double]{(FREE-DOUBLE)}, usa o mesmo mecanismo de detecção de \emph{Use-After-Free} das demais regras, validando se o primeiro elemento tem uma fechadura $k'$ igual à chave $k$ do local que acessa, da forma $k = k'$. Só é necessário fazer a comparação para a chave do primeiro elemento, pois se sabe que a região a ser liberada foi corretamente descrita ($o = 0$ e $s = n$) e não poderia ter sido liberada e realocada parcialmente. Dessa forma, as chaves dessa região são todas as mesmas e fazer a comparação só com a primeira é suficiente.
+
+Uma característica importante dessas regras de detecção de falhas é que elas acabam definindo o que significa uma falha de memória em $PCL_{back}$. No caso de uma falha espacial, se o acesso a pilha ou a memória é via um local $l\{i, k, o, s\}$ com o seu desvio $o$ menor que 0 ou maior ou igual a $s$, então o programa termina de execução e sabe-se que a interrupção foi devido a uma falha espacial. Para as temporais, há mais granularidade. Com \emph{Use-After-Free}, se o acesso a pilha ou a memória é via um local $l\{i, k, o, s\}$ com a sua chave $k$ diferente da fechadura $k'$ do local acessado $i + o$, então o programa termina de execução e sabe-se que a interrupção foi devido a uma falha temporal de tipo \emph{Use-After-Free}. Essas relações podem ser observadas na tabela \ref{table:invariants}, em que os símbolos usados na coluna dos invariantes seriam os símbolos disponíveis no momento da falha correspondente.
+
+\begin{table}[ht]
+	\centering
+	\caption{Invariantes do Programa}
+	\label{table:invariants}
+	\begin{tabular}{lll}
+		\toprule 
+		Tipo & Falha & Invariantes \\
+		\midrule
+		Espacial	& \emph{Out-of-Bounds-Read} & $0 > o \ge s$ \\
+		 			& \emph{Out-of-Bounds-Write} & $0 > o \ge s$ \\
+		Temporal 	& \emph{Use-After-Free} & $0 \le o < s \quad k \neq k'$\\
+		 			& \emph{Free-Memory-Not-on-Heap} & $l = l^p \lor i = 0$ \\
+		 			& \emph{Partil-Free} & $o \neq 0 \lor s \neq n$ \\
+		 			& \emph{Double-Free} & $o = 0 \quad s = n \quad k \neq k'$ \\
+		Inicialização 	& \emph{Uninitialized-Access} & $0 \le o < s \quad k = k' \quad v = \bot$  \\
+		Extra 	    & \emph{Nullptr-Deref} & $i = 0 \quad k = 0 \quad o = 0 \quad s = 0$  \\
+		\bottomrule
+	\end{tabular}
+	\legend{Fonte: O Autor}
+\end{table}
+
+
+
+
+\todo[inline]{Adicionar exemplo em PCL-back reproduzindo os erros em C.}
 
 % falar das seções 
 % - Declarações e atribuições
