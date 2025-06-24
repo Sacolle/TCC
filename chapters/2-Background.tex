@@ -68,7 +68,7 @@ não se checa se $idx \ge 0$, possivelmente acessando memória antes do ponteiro
 \begin{lstlisting}[language=C ,label={lst:spacial-error-c}, caption=Exemplo de uma Falha Espacial]
 int get_val(int* list, int len, int idx){
 	if(idx < len) return list[idx];
-	else return -1;
+ 	else return -1;
 }
 \end{lstlisting}
 
