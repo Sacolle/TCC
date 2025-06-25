@@ -8,12 +8,17 @@
 % to validate temporal memory access. Although, properly validating its claims 
 % has been a challenge\cite{RUSTBELT, RUSTSYMBOLIC}.
 
+Com a base $PCL_{back}$ definida, agora se avança para a próxima etapa do projeto, provar alguma solução de memória. Uma das soluções mais estudadas é o \emph{Borrow Checker} de Rust \cite{RUSTBOOK}. Ele promete uma solução para \emph{bugs} temporais com zero custo no desempenho do programa. Para isso, não só se limita a habilidade do programador de realizar \emph{alias}, como se necessita que ele anote o código para validar os acessos temporais. Entretanto, a validação desse sistema todo tem sido um desafio \cite{RUSTBELT,RUSTSYMBOLIC}.
+
 % In the case of $PCL_{back}$, there is an interesting bijection between the key locks 
 % used to check for temporal safety and the lifetimes used for computing the correctness 
 % of an access. Therefore, one could postulate that to implement a front-end language 
 % with a borrow checking system $PCL_{front}$, it could be proven that 
 % no \textit{Use After Free} errors would occur in $PCL_{back}$, 
 % given a correct input program and a sound compilation.
+
+Esse sistema foi escolhido especificamente porque há uma bijeção interessante entre as chaves e fechaduras usadas no mecanismo de detecção de falhas temporais de $PCL_{back}$ e os tempos de vida usados pelo \emph{Borrow Checker} de Rust para validar os acessos. Dessa forma, pode-se postular que ao implementar uma linguagem de \emph{front-end} com um sistema de \emph{Borrow Checker}, $PCL_{front}$, poder-se-ia provar que nenhum erro de \emph{Use-After-Free} ocorreria no $PCL_{back}$ compilado de $PCL_{front}$ dado um programa de entrada e compilação corretos.
+
 
 %	4.1 Rust and the Borrow Checker
 \section{O Borrow Checker do Rust}

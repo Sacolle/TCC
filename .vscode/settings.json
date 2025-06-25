@@ -16,7 +16,7 @@
 	"ltex.latex.commands": {
 		"\\todo{}": "ignore",
 		"\\todo[]{}": "ignore",
-		"\\emph{}" : "ignore",
+		"\\emph{}" : "dummy",
 		"\\infrule[]{}" : "ignore",
 		"\\labelRule{}{}" : "ignore",
 		"\\labelRule{}" : "ignore",
