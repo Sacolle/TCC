@@ -29,3 +29,4 @@
 {"rule":"SPACE_BEFORE_PUNCTUATION2","sentence":"^\\QAssim como o acesso na pilha, essa operação pode ser vista como uma simples indexação a um .\\E$"}
 {"rule":"TODOS_FOLLOWED_BY_NOUN_PLURAL","sentence":"^\\QAs globais do programa são declaradas todas declaradas juntas no começo do programa\\E$"}
 {"rule":"UPPERCASE_SENTENCE_START","sentence":"^\\Qavalia para o endereço alocado na pilha \\E(?:Dummy|Ina|Jimmy-|Dummy-|Maniquí-|Maniquíes-)[0-9]+\\Q.\\E$"}
+{"rule":"GENERAL_NUMBER_AGREEMENT_ERRORS","sentence":"^\\QAo invés de utilizar um GC para abstrair o acesso à memória do programador, Rust se utiliza de uma série de regras para checar e gerir, em tempo de compilação, os acessos à memória, evitando erros como \\E(?:Dummy|Ina|Jimmy-|Dummy-|Maniquí-|Maniquíes-)[0-9]+\\Q, \\E(?:Dummy|Ina|Jimmy-|Dummy-|Maniquí-|Maniquíes-)[0-9]+\\Q, etc. O mecanismo dentro da linguagem que faz essa validação é o Borrow Checker.\\E$"}

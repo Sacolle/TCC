@@ -19,16 +19,53 @@ Com a base $PCL_{back}$ definida, agora se avança para a próxima etapa do proj
 
 Esse sistema foi escolhido especificamente porque há uma bijeção interessante entre as chaves e fechaduras usadas no mecanismo de detecção de falhas temporais de $PCL_{back}$ e os tempos de vida usados pelo \emph{Borrow Checker} de Rust para validar os acessos. Dessa forma, pode-se postular que ao implementar uma linguagem de \emph{front-end} com um sistema de \emph{Borrow Checker}, $PCL_{front}$, poder-se-ia provar que nenhum erro de \emph{Use-After-Free} ocorreria no $PCL_{back}$ compilado de $PCL_{front}$ dado um programa de entrada e compilação corretos.
 
-
 %	4.1 Rust and the Borrow Checker
-\section{O Borrow Checker do Rust}
+\section{O Borrow Checker de Rust}
+
+Rust é uma linguagem de programação de baixo nível, comparável a C++, que oferece acesso seguro à memória sem custo ao tempo de execução do programa. Ao invés de utilizar um GC para abstrair o acesso à memória do programador, Rust se utiliza de uma série de regras para checar e gerir, em tempo de compilação, os acessos à memória, evitando erros como \emph{Use-After-Free}, \emph{Double-Free}, etc. O mecanismo dentro da linguagem que faz essa validação é o \emph{Borrow Checker}. 
+
+A intuição do funcionamento do \emph{Borrow Checker} parte do entendimento de como são geridas alocações na pilha e na \emph{heap}. Um caso de estudo é, por exemplo, uma \emph{string} dinâmica $s1$, declarada como \lstinline[language=Rust]|let s1 = String::from("hello")|. Ela possui um componente da pilha, a tripla ponteiro, tamanho, capacidade, com o ponteiro referenciando o componente da \emph{heap}, que guarda os caracteres em si. O diagrama \ref{fig:svg:mem-layout} demonstra o \emph{layout} dessa estrutura em memória.
+
+\begin{figure}[ht]
+	\centering
+	\caption{\emph{Layout} de memória de uma \emph{string} dinâmica em Rust.}
+	\label{fig:svg:mem-layout}
+	\includesvg[scale=0.35]{figures/string-layout.svg}
+	\legend{Fonte: \citet[Figure 4-1]{RUSTBOOK}}
+\end{figure}
+
+Estruturas na pilha são trivialmente copiadas, visto que o tamanho delas é sempre conhecido. Elementos na \emph{heap} podem representar diversas estruturas complexas sem tamanho definido.  Dessa forma, tipos em Rust podem \lstinline[language=Rust]|Copy| ou \lstinline[language=Rust]|Clone|, representando, respectivamente, a cópia automática de valores, para estruturas compostas apenas por elementos na pilha, e a possibilidade de cópia manual, para estruturas que possuem uma parte na \emph{heap}. A interação que faz esse conceito progredir é que operações de atribuição, tal como \lstinline[language=Rust]|a = b|, só copiam o componente na pilha de um valor. Por consequência, valores que não são \lstinline[language=Rust]|Copy| adquirem um novo contexto semântico na atribuição, em que ao invés do elemento da esquerda receber o valor do elemento da direita, o elemento da direita é movido para o elemento da esquerda. 
+
+Esse conceito de mover valores introduz a ideia de \emph{ownership}. Nela, variáveis são donas de valores e em certas operações (atribuição, passagem de parâmetros, capturas...), caso o tipo não seja \lstinline[language=Rust]|Copy|, a propriedade do valor é passada de um elemento a outro. O acesso a um valor só pode ser feito então pelo elemento que é dono deste. No trecho de código \ref{fig:ex:move}, $s1$ é dono do valor \lstinline[language=Rust]|String::from("hello")| e este é \textbf{movido} para $s2$. O acesso então a $s1$ após mover o valor passa a ser inválido, pois ele não é mais o dono do valor.
+
+\begin{figure}[ht]
+	\caption{Exemplo de \emph{move} em Rust}
+	\label{fig:ex:move}
+	\begin{lstlisting}[language=Rust]
+let s1 = String::from("hello");
+let s2 = s1;
+s1.len(); //erro, uso de valor movido.
+	\end{lstlisting}
+	\legend{Fonte: Os Autores.}
+\end{figure}
+
+Outro aspecto importante é que todos os valores têm a sua função \lstinline[language=Rust]|drop| chamada quando os seus donos saem de escopo, visto que é apenas através deles que o valor pode ser acessado, não é necessário manter o objeto em memória se não há nenhum elemento vivo para referenciá-lo. Com isso, introduz-se o conceito do \emph{Borrow} (empréstimo). Um empréstimo em Rust nada mais é que um ponteiro não anulável a um valor, tal qual referências em C++. Esse empréstimo pode ser imutável, podendo existir várias cópias dele, ou mutável, podendo existir só um. Esses modos são mutuamente exclusivos, ou um empréstimo mutável, ou vários empréstimos imutáveis. Eles também carregam uma notação que indica o seu tempo de vida, denotado por uma breve \emph{string} de caracteres prefixado com uma aspa simples, tal como \lstinline[language=Rust]|'a|.
+
+O acesso a esses empréstimos é validado, em tempo de compilação, com o uso de \emph{Borrow Checker}, que analisa os tempos de vidas deles e verifica se todos os acessos são a elementos vivos no escopo de execução (vivo aqui denota que ele ainda não saiu de escopo ou foi manualmente liberado). Há várias estratégias para validar esses acessos. A atual é uma mistura de NLL \cite{NLL} e Polonius \cite{Stjerna1684081}, que será elaborado em sequência.
+
+%Essa dicotomia está no cerne do \emph{Borrow Checker}. 
+O \emph{Borrow Checker} então pode ser definido como uma ferramenta para validar os acessos a ponteiros, construído sobre uma base que limita a criação desses diretamente para estruturas na \emph{heap}. Pode-se observar muita semelhança com o sistema de \emph{move} de Rust para tipos não \lstinline[language=Rust]|Copy| com o \emph{unique\_ptr} de C++. Os dois impedem o \emph{alias} múltiplo, liberando a sua memória no final do escopo. 
 
 %	4.2 Tipos Lineares
 \section{Tipos Lineares}
-% Call back da sessão anterior, recontextualizando o comportamento do borrow checker 
-% do Rust como tipos lineares/Afim
 
+Tipos Lineares é um sistema de tipos derivado da lógica linear intuicionista \cite{CSLINLOG}. Nele, valores de tipos lineares devem ser usados exatamente uma vez. A pesquisa desse sistema de tipos se iniciou principalmente focada na capacidade dele de reduzir alocações em linguagens funcionais \cite{Wadler1990LinearTC}. A tendência de muitos desses sistemas era de implementar tipos lineares junto de tipos não lineares. Dessa forma, alguns elementos da linguagem, os não lineares, podem ser usados várias vezes (ou não usados), e outros, os lineares, podem ser usados só uma vez. 
+
+Essa dinâmica entre um sistema com tipos lineares e não lineares evoca fortemente o sistema de tipos de Rust, com tipos \lstinline[language=Rust]|Clone| e \lstinline[language=Rust]|Copy|. Os tipos não \lstinline[language=Rust]|Copy| de Rust podem ser modelados como tipos lineares. O uso de um valor em Rust é o ato de mover ele para outro dono: o símbolo que tinha o valor não o carrega mais, foi usado. Além disso, pode-se pensar que todos os valores são usados pelas suas respectivas funções \lstinline[language=Rust]|drop()| no final de seus escopos.
+
+%complementar?
 %	4.3 Polonius
 \section{Polonius}
+
 % Explicar os detalhes da implementação do polonius
 % Expecífico ao domínio do Rust

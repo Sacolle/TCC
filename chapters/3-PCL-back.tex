@@ -122,6 +122,7 @@ let ()
 
 %	3.2 Memory Model
 \section{Modelo de Memória}
+\label{sec:memory-model}
 
 O layout de memória de um programa em C tem vários componentes\todo{Adicionar citação e um diagrama. Provavelmente retirar do livro de C}: o segmento de texto, que contém o programa em si; a seção de dados, que guarda elementos globais, assim como \emph{strings} literais e outros elementos escritos no código; a pilha e a \emph{heap}. A pilha é o lugar em que variáveis locais são alocadas e chamadas de funções são geridas. Ela realiza alocações de tamanho conhecido em tempo de compilação e libera essa memória no final do escopo da variável associada. A \emph{heap} é o lugar em que alocações dinâmicas são colocadas, seja porque o tamanho ou a duração não são conhecidos em tempo de compilação.
 
