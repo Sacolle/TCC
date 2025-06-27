@@ -12,6 +12,8 @@ O objetivo dessa linguagem é, quando compilada para $PCL_{back}$, nunca atingir
 
 A sintaxe da linguagem é bem próxima de um $PCL_{back}$ tipado. O modelo de linearidade necessitou de alguns operadores adicionais sendo eles a troca $:=:$ e troca que dereferência $:=:\!\text{*}$; o incremento $+=$ e decremento $-=$; e a cópia de ponteiro $\KW{alias}$ e a cópia de ponteiro que dereferência $\KW{alias}\!\text{*}$. Os termos $\KW{new}\typearg{\tau}$ e $\KW{delete}$ substituem o $\KW{malloc}$ e $\KW{free}$ com a mesma funcionalidade, mas com nomes que indicam uma operação mais alto nível. Por fim, os \emph{macros} \emph{PANIC} e \emph{NULL} se tornaram as expressões $\KW{stop}$ e $\KW{nullptr}\typearg{\tau}$ respectivamente. Tem-se também $\KW{nullalias}\typearg{\tau}$ como o \emph{alias} nulo da linguagem. A sintaxe é descrita por \ref{fig:pcl-front:sintax}.
 
+\def\notmov#1{\color{blue}\underline{{\color{black}#1}}\color{black}}
+
 \begin{figure}[ht]
 	\caption{Sintaxe de $PCL_{front}$}
 	\label{fig:pcl-front:sintax}
@@ -21,51 +23,196 @@ A sintaxe da linguagem é bem próxima de um $PCL_{back}$ tipado. O modelo de li
 		Value \ni v ::&= n \OR l && \\
 		BinOp \ni op ::&= + | - | * | < | > | = | \land | \lor \\
 		Expression \ni e ::&= x \OR v \\
-		&\NLOR e\; op\; e \OR !e  \\
-		&\NLOR \text{*}e \OR \&x \OR \KW{alias} \; x \OR \KW{alias}\text{*} \; x\\
+		&\NLOR e\; op\; e \OR !e \OR \notmov{x +\!\!= e} \OR \notmov{x -\!\!= e_2}\\
 		&\NLOR e;e \OR \{e\} \\ 
 		&\NLOR \KW{new}\typearg\tau(e) \OR \KW{delete}(e, e) \; \\ 
 		&\NLOR \KW{var}\; x: \tau := e \OR e_1 := e_2 \\
-		&\NLOR e_1 :=: e_2 \OR e_1 :=:\!\text{*}\;e_2\\
+		&\NLOR \notmov{\text{*}e} \OR \notmov{\&x} \OR \notmov{\KW{alias} \; x} \OR \notmov{\KW{alias}\text{*} \; x}\\
+		&\NLOR \notmov{e_1 :=: e_2} \OR \notmov{e_1 :=:\!\text{*}\;e_2}\\
 		&\NLOR \KW{if}(e) \; e \; \KW{else} \; e\\
 		&\NLOR f(\bar e) \\ 
 		&\NLOR \KW{stop}\\ 
 		&\NLOR \KW{nullprt}\typearg{\tau} \OR \KW{nullalias}\typearg{\tau}\\ 
 		Function \ni F ::&= \KW{fn} \; f(\overline{x : \tau}) \to \tau \; e \; F \; | \; \mathbf{let}\;() \; e \\
 	\end{align*}
+	\vspace{-4em}
+	\begin{flushleft}
+		\small
+		{\color{red}*}Elementos subscritos em {\color{blue} azul} não movem valores.
+	\end{flushleft}
 	\legend{Fonte: Os Autores.}
 \end{figure}
 
 \noindent$'a$, $x$ e $f$ são meta variáveis que cobrem as regiões, nomes de variáveis e nomes de funções de um programa respectivamente. Os nomes de variáveis $x$ também são usados como o nome dos empréstimos, visto que nesta versão do \emph{Borrow Checker}, não se precisa anotar o modo de acesso, todos os acessos são mutáveis.
  
-Há algumas omissões importantes. Não há tipos tupla ou recursivos. Mesmo que $PCL_{back}$ pudesse representar eles, eles complicam o \emph{Borrow Checker} e o passo de compilação. Entretanto, a omissão é principalmente por limite de tempo e escopo do projeto. Essa é a mesma razão pela omissão do operador $\KW{while}$ e declarações globais.
+Há algumas omissões relevantes. Não há tipos tupla ou recursivos. Mesmo que $PCL_{back}$ pudesse representar eles, eles complicam o \emph{Borrow Checker} e o passo de compilação. Entretanto, a omissão é principalmente por limite de tempo e escopo do projeto. Essa é a mesma razão pela omissão do operador $\KW{while}$ e declarações globais.
 
+\section{Linearidade e \emph{Alias}}
+
+O sistema de \emph{Borrow Checker} de $PCL_{front}$ é fortemente conectado com o seu sistema de linearidade. O tipo ponteiro, $\text{*}\!\tau$, é linear e aponta para uma região da \emph{heap}. Ele é obtido através da função $\KW{new}$ e só é apagado através da função $\KW{delete}$. Os demais tipos são não lineares. O tipo \emph{alias}, $@\tau'a$ é uma forma de copiar o tipo ponteiro, e também é usado para referenciar valores na pilha. Ele denota uma cópia (\emph{alias}) de um ponteiro e é equivalente aos empréstimos de Rust. Uma consequência da modelagem com tipos lineares é quais operações consomem o valor, quais operações que, passado uma variável $x$ do tipo $\text{*}\!\tau$, consomem o valor e o tornam inacessíveis via a variável passada. As operações subscritas em {\color{blue}azul} não movem os valores passados a eles. Excluindo os operadores de dereferência (*) e referência (\&), são todos operadores novos, introduzidos com o propósito de não mover os valores no uso. Por exemplo, os operadores de incremento e decremento foram criados para poder-se aumentar o valor de um ponteiro sem que se usa o valor, dessa forma acessos a listas em memória ficam mais fáceis, como em \ref{fig:pcl-front:inc}.
+
+\begin{figure}[ht]
+	\caption{Acesso a listas em memória em $PCL_{front}$}
+	\label{fig:pcl-front:inc}
+	\begin{lstlisting}[language=PCLfront]
+do(*x);
+x += 1;
+do(*x);
+x += 1;
+// ...
+	\end{lstlisting}
+	\legend{Fonte: Os Autores.}
+\end{figure}
+
+Porém, há um problema nesse sistema, especificamente com o fato que o ato de dereferenciar um ponteiro não consome este. No exemplo \ref{fig:pcl-front:uaf}, consegue-se duplicar um ponteiro a memória e liberá-lo, realizando uma falha de \emph{Use-After-Free} dentro da linguagem feita para preveni-los.
+
+\begin{figure}[ht]
+	\caption{Geração de erro de \emph{Use-After-Free} com $PCL_{front}$ sem restrições.}
+	\label{fig:pcl-front:uaf}
+	\begin{lstlisting}[language=PCLfront]
+var a: **int := new<*int>(1);
+*a := new<int>(1);
+//acessa o ponteiro salvo no |.{\color{codegreen}endereço}. a
+delete(*a, 1);
+//acessa novamente
+*a // <- use after free
+	\end{lstlisting}
+	\legend{Fonte: Os Autores.}
+\end{figure}
+
+A operação de dereferência de valores precisa então ser restringida. Dessa forma, tem-se que uma operação de deferência $\text{*}\!e$ só é valida se $e$ for de um tipo não linear, $e\!:\,!\tau$ ($!$ prefixando um tipo indica que este é não linear). Essa limitação justifica os operadores $:=:\!\!\text{*}$ e $\KW{alias}\text{*}$, operações em que mesmo com um tipo $e$ linear, pode-se dereferenciar, pois a operação imediata após é segura e absorve o valor. Essa dinâmica vem inspirada nos \emph{tracked pointers} de Cyclone \cite[p.6]{CYCLONEMEM}, que limitam também o acesso a ponteiros alinhados da mesma forma. Um último adicional é que a função $\KW{new}$ inicializa a memória com o valor base do tipo indicado. Dessa forma \ref{fig:pcl-front:uaf} também está incorreto na sua segunda linha, pois descarta o tipo linear em memória. O trecho \ref{fig:pcl-front:init} descreve essa inicialização mais propriamente. O $\KW{delete}$ na linguagem pode consumir ponteiros nulos sem emissão de falhas.
+\todo{e os alias na memória?}
+
+\begin{figure}[ht]
+	\caption{Inicialização correta de ponteiros aninhados com $PCL_{front}$.}
+	\label{fig:pcl-front:init}
+	\begin{lstlisting}[language=PCLfront]
+var a: **int := new<*int>(1); //|.{\color{codegreen}Inicia espaço alocado com nullptr}.
+var b: *int := new<int>(1); //|.{\color{codegreen}Inicia espaço alocado com 0}.
+b := 2;
+//|.{\color{codegreen}Troca o ponteiro $b$ pelo ponteiro na posição $a$}. 
+b :=:* a;
+delete(b, 1);
+//|.{\color{codegreen}$a$ agora é $a \to ptr \to 2$}. 
+	\end{lstlisting}
+	\legend{Fonte: Os Autores.}
+\end{figure}
+
+O \emph{Borrow Checker} da linguagem, então, é extremamente similar ao modelo do Polonius, descrito em \ref{sec:chap4:polonius}, apenas com nomes diferentes. Qualquer operação que use, consumindo ou não, o ponteiro, invalida os seus \emph{alias}.
 % 	5.3 Checagem de Tipos
 \section{Checagem de Tipos e Regiões}
 
-\todo[inline]{É aqui que tu comenta da forma do borrow checker, assim como as regras de aliasing e acesso a tipos lineares. }
+A checagem de tipos dessa linguagem inclui a validação de acessos a \emph{alias}, ou seja, o \emph{Borrow Checker} faz parte do sistema de tipos. Uma consequência disso é que acessos a um nó da árvore de avaliação podem ter efeitos colaterais em nós irmãos e primos, necessitando de uma ordem de avaliação em profundidade para que todos os nós sejam computados com a informação de todos os nós anteriores. Dessa forma, a avaliação de um termo devolve o seu tipo e o ambiente resultante na computação, na forma $\Delta \vdash e : \tau\;|\;\Delta'$, em que $e$ computado sobre $Delta$ tem o tipo $\tau$ e resulta no ambiente $\Delta'$.
 
-% One important aspect of $PCL_{front}$'s linear type system is how to deal with pointer
-% dereferences. Following Cyclone's rules for accessing linear pointers\cite{CYCLONEMEM},
-% a pointer $\text{*}\tau$ or $@\tau'a$ can be safely dereferenced if $\tau$ is nonlinear.
-% For other cases a swap and alias attached with a dereference are safe abstractions 
-% ($\mathbf{alias}\text{*}\;e$, $e_1 :=:\!\!\text{*} \;e_2$).
+Os ambientes usados para computação são $\Gamma$, $U$, $R$ e $L$. O ambiente $\Gamma$ é o ambiente de variáveis para tipos, com $U$ sendo o seu coadjuvante. Ele também é um ambiente de variáveis para tipos, mas é o local em que variáveis acessada são movidas para que a operação imediatamente anterior a elas decida se serão descartadas ou reincorporadas em $\Gamma$. Os ambientes $R$ e $L$ são dedicados a avaliação dos \emph{alias} do programa, contendo o mesmo significado que o descrito em \ref{sec:chap4:polonius}, $R$ é a relação entre regiões e $L$ é a relação de regiões para conjuntos de concessões. Dessa forma, a seguir se tem as regras de tipo de $PCL_{front}$
 
-% The borrow checker implemented is based on the Polonius 
-% proposal\cite{Matsakis_2018, Stjerna1684081}. This implementation requires that 
-% a node in the derivation tree alter a state which will be used for the sequent 
-% assessment of other nodes. This imposes an evaluation order of depth first, 
-% which is shown in the notation by each assessment returning its computed type 
-% and its resulting environments. 
 
-% These environments are: $\Gamma$, the association between names and types; 
-% $U$, similar to $\Gamma$, but as an intermediary space between used value and 
-% restored value; $R$ is a set of region pairs $('a, 'b)$, such as 
-% $'a : 'b$ ($a$ outlives $b$), $R$ is transitive; $L$ is a set of region to 
-% loan relations, which propagates over $R$ in that 
-% $('a,'b) \in R \land ('a, x) \in L\to ('b, x) \in L$. Any access to an alias
-% $@\tau'a$ needs to validate that $'a$ has a valid loan, as in (\textsc{DerefAlias}). 
 
 
 %   5.4 Definição via compilação
 \section{Definição via Compilação}
+
+A definição via compilação é relativamente simples. A linguagem foi criada de uma forma que esse processo fosse simples. Para a maioria dos elementos basta apenas apagar os tipos, entretanto para os operadores de troca ($:=:$,$:=:\!\!\text{*}$) e para o $\KW{new}$ é necessário algumas operações adicionais. Abaixo segue a função recursiva que define a compilação, ela se utiliza da função $\KW{newname}$ para gerar nomes únicos para variáveis.
+
+\infrule[Number]
+	{}
+	{\Gamma;U;R;L \vdash n : \KW{int} \OR \Gamma;U;R;L} 
+
+\infrule[Var-nonlin]
+	{}
+	{\Gamma, x:\,!\tau;U;R;L \vdash x : \tau \OR \Gamma,x:\tau;U;R;L} 
+
+\infrule[Var-lin]
+	{}
+	{\Gamma, x:\tau;U;R;L \vdash x : \tau \OR \Gamma;U, x:\tau;R;\text{rm}(x,L) }
+
+\infrule[Ref]
+	{'r = \text{newlabel}}
+	{\Gamma, x:\tau;U;R;L \vdash \&x : @\tau'r \OR \Gamma,x:\tau;U;R;L, ('r, x)}
+
+\infrule[Binop]
+	{\text{TODO}}
+	{\Gamma;U;R;L \vdash n : \KW{int} \OR \Gamma;U;R;L} 
+
+\infrule[Increment]
+	{\text{TODO}}
+	{\Gamma;U;R;L \vdash n : \KW{int} \OR \Gamma;U;R;L} 
+
+\infrule[Decrement]
+	{\text{TODO}}
+	{\Gamma;U;R;L \vdash n : \KW{int} \OR \Gamma;U;R;L} 
+
+\infrule[Not]
+	{\text{TODO}}
+	{\Gamma;U;R;L \vdash n : \KW{int} \OR \Gamma;U;R;L} 
+
+\infrule[Deref-Ptr]
+	{\Gamma;U;R;L \vdash e : \text{*}\tau \OR \Gamma';U';R';L' \quad \tau \text{ is nonlinear}}
+	{\Gamma;U;R;L \vdash \text{*}e : \tau \OR \Gamma',U';\emptyset;R';L'} 
+
+\infrule[Deref-Alias]
+	{\Gamma;U;R;L \vdash e : @\tau'r \OR \Gamma';U';R';L' \quad \tau \text{ is nonlinear} \quad 'r \text{ is valid}}
+	{\Gamma;U;R;L \vdash \text{*}e : \tau \OR \Gamma',U';\emptyset;R';L'} 
+
+\infrule[Alias]
+	{'r = \text{newlabel}}
+	{\Gamma, x:\text{*}\tau;U;R;L \vdash \KW{alias}\;x : @\tau'r \OR \Gamma,x:\text{*}\tau;U;R;L, ('r, x)} 
+
+\infrule[Alias-Deref]
+	{}
+	{\Gamma, x:@\text{*}\tau'r;U;R;L \vdash \KW{alias}\text{*}\;x : @\tau'r \OR \Gamma,@\text{*}\tau'r;U;R;L, ('r, x)} 
+
+\infrule[Compose]
+	{\Gamma;U;R;L \vdash e_1 : \tau_1 \OR \Gamma';U';R';L' \quad \Gamma';\emptyset;R';L' \vdash e_2 : \tau_2 \OR \Gamma'';U'';R'';L''}{\Gamma;U;R;L \vdash e_1;e_2 : \tau_2 \OR \Gamma'';U'';R'';L''} 
+
+\infrule[Scope]
+	{\Gamma;U;R;L \vdash e : \tau \OR \Gamma';U';R';L' \quad \Gamma \text{ is nonlinear}}
+	{\Gamma;U;R;L \vdash \{e\}:\tau \OR \Gamma'\cap\Gamma;\emptyset;R;\forall (\_, n) \in \Gamma'/\Gamma, \text{rm}(n, L')} 
+
+\infrule[New]
+	{\Gamma;U;R;L \vdash e : \KW{int} \OR \Gamma';U';R';L'}
+	{\Gamma;U;R;L \vdash \KW{new}\typearg{\tau}(e):\text{*}\tau \OR \Gamma';\emptyset;R';L'}
+
+% acho que tem que ser só o delete var, pq dá pra fazer *(&tau)
+% não dá, essa operação fica *(@*T) que é inválido via as regras que tu escreveu.
+
+\infrule[Delete-var]
+	{\Gamma;U;R;L \vdash e : \KW{int} \OR \Gamma';U';R';L'}
+	{\Gamma,x:\tau;U;R;L \vdash \KW{delete}(x, e): Unit \OR \Gamma';\emptyset;R';rm(x, L')}
+
+\infrule[Delete]
+	{\Gamma;U;R;L \vdash e_1: \text{*}\tau \OR \Gamma';U';R';L' \quad \Gamma';\emptyset;R';L' \vdash e_2 : \KW{int} \OR \Gamma'';U'';R'';L''}
+	{\Gamma;U;R;L \vdash \KW{delete}(e_1, e_2): Unit \OR \Gamma'';\emptyset;R'';L''}
+
+\infrule[Var-Alias]
+	{\Gamma;U;R;L \vdash e: @\tau'1 \OR \Gamma';U';R';L'}{\Gamma;U;R;L \vdash \KW{var}\;x : @\tau'r := e: Unit \OR \Gamma', x: \tau;\emptyset;R', ('1, 'r);L'}
+
+\infrule[Var]
+	{\Gamma;U;R;L \vdash e: \tau \OR \Gamma';U';R';L'}
+	{\Gamma;U;R;L \vdash \KW{var}\;x : \tau := e: Unit \OR \Gamma', x: \tau;\emptyset;R';L'} 
+
+\infrule[Assign]
+	{\Gamma;U;R;L \vdash e_1: \tau \OR \Gamma';U';R';L' \quad \Gamma';\emptyset;R';L' \vdash e_2 : \tau \OR \Gamma'';U'';R'';L'' \quad \tau \text{ is nonlinear}}
+	{\Gamma;U;R;L \vdash e_1 := e_2: \tau \OR \Gamma'';\emptyset;R'';L''} 
+
+\infrule[Swap]
+	{\Gamma;U;R;L \vdash e_1: \tau \OR \Gamma';U';R';L' \quad \Gamma';\emptyset;R';L' \vdash e_2 : \tau \OR \Gamma'';U'';R'';L'' \quad \tau \text{ is nonlinear}}
+	{\Gamma;U;R;L \vdash e_1 := e_2: \tau \OR \Gamma'';\emptyset;R'';L''} 
+
+
+\infrule[Swap-Deref]
+	{\Gamma;U;R;L \vdash e_1: \tau \OR \Gamma';U';R';L' \quad \Gamma';\emptyset;R';L' \vdash e_2 : \tau \OR \Gamma'';U'';R'';L'' \quad \tau \text{ is nonlinear}}
+	{\Gamma;U;R;L \vdash e_1 := e_2: \tau \OR \Gamma'';\emptyset;R'';L''} 
+
+\infrule[If]
+	{\Gamma;U;R;L \vdash e_1: \tau \OR \Gamma';U';R';L' \quad \Gamma';\emptyset;R';L' \vdash e_2 : \tau \OR \Gamma'';U'';R'';L'' \quad \tau \text{ is nonlinear}}
+	{\Gamma;U;R;L \vdash e_1 := e_2: \tau \OR \Gamma'';\emptyset;R'';L''} 
+
+\infrule[CallFunc]
+	{\Gamma;U;R;L \vdash e_1: \tau \OR \Gamma';U';R';L' \quad \Gamma';\emptyset;R';L' \vdash e_2 : \tau \OR \Gamma'';U'';R'';L'' \quad \tau \text{ is nonlinear}}
+	{\Gamma;U;R;L \vdash e_1 := e_2: \tau \OR \Gamma'';\emptyset;R'';L''} 
+
+\infrule[DeclFunc]
+	{\Gamma;U;R;L \vdash e_1: \tau \OR \Gamma';U';R';L' \quad \Gamma';\emptyset;R';L' \vdash e_2 : \tau \OR \Gamma'';U'';R'';L'' \quad \tau \text{ is nonlinear}}
+	{\Gamma;U;R;L \vdash e_1 := e_2: \tau \OR \Gamma'';\emptyset;R'';L''} 
+

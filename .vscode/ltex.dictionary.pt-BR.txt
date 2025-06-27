@@ -21,3 +21,5 @@ UB
 dereferência
 booleana
 Polonius
+derefênciar
+dereferenciar
