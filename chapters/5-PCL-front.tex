@@ -1,30 +1,20 @@
 % 5. PCL front
 \chapter{PCL-front}
 
-% The front-end language, $PCL_{front}$, aims to model a borrow checking system. 
-% However, due to the shape of $PCL_{back}$ and to ease compilation, 
-% two design decisions were taken that change the shape of $PCL_{front}$'s borrow checker.
-% $\mathbf{1\!\!:}$ Instead of using affine types, 
-% with automatic \textit{drop} call at the end of the scope, 
-% $PCL_{front}$ uses linear types\cite{CSLINLOG, Wadler1990LinearTC}, 
-% with the pointer type $\text{*}\tau$ being linear whilst the others are nonlinear. 
-% This decision simplifies compilation and also models Rust's \textit{Copy} and 
-% \textit{Clone} subtextual fling with linearity. $\mathbf{2\!\!:}$ Without parallelism, 
-% it lessens the necessity of only one mutable reference or, exclusively, many immutable 
-% references to a given pointer. With that, $PCL_{front}$ allows for multiple mutable 
-% references, called \textit{alias} ($@\tau'a$) in the type system.
+O fim do projeto é utilizar a linguagem $PCL_{back}$ como um meio de prova para estratégias de solução de memória. Para demonstrar essa capacidade, como elaborado em \ref{chap4}, desenvolveu-se a linguagem de \emph{front-end}, $PCL_{front}$, que implementa um sistema de \emph{Borrow Checker} e é definido via compilação para $PCL_{back}$.
 
-% The aim with this language is, when compiled to $PCL_{back}$, to never reach 
-% a derivation of $\KW{panic}\;\KW{UseAfterFree}$. The syntax of the language follows:
+O design de $PCL_{front}$ partiu do formato de $PCL_{back}$, focando em gerar o menor número de modificações sintáticas para que a compilação fosse simples de se definir. Duas decisões foram tomadas que alteraram o funcionamento do \emph{Borrow Checker} de $PCL_{back}$ comparado com o de Rust, a fim de manter a simplicidade da linguagem. \textbf{1}: Ao invés de se utilizar um sistema de Rust que evoca tipos lineares, decidiu-se usá-los propriamente, voltando a alocações e desalocações manuais, regidas pela regra do uso exatamente uma vez. Na linguagem, o tipo $\text{*}\tau$ é linear enquanto os demais são não lineares. Isso simplificada a compilação por evitar as chamadas implícitas de liberação de memória que existem em Rust, mas ainda modela o comportamento deste, com liberações sendo necessárias no fim de escopos para que um programa seja bem tipado. \textbf{2}: Sem paralelismo, há menos necessidade de utilizar a regra de apenas um empréstimo mutável ou, exclusivamente, vários empréstimos imutáveis. Assim, $PCL_{front}$ permite várias referências mutáveis, chamadas \emph{alias} ($@\tau'a$) no sistema de tipos. \todo{A decisão de multiplos alias evoca o sistema de lineridade de Cyclone.}
 
-% 	5.1 PCL front's Borrow Checker
-\section{O Borrow Checker de PCL-front}
+O objetivo dessa linguagem é, quando compilada para $PCL_{back}$, nunca atingir uma derivação de $\KW{panic}\;\KW{UseAfterFree}$. As demais falhas temporais são permitidas na atual configuração do programa. Ao se aproximar mais do sistema de linearidade de Rust, movendo-se para um sistema de liberação automática de memória, pode-se começar a validar as demais falhas de memória temporais.
 
-% 	5.2 Syntax
+% 	5.1 Syntax
 \section{Sintaxe}
 
-\begingroup
-\setlength{\jot}{-0.2ex} 
+A sintaxe da linguagem é bem próxima de um $PCL_{back}$ tipado. O modelo de linearidade necessitou de alguns operadores adicionais sendo eles a troca $:=:$ e troca que dereferência $:=:\!\text{*}$; o incremento $+=$ e decremento $-=$; e a cópia de ponteiro $\KW{alias}$ e a cópia de ponteiro que dereferência $\KW{alias}\!\text{*}$. Os termos $\KW{new}\typearg{\tau}$ e $\KW{delete}$ substituem o $\KW{malloc}$ e $\KW{free}$ com a mesma funcionalidade, mas com nomes que indicam uma operação mais alto nível. Por fim, os \emph{macros} \emph{PANIC} e \emph{NULL} se tornaram as expressões $\KW{stop}$ e $\KW{nullptr}\typearg{\tau}$ respectivamente. Tem-se também $\KW{nullalias}\typearg{\tau}$ como o \emph{alias} nulo da linguagem. A sintaxe é descrita por \ref{fig:pcl-front:sintax}.
+
+\begin{figure}[ht]
+	\caption{Sintaxe de $PCL_{front}$}
+	\label{fig:pcl-front:sintax}
 	\begin{align*}
 		Types \ni \tau ::&= \KW{int} \OR \text{*}\tau \OR @\tau'a \OR (\bar\tau) \to \tau \\
 		Locals \ni l ::&= l^m \OR l^p &&\\ 
@@ -37,32 +27,29 @@
 		&\NLOR \KW{new}\typearg\tau(e) \OR \KW{delete}(e, e) \; \\ 
 		&\NLOR \KW{var}\; x: \tau := e \OR e_1 := e_2 \\
 		&\NLOR e_1 :=: e_2 \OR e_1 :=:\!\text{*}\;e_2\\
-		&\NLOR \KW{if}(e) \; e \; \KW{else} \; e \; \OR \KW{while}(e) \; e \\
+		&\NLOR \KW{if}(e) \; e \; \KW{else} \; e\\
 		&\NLOR f(\bar e) \\ 
 		&\NLOR \KW{stop}\\ 
 		&\NLOR \KW{nullprt}\typearg{\tau} \OR \KW{nullalias}\typearg{\tau}\\ 
 		Function \ni F ::&= \KW{fn} \; f(\overline{x : \tau}) \to \tau \; e \; F \; | \; \mathbf{let}\;() \; e \\
 	\end{align*}
-\endgroup
+	\legend{Fonte: Os Autores.}
+\end{figure}
 
-% $'a$, $x$ and $f$ are meta variables ranging over regions $r \in Regs$ in the program, 
-% variable names and function names respectively. $x$ is also used as a loan name 
-% $x \in Loans$, given that loans are from variable names.
+\noindent$'a$, $x$ e $f$ são meta variáveis que cobrem as regiões, nomes de variáveis e nomes de funções de um programa respectivamente. Os nomes de variáveis $x$ também são usados como o nome dos empréstimos, visto que nesta versão do \emph{Borrow Checker}, não se precisa anotar o modo de acesso, todos os acessos são mutáveis.
  
+Há algumas omissões importantes. Não há tipos tupla ou recursivos. Mesmo que $PCL_{back}$ pudesse representar eles, eles complicam o \emph{Borrow Checker} e o passo de compilação. Entretanto, a omissão é principalmente por limite de tempo e escopo do projeto. Essa é a mesma razão pela omissão do operador $\KW{while}$ e declarações globais.
+
+% 	5.3 Checagem de Tipos
+\section{Checagem de Tipos e Regiões}
+
+\todo[inline]{É aqui que tu comenta da forma do borrow checker, assim como as regras de aliasing e acesso a tipos lineares. }
+
 % One important aspect of $PCL_{front}$'s linear type system is how to deal with pointer
 % dereferences. Following Cyclone's rules for accessing linear pointers\cite{CYCLONEMEM},
 % a pointer $\text{*}\tau$ or $@\tau'a$ can be safely dereferenced if $\tau$ is nonlinear.
 % For other cases a swap and alias attached with a dereference are safe abstractions 
 % ($\mathbf{alias}\text{*}\;e$, $e_1 :=:\!\!\text{*} \;e_2$).
-
-% There are a few omissions of note. There are no tuple or recursive types. 
-% Even thought $PCL_{back}$ could represent them, they complicate the borrow checker 
-% and the compilation step. However the omission is mostly due to time constraints. 
-% This is the same reason for the missing of $\mathbf{while}$ and global declarations. 
-
-
-% 	5.3 Checagem de Tipos
-\section{Checagem de Tipos e Regiões}
 
 % The borrow checker implemented is based on the Polonius 
 % proposal\cite{Matsakis_2018, Stjerna1684081}. This implementation requires that 
