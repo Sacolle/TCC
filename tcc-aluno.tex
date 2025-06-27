@@ -50,7 +50,6 @@
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta, automata, positioning, quotes, fit}
 
-%\usepackage{listings}
 \usepackage{xcolor}
 \usepackage{placeins}
 \usepackage{caption}
@@ -58,7 +57,7 @@
 \usepackage{booktabs}
 \usepackage{multirow}
 \usepackage{multicol}
-\usepackage{listingsutf8}
+\usepackage{listings}
 \usepackage{listings-rust}
 \usepackage{svg}
 \usepackage{mwe}
@@ -179,7 +178,7 @@
     tabsize=4
 }
 
-\lstset{style=mystyle}
+\lstset{style=mystyle, escapeinside={|.}{.}}
 
 % NOTE: usado para o todonotes fazer o display correto
 \setlength{\marginparwidth}{2.5cm}
@@ -201,7 +200,7 @@
 %
 \begin{document}
 
-\lstset{inputencoding=utf8/latin1}
+%\lstset{inputencoding=utf8/utf8}
 
 \lstdefinelanguage{PCLback}{%
   sensitive%

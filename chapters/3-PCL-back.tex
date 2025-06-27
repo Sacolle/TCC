@@ -857,7 +857,7 @@ char* sanitize_input(char *user_supplied_string){
 		}
 		/*  
 		else if ('<' == user_supplied_string[i] ){
-			//encode to &lt; 
+			//encode to \&lt; .
 		}*/  
 		else dst_buf[dst_index++] = user_supplied_string[i];
 	}  
@@ -876,7 +876,7 @@ Em \ref{lst:c:spacial}, é realizada uma sanitização de caracteres de controle
 	\begin{lstlisting}[language=PCLback]
 let sanitize_input(user_supplied_string){
 	let string_size[1]; string_size := strlen(user_supplied_string);
-	//MAX_SIZE hardcoded como 100
+	//MAX\_SIZE hardcoded como 100.
 	let dst_buf[1]; dst_buf := malloc(4 * 100); 
 	if(99 < string_size) PANIC else 0;
 	let dst_index[1]; dst_index := 0;
