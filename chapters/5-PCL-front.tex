@@ -104,162 +104,289 @@ O \emph{Borrow Checker} da linguagem, então, é extremamente similar ao modelo 
 
 A checagem de tipos dessa linguagem inclui a validação de acessos a \emph{alias}, ou seja, o \emph{Borrow Checker} faz parte do sistema de tipos. Uma consequência disso é que acessos a um nó da árvore de avaliação podem ter efeitos colaterais em nós irmãos e primos, necessitando de uma ordem de avaliação em profundidade para que todos os nós sejam computados com a informação de todos os nós anteriores. Dessa forma, a avaliação de um termo devolve o seu tipo e o ambiente resultante na computação, na forma $\Delta \vdash e : \tau\;|\;\Delta'$, em que $e$ computado sobre $Delta$ tem o tipo $\tau$ e resulta no ambiente $\Delta'$.
 
-Os ambientes usados para computação são $\Gamma$, $U$, $R$ e $L$. O ambiente $\Gamma$ é o ambiente de variáveis para tipos, com $U$ sendo o seu coadjuvante. Ele também é um ambiente de variáveis para tipos, mas é o local em que variáveis acessada são movidas para que a operação imediatamente anterior a elas decida se serão descartadas ou reincorporadas em $\Gamma$. Os ambientes $R$ e $L$ são dedicados a avaliação dos \emph{alias} do programa, contendo o mesmo significado que o descrito em \ref{sec:chap4:polonius}, $R$ é a relação entre regiões e $L$ é a relação de regiões para conjuntos de concessões. Dessa forma, a seguir se tem as regras de tipo de $PCL_{front}$:
+Os ambientes usados para computação são $\Gamma$, $U$, $R$ e $L$. O ambiente $\Gamma$ é o ambiente de variáveis para tipos, com $U$ sendo o seu coadjuvante. Ele também é um ambiente de variáveis para tipos, mas é o local em que variáveis acessada são movidas para que a operação imediatamente anterior a elas decida se serão descartadas ou reincorporadas em $\Gamma$. Os ambientes $R$ e $L$ são dedicados a avaliação dos \emph{alias} do programa, contendo o mesmo significado que o descrito em \ref{sec:chap4:polonius}, $R$ é a relação entre regiões e $L$ é a relação de regiões para conjuntos de concessões. 
 
-\infrule[Number]
-	{}
-	{\Gamma;U;R;L \vdash n : \KW{int} \OR \Gamma;U;R;L} 
+As regras de tipo usam algumas funções auxiliares que precisam ser definidas. Uma delas é a $\mathbf{newlabel}$, que retorna uma região única nova ao programa. A função $\mathbf{live}('r, L)$ (\ref{fig:def:live}) retorna verdadeiro se a região $'r$ está viva naquele ponto do programa, verificando que existe alguma concessão no conjunto de $'r$ em $L$. As funções de operação binária usam a função auxiliar $\mathbf{addSubType}(\tau_1, \tau_2)$ (\ref{fig:def:addsub}) para simplificar a notação. Ela retorna o tipo que corresponde uma operação entre os seus dois operandos. Há correspondência se $\tau_1$ e $\tau_2$ forem $\KW{int}$, resultando em $\KW{int}$ ou se um deles for $\KW{int}$ e o outro sendo tipo ponteiro ($\text{*}\!\tau$) ou tipo \emph{alias} ($@\tau'r$), resultando nos tipos ponteiro e \emph{alias} respectivamente. Uma notação complementar usada para reduzir o número de regras é a de chaves $\{\}$, assume-se que os elementos dentro desses, quanto falando de símbolos da linguagem, representam alternativas. Por exemplo, a regra \hyperref[trule:binop-comp]{(BINOP-COMP)} é valida para $op$ de valores $=$, ou $>$, ou $<$.
 
-\infrule[Var-nonlin]
-	{}
-	{\Gamma, x:\,!\tau;U;R;L \vdash x : \tau \OR \Gamma,x:\tau;U;R;L} 
+\begin{figure}[ht]
+	\caption{Função que determina se uma região $'r$ está viva em $L$.}
+	\label{fig:def:live}
+	\begin{align}
+		&\mathbf{live}('r, L) = \exists ('w, l^s) \in L, {'r} = {'w} \land l^s \neq \emptyset
+	\end{align}
+	\legend{Fonte: Os Autores.}
+\end{figure}
 
-\infrule[Var-lin]
-	{}
-	{\Gamma, x:\tau;U;R;L \vdash x : \tau \OR \Gamma;U, x:\tau;R; \\
-	\{(r, l^s) \OR \forall (r, l^s) \in L, x \notin l^s \} }
+\begin{figure}[ht]
+	\caption{Função que gera o tipo resultante entre $\tau_1$ e $\tau_2$ no caso de soma ou subtração.}
+	\label{fig:def:addsub}
+	\begin{align}
+		&\mathbf{addSubType}(\KW{int}, \KW{int}) = \KW{int}\\ 
+		&\mathbf{addSubType}(\KW{int}, \text{*}\!\tau) = \text{*}\!\tau\\ 
+		&\mathbf{addSubType}(\text{*}\!\tau, \KW{int}) = \text{*}\!\tau\\ 
+		&\mathbf{addSubType}(\KW{int}, @\tau'r) = @\tau'r\\ 
+		&\mathbf{addSubType}(@\tau'r, \KW{int}) = @\tau'r
+	\end{align}
+	\legend{Fonte: Os Autores}
+\end{figure}
 
-\infrule[Ref]
-	{'r = \textbf{newlabel}()}
-	{\Gamma, x:\tau;U;R;L \vdash \&x : @\tau'r \OR \Gamma,x:\tau;U;R;
-	L, (r, \{ x \})}
+Uma característica da ausência do tipo tupla é que não há a existência do tipo unitário por consequência. Decidiu-se não o adicionar por simplicidade. Dessa forma, algumas regras como \hyperref[trule:var]{(VAR)}, \hyperref[trule:delete]{(DELETE)}e \hyperref[trule:swap]{(SWAP)} retornam $\KW{int}$ como forma de retorno do tipo unitário. Na parte de compilação \ref{chap5:compile}, essas operações retornarão o número 1. Dessa forma, a seguir se tem as regras de tipo de $PCL_{front}$:
 
-\infrule[Binop]
-	{\text{TODO}}
-	{\Gamma;U;R;L \vdash n : \KW{int} \OR \Gamma;U;R;L} 
+\labelRule{\label{trule:number}}{
+	\infrule[Number]
+		{}
+		{\Gamma;U;R;L \vdash n : \KW{int} \OR \Gamma;U;R;L} 
+}
 
-\infrule[Increment]
-	{\text{TODO}}
-	{\Gamma;U;R;L \vdash n : \KW{int} \OR \Gamma;U;R;L} 
+\labelRule{\label{trule:nonlin-var}}{
+	\infrule[Var-nonlin]
+		{}
+		{\Gamma, x:\,!\tau;U;R;L \vdash x : \tau \OR \Gamma,x:\tau;U;R;L} 
+}
+\labelRule{\label{trule:lin-var}}{
+	\infrule[Var-lin]
+		{}
+		{\Gamma, x:\tau;U;R;L \vdash x : \tau \OR \Gamma;U, x:\tau;R; \\
+		\{(r, l^s) \OR \forall (r, l^s) \in L, x \notin l^s \} }
+}
 
-\infrule[Decrement]
-	{\text{TODO}}
-	{\Gamma;U;R;L \vdash n : \KW{int} \OR \Gamma;U;R;L} 
+\labelRule{\label{trule:ref}}{
+	\infrule[Ref]
+		{'r = \textbf{newlabel}()}
+		{\Gamma, x:\tau;U;R;L \vdash \&x : @\tau'r \OR \Gamma,x:\tau;U;R;
+		L, (r, \{ x \})}
+}
 
-\infrule[Not]
-	{\text{TODO}}
-	{\Gamma;U;R;L \vdash n : \KW{int} \OR \Gamma;U;R;L} 
+\labelRule{\label{trule:binop-addsub}}{
+	\infrule[Binop-AddSub]
+		{\Gamma;U;R;L \vdash e_1: \tau_1 \OR \Gamma';U';R';L' \\ 
+		\Gamma';\emptyset;R';L' \vdash e_2 : \tau_2 \OR \Gamma'';U'';R'';L''\\
+		\tau_r = \mathbf{addSubType}(\tau_1, \tau_2)
+		}
+		{\Gamma;U;R;L \vdash e_1\;\{+, -\}\;e_2: \tau_r \OR \Gamma'';\emptyset;R'';L''} 
+}
 
-\infrule[Deref-Ptr]
-	{\Gamma;U;R;L \vdash e : \text{*}{!\tau} \OR \Gamma';U';R';L'}
-	{\Gamma;U;R;L \vdash \text{*}e : !\tau \OR \Gamma' \cup U';\emptyset;R';L'} 
+\labelRule{\label{trule:binop-comp}}{
+	\infrule[Binop-Comp]
+		{\Gamma;U;R;L \vdash e_1: \tau \OR \Gamma';U';R';L' \\ 
+		\Gamma';\emptyset;R';L' \vdash e_2 : \tau \OR \Gamma'';U'';R'';L''
+		}
+		{\Gamma;U;R;L \vdash e_1\;\{=, >, <\}\;e_2: \tau \OR \Gamma'';\emptyset;R'';L''} 
+}
 
-\infrule[Deref-Alias]
-	{\Gamma;U;R;L \vdash e : @!\tau'r \OR \Gamma';U';R';L' \quad \mathbf{live}('r)}
-	{\Gamma;U;R;L \vdash \text{*}e : !\tau \OR \Gamma' \cup U';\emptyset;R';L'} 
+\labelRule{\label{trule:binop}}{
+	\infrule[Binop]
+		{\Gamma;U;R;L \vdash e_1: \KW{int} \OR \Gamma';U';R';L' \\ 
+		\Gamma';\emptyset;R';L' \vdash e_2 : \KW{int} \OR \Gamma'';U'';R'';L''
+		}
+		{\Gamma;U;R;L \vdash e_1\;op\;e_2: \KW{int} \OR \Gamma'';\emptyset;R'';L''} 
+}
 
-\infrule[Alias]
-	{'r = \text{newlabel}}
-	{\Gamma, x:\text{*}\tau;U;R;L \vdash \KW{alias}\;x : @\tau'r \OR \Gamma,x:\text{*}\tau;U;R;L,('r, \{x\})} 
+\labelRule{\label{trule:inc}}{
+	\infrule[Increment]
+		{
+			\Gamma;U;R;L \vdash e_1: \{\text{*}\!\tau, @\tau'r\} \OR \Gamma';U';R';L'\\
+			\Gamma' \cup U'; \emptyset;R';L' \vdash e_2: \KW{int} \OR \Gamma'';U'';R'';L''
+		}
+		{\Gamma;U;R;L \vdash e_1 +\!\!= e_2 : \KW{int} \OR \Gamma'';\emptyset;R'';L''} 
+}
 
-\infrule[Alias-Deref]
-	{}
-	{\Gamma, x:@\text{*}\tau'r;U;R;L \vdash \\\KW{alias}\text{*}\;x : @\tau'r \OR \Gamma,@\text{*}\tau'r;U;R;L, ('r, \{x\})} 
+\labelRule{\label{trule:dec}}{
+	\infrule[Decrement]
+		{
+			\Gamma;U;R;L \vdash e_1: \{\text{*}\!\tau, @\tau'r\} \OR \Gamma';U';R';L'\\
+			\Gamma' \cup U'; \emptyset;R';L' \vdash e_2: \KW{int} \OR \Gamma'';U'';R'';L''
+		}
+		{\Gamma;U;R;L \vdash e_1 -\!\!= e_2 : \KW{int} \OR \Gamma'';\emptyset;R'';L''} 
+}
 
-\infrule[Compose]
-	{\Gamma;U;R;L \vdash e_1 : \tau_1 \OR \Gamma';U';R';L' \\ \Gamma';\emptyset;R';L' \vdash e_2 : \tau_2 \OR \Gamma'';U'';R'';L''}{\Gamma;U;R;L \vdash e_1;e_2 : \tau_2 \OR \Gamma'';U'';R'';L''} 
+\labelRule{\label{trule:not}}{
+	\infrule[Not]
+		{\Gamma;U;R;L \vdash e: \KW{int} \OR \Gamma';U';R';L'}
+		{\Gamma;U;R;L \vdash !e : \KW{int} \OR \Gamma';\emptyset;R';L'} 
+}
 
-\infrule[Scope]
-	{\Gamma;U;R;L \vdash e : \tau \OR \Gamma';U';R';L' \quad !\Gamma}
-	{\Gamma;U;R;L \vdash \{e\}:\tau \OR \Gamma' \cap \Gamma;\emptyset;R;\\
-	\{(r, l^s) \OR \forall (x, \tau) \in \Gamma'/\Gamma, \forall (r, l^s), x \notin l^s\} } 
+\labelRule{\label{trule:deref-ptr}}{
+	\infrule[Deref-Ptr]
+		{\Gamma;U;R;L \vdash e : \text{*}{!\tau} \OR \Gamma';U';R';L'}
+		{\Gamma;U;R;L \vdash \text{*}e : !\tau \OR \Gamma' \cup U';\emptyset;R';L'} 
+}
 
-\infrule[New]
-	{\Gamma;U;R;L \vdash e : \KW{int} \OR \Gamma';U';R';L'}
-	{\Gamma;U;R;L \vdash \KW{new}\typearg{\tau}(e):\text{*}\tau \OR \Gamma';\emptyset;R';L'}
+\labelRule{\label{trule:deref-alias}}{
+	\infrule[Deref-Alias]
+		{\Gamma;U;R;L \vdash e : @!\tau'r \OR \Gamma';U';R';L' \quad \mathbf{live}('r)}
+		{\Gamma;U;R;L \vdash \text{*}e : !\tau \OR \Gamma' \cup U';\emptyset;R';L'} 
+}
+
+\labelRule{\label{trule:alias}}{
+	\infrule[Alias]
+		{'r = \text{newlabel}}
+		{\Gamma, x:\text{*}\tau;U;R;L \vdash \KW{alias}\;x : @\tau'r \OR \Gamma,x:\text{*}\tau;U;R;L,('r, \{x\})} 
+}
+
+\labelRule{\label{trule:alias-deref}}{
+	\infrule[Alias-Deref]
+		{\mathbf{live}('r)}
+		{\Gamma, x:@\text{*}\tau'r;U;R;L \vdash \KW{alias}\text{*}\;x : @\tau'r \OR \Gamma,x: @\text{*}\tau'r;U;R;L} 
+}
+
+\labelRule{\label{trule:compose}}{
+	\infrule[Compose]
+		{\Gamma;U;R;L \vdash e_1 : \tau_1 \OR \Gamma';U';R';L' \\ \Gamma';\emptyset;R';L' \vdash e_2 : \tau_2 \OR \Gamma'';U'';R'';L''}{\Gamma;U;R;L \vdash e_1;e_2 : \tau_2 \OR \Gamma'';U'';R'';L''} 
+}
+
+\labelRule{\label{trule:scope}}{
+	\infrule[Scope]
+		{\Gamma;U;R;L \vdash e : \tau \OR \Gamma';U';R';L'\\
+		\Gamma_l = \Gamma'\backslash\Gamma \quad !\Gamma_l}
+		{\Gamma;U;R;L \vdash \{e\}:\tau \OR \Gamma' \cap \Gamma;\emptyset;R;\\
+		\{(r, l^s) \OR \forall (x, \tau) \in \Gamma_l, \forall (r, l^s), x \notin l^s\} } 
+}
+
+\labelRule{\label{trule:new}}{
+	\infrule[New]
+		{\Gamma;U;R;L \vdash e : \KW{int} \OR \Gamma';U';R';L'}
+		{\Gamma;U;R;L \vdash \KW{new}\typearg{\tau}(e):\text{*}\tau \OR \Gamma';\emptyset;R';L'}
+}
 
 % acho que tem que ser só o delete var, pq dá pra fazer *(&tau)
 % não dá, essa operação fica *(@*T) que é inválido via as regras que tu escreveu.
 
-\infrule[Delete-var]
-	{\Gamma;U;R;L \vdash e : \KW{int} \OR \Gamma';U';R';L'}
-	{\Gamma,x:\tau;U;R;L \vdash \\
-	\KW{delete}(x, e): \KW{int} \OR \Gamma';\emptyset;R'; 
-	\{(r, l^s) \OR \forall (r, l^s) \in L, x \notin l^s \}}
+\labelRule{\label{trule:delete-var}}{
+	\infrule[Delete-var]
+		{\Gamma;U;R;L \vdash e : \KW{int} \OR \Gamma';U';R';L'}
+		{\Gamma,x:\tau;U;R;L \vdash 
+		\KW{delete}(x, e): \KW{int} \OR \Gamma';\emptyset;R'; \\
+		\{(r, l^s) \OR \forall (r, l^s) \in L, x \notin l^s \}}
+}
 
-\infrule[Delete]
-	{\Gamma;U;R;L \vdash e_1: \text{*}\tau \OR \Gamma';U';R';L' \quad \Gamma';\emptyset;R';L' \vdash e_2 : \KW{int} \OR \Gamma'';U'';R'';L''}
-	{\Gamma;U;R;L \vdash \KW{delete}(e_1, e_2): \KW{int} \OR \Gamma'';\emptyset;R'';L''}
+\labelRule{\label{trule:delete}}{
+	\infrule[Delete]
+		{\Gamma;U;R;L \vdash e_1: \text{*}\tau \OR \Gamma';U';R';L' \\ \Gamma';\emptyset;R';L' \vdash e_2 : \KW{int} \OR \Gamma'';U'';R'';L''}
+		{\Gamma;U;R;L \vdash \KW{delete}(e_1, e_2): \KW{int} \OR \Gamma'';\emptyset;R'';L''}
+}
 
-\infrule[Var-Alias]
-	{\Gamma;U;R;L \vdash e: @\tau'r \OR \Gamma';U';R';L'}
-	{\Gamma;U;R;L \vdash \KW{var}\;x : @\tau'w := e: \KW{int} \OR \Gamma', x: \tau;\emptyset;R', ('r, 'w);L'}
+\labelRule{\label{trule:var-alias}}{
+	\infrule[Var-Alias]
+		{\Gamma;U;R;L \vdash e: @\tau'r \OR \Gamma';U';R';L'}
+		{\Gamma;U;R;L \vdash \KW{var}\;x : @\tau'w := e: \KW{int} \OR \Gamma', x: \tau;\emptyset;R', ('r, 'w);L'}
+}
 
-\infrule[Var]
-	{\Gamma;U;R;L \vdash e: \tau \OR \Gamma';U';R';L'}
-	{\Gamma;U;R;L \vdash \KW{var}\;x : \tau := e: \KW{int} \OR \Gamma', x: \tau;\emptyset;R';L'} 
+\labelRule{\label{trule:var}}{
+	\infrule[Var]
+		{\Gamma;U;R;L \vdash e: \tau \OR \Gamma';U';R';L'}
+		{\Gamma;U;R;L \vdash \KW{var}\;x : \tau := e: \KW{int} \OR \Gamma', x: \tau;\emptyset;R';L'} 
+}
 
-\infrule[Assign]
-	{\Gamma;U;R;L \vdash e_1:\,! \tau \OR \Gamma';U';R';L' \\
-	\Gamma';\emptyset;R';L' \vdash e_2 :\,! \tau \OR \Gamma'';U'';R'';L'' }
-	{\Gamma;U;R;L \vdash e_1 := e_2:\,! \tau \OR \Gamma'';\emptyset;R'';L''} 
+\labelRule{\label{trule:assing}}{
+	\infrule[Assign]
+		{\Gamma;U;R;L \vdash e_1:\,! \tau \OR \Gamma';U';R';L' \\
+		\Gamma';\emptyset;R';L' \vdash e_2 :\,! \tau \OR \Gamma'';U'';R'';L'' }
+		{\Gamma;U;R;L \vdash e_1 := e_2:\,! \tau \OR \Gamma'';\emptyset;R'';L''} 
+}
 
-\infrule[Swap]
-	{\Gamma;U;R;L \vdash e_1: \tau \OR \Gamma';U';R';L' \\
-	\Gamma'\cup U';\emptyset;R';L' \vdash e_2 : \tau \OR \Gamma'';U'';R'';L''}
-	{\Gamma;U;R;L \vdash e_1 :=: e_2 : \KW{int} \OR \Gamma'' \cup U;\emptyset;R'';L''} 
+\labelRule{\label{trule:swap}}{
+	\infrule[Swap]
+		{\Gamma;U;R;L \vdash e_1: \tau \OR \Gamma';U';R';L' \\
+		\Gamma'\cup U';\emptyset;R';L' \vdash e_2 : \tau \OR \Gamma'';U'';R'';L''}
+		{\Gamma;U;R;L \vdash e_1 :=: e_2 : \KW{int} \OR \Gamma'' \cup U;\emptyset;R'';L''} 
+}
 
+\labelRule{\label{trule:swap-deref-ptr}}{
+	\infrule[Swap-Deref-Ptr]
+		{\Gamma;U;R;L \vdash e_1: \tau \OR \Gamma';U';R';L' \\
+		\Gamma' \cup U';\emptyset;R';L' \vdash e_2 : \text{*}\tau \OR \Gamma'';U'';R'';L''}
+		{\Gamma;U;R;L \vdash e_1 :=:\!\!\text{*} e_2: \KW{int} \OR \Gamma'' \cup U'';\emptyset;R'';L''} 
+}
 
-\infrule[Swap-Deref-Ptr]
-	{\Gamma;U;R;L \vdash e_1: \tau \OR \Gamma';U';R';L' \\
-	\Gamma' \cup U';\emptyset;R';L' \vdash e_2 : \text{*}\tau \OR \Gamma'';U'';R'';L''}
-	{\Gamma;U;R;L \vdash e_1 :=:\!\!\text{*} e_2: \KW{int} \OR \Gamma'' \cup U'';\emptyset;R'';L''} 
-
-\infrule[Swap-Deref-Alias]
-	{\Gamma;U;R;L \vdash e_1: \tau \OR \Gamma';U';R';L' \\
-	\Gamma' \cup U';\emptyset;R';L' \vdash e_2 : @\tau'r \OR \Gamma'';U'';R'';L'' \quad \mathbf{live}('r)}
-	{\Gamma;U;R;L \vdash e_1 :=:\!\!\text{*} e_2: \KW{int} \OR \Gamma'' \cup U'';\emptyset;R'';L''} 
+\labelRule{\label{trule:swap-deref-alias}}{
+	\infrule[Swap-Deref-Alias]
+		{\Gamma;U;R;L \vdash e_1: \tau \OR \Gamma';U';R';L' \\
+		\Gamma' \cup U';\emptyset;R';L' \vdash e_2 : @\tau'r \OR \Gamma'';U'';R'';L'' \quad \mathbf{live}('r)}
+		{\Gamma;U;R;L \vdash e_1 :=:\!\!\text{*} e_2: \KW{int} \OR \Gamma'' \cup U'';\emptyset;R'';L''} 
+}
 
 %adicionando as relações de região
-\infrule[If-Alias]
-	{\Gamma;U;R;L \vdash e_1: \KW{int} \OR \Gamma';U';R';L' \\
-	\Gamma';\emptyset;R';L' \vdash \{ e_2 \} : @\tau'r \OR \Gamma''_2;U''_2;R''_2;L''_2\\
-	\Gamma';\emptyset;R';L' \vdash \{ e_3 \} : @\tau'w \OR \Gamma''_3;U''_3;R''_3;L''_3
-	}
-	{\Gamma;U;R;L \vdash \KW{if}(e_1)\;e_2\;\KW{else}\;e_3 : \tau \OR\\
-	\Gamma''_2 \cap \Gamma''_3;\emptyset;R'' \cup \{('r, 'w), ('w, 'r)\};L''_2 \cup L''_3} 
+\labelRule{\label{trule:if-alias}}{
+	\infrule[If-Alias]
+		{\Gamma;U;R;L \vdash e_1: \KW{int} \OR \Gamma';U';R';L' \\
+		\Gamma';\emptyset;R';L' \vdash \{ e_2 \} : @\tau'r \OR \Gamma''_2;U''_2;R''_2;L''_2\\
+		\Gamma';\emptyset;R';L' \vdash \{ e_3 \} : @\tau'w \OR \Gamma''_3;U''_3;R''_3;L''_3
+		}
+		{\Gamma;U;R;L \vdash \KW{if}(e_1)\;e_2\;\KW{else}\;e_3 : \tau \OR\\
+		\Gamma''_2 \cap \Gamma''_3;\emptyset;R'' \cup \{('r, 'w), ('w, 'r)\};L''_2 \cup L''_3} 
+}
 
-\infrule[If]
-	{\Gamma;U;R;L \vdash e_1: \KW{int} \OR \Gamma';U';R';L' \\
-	\Gamma';\emptyset;R';L' \vdash \{ e_2 \} : \tau \OR \Gamma''_2;U''_2;R''_2;L''_2\\
-	\Gamma';\emptyset;R';L' \vdash \{ e_3 \} : \tau \OR \Gamma''_3;U''_3;R''_3;L''_3
-	}
-	{\Gamma;U;R;L \vdash \KW{if}(e_1)\;e_2\;\KW{else}\;e_3 : \tau \OR\\
-	\Gamma''_2 \cap \Gamma''_3;\emptyset;R'';L''_2 \cup L''_3} 
+\labelRule{\label{trule:if}}{
+	\infrule[If]
+		{\Gamma;U;R;L \vdash e_1: \KW{int} \OR \Gamma';U';R';L' \\
+		\Gamma';\emptyset;R';L' \vdash \{ e_2 \} : \tau \OR \Gamma''_2;U''_2;R''_2;L''_2\\
+		\Gamma';\emptyset;R';L' \vdash \{ e_3 \} : \tau \OR \Gamma''_3;U''_3;R''_3;L''_3
+		}
+		{\Gamma;U;R;L \vdash \KW{if}(e_1)\;e_2\;\KW{else}\;e_3 : \tau \OR\\
+		\Gamma''_2 \cap \Gamma''_3;\emptyset;R'';L''_2 \cup L''_3} 
+}
 
-\infrule[CallFunc]
-	{
-		\tau = (\tau_1^f, \tau_2^f, ..., \tau_n^f)\to \tau_r\\
-		\Gamma;U;R;L \vdash e_1: \tau_1^a \OR \Gamma_1;U_1;R_1;L_1 \quad \tau_1^f = \tau_1^a\\
-		\Gamma_1;\emptyset;R_1;L_1 \vdash e_2: \tau_2^a \OR \Gamma_2;U_2;R_2;L_2 \quad \tau_2^f = \tau_2^a\\
-		... \\
-		\Gamma_{n-1};\emptyset;R_{n-1};L_{n-1} \vdash e_n: \tau_n^a \OR \Gamma_n;U_n;R_n;L_n \quad \tau_n^f = \tau_n^a\\
-		RR = \{(r_i, w_i) \OR \forall i, \tau_i^f = @{\tau}{'}{w_i} \land \tau_i^a = @{\tau}{'}{r_i}\}
-	}
-	{\Gamma, f: \tau;U;R;L \vdash f(\bar e) : \tau_r \OR
-	\Gamma_n, f: \tau ;\emptyset; R_n \cup RR ;L_n} 
+\labelRule{\label{trule:callfunc}}{
+	\infrule[CallFunc]
+		{
+			\tau = (\tau_1^f, \tau_2^f, ..., \tau_n^f)\to \tau_r\\
+			\Gamma;U;R;L \vdash e_1: \tau_1^a \OR \Gamma_1;U_1;R_1;L_1 \quad \tau_1^f = \tau_1^a\\
+			\Gamma_1;\emptyset;R_1;L_1 \vdash e_2: \tau_2^a \OR \Gamma_2;U_2;R_2;L_2 \quad \tau_2^f = \tau_2^a\\
+			... \\
+			\Gamma_{n-1};\emptyset;R_{n-1};L_{n-1} \vdash e_n: \tau_n^a \OR \Gamma_n;U_n;R_n;L_n \quad \tau_n^f = \tau_n^a\\
+			RR = \{(r_i, w_i) \OR \forall i, \tau_i^f = @{\tau}{'}{w_i} \land \tau_i^a = @{\tau}{'}{r_i}\}
+		}
+		{\Gamma, f: \tau;U;R;L \vdash f(\bar e) : \tau_r \OR
+		\Gamma_n, f: \tau ;\emptyset; R_n \cup RR ;L_n} 
+}
 
-\infrule[Stop]
-	{}
-	{\Gamma;U;R;L \vdash \KW{stop}: \KW{int} \OR \Gamma;U;R;L} 
+\labelRule{\label{trule:stop}}{
+	\infrule[Stop]
+		{}
+		{\Gamma;U;R;L \vdash \KW{stop}: \KW{int} \OR \Gamma;U;R;L} 
+}
 
-\infrule[NullPtr]
-	{}
-	{\Gamma;U;R;L \vdash \KW{nullptr}\typearg{\tau}: \text{*}\tau \OR \Gamma;U;R;L} 
+\labelRule{\label{trule:nullptr}}{
+	\infrule[NullPtr]
+		{}
+		{\Gamma;U;R;L \vdash \KW{nullptr}\typearg{\tau}: \text{*}\tau \OR \Gamma;U;R;L} 
+}
 
-\infrule[NullAlias]
-	{}
-	{\Gamma;U;R;L \vdash \KW{nullalias}\typearg{\tau}: @\tau'0 \OR \Gamma;U;R;L} 
+\labelRule{\label{trule:nullalias}}{
+	\infrule[NullAlias]
+		{}
+		{\Gamma;U;R;L \vdash \KW{nullalias}\typearg{\tau}: @\tau'0 \OR \Gamma;U;R;L} 
+}
 
-\todo{Label e fazer o tipo desse cara}
-\infrule[DeclFunc]
-	{\Gamma;U;R;L \vdash e_1: \tau \OR \Gamma';U';R';L' \quad \Gamma';\emptyset;R';L' \vdash e_2 : \tau \OR \Gamma'';U'';R'';L'' \quad \tau \text{ is nonlinear}}
-	{\Gamma;U;R;L \vdash e_1 := e_2: \tau \OR \Gamma'';\emptyset;R'';L''} 
+\labelRule{\label{trule:func-alias}}{
+	\infrule[Func-Alias]
+		{
+			\Gamma, \overline{x_i:\tau_i}, f: (\bar\tau_i) \to @\tau_r'r;U;R;L \vdash \{e\}: @\tau_r'w \OR \Gamma';U';R';L'\\
+			\forall ({'r_1}, {'r_2}) \in R', {'r_2} = {'w} \to {'r} = {'w} \lor ('r, {'r_1}) \in R' \land ({'r_1}, {'r}) \notin R'\\
+			\Gamma, f: (\bar\tau_i) \to @\tau_r'r;U;R;L \vdash F : \KW{int} 
+		}
+		{\Gamma;U;R;L \vdash \KW{fn}\;f(\overline{x_i:\tau_i}) \to @\tau_r'r\;e\;F: \KW{int}} 
+}
 
+\labelRule{\label{trule:func}}{
+	\infrule[Func]
+		{
+			\Gamma, \overline{x_i:\tau_i}, f: (\bar\tau_i) \to \tau_r;U;R;L \vdash \{e\}: \tau_r \\
+			\Gamma, f: (\bar\tau_i) \to \tau_r;U;R;L \vdash F : \KW{int} 
+		}
+		{\Gamma;U;R;L \vdash \KW{fn}\;f(\overline{x_i:\tau_i}) \to \tau_r\;e\;F: \KW{int}} 
+}
+
+As regras \hyperref[trule:delete-var]{(DELETE-VAR)}, \hyperref[trule:scope]{(SCOPE)} realizam a limpeza de valores do ambiente de concessões $L$. A operação de deletar uma variável é mais granular, removendo apenas as regiões que tem essa variável na sua lista de concessões. A operação de escopo remove todas as variáveis locais definidas dentro do escopo, obtidas via $\Gamma'\backslash\Gamma$ (subtração do conjunto de várias declaradas antes da avaliação do escopo com o conjunto de variáveis declarada até o final do escopo). Usa-se notação $!\Gamma$, com o $!$, para indicar que todas as variáveis nesse ambiente são não lineares. O resultado do escopo também descarta todas as associações entre regiões criadas dentro dele, restaurando o conjunto de regiões $R$ externo.
+
+Por fim, discorre-se sobre as operações de funções. A chamada de função, regra \hyperref[trule:callfunc]{(CALLFUNC)}, descreve que cada argumento deve ser igual ao tipo correspondente na função, sendo avaliados em ordem e usando os ambientes gerados pelos anteriores. A última linha das pré-condições coleta todos os tipos que forem \emph{alias} e adiciona relações de sobrevivência entre eles para a avaliação da função. Essas funções são avaliadas na declaração, regra \hyperref[trule:func-alias]{(FUNC-ALIAS)} e caso retornem um \emph{alias}, precisam testar que o \emph{alias} de retorno do corpo só é sobrevivido pelo \emph{alias} de retorno anotado na função. Essa codição é dada pela segunda linha da pré-condição, que diz que se a região de retorno do \emph{alias} do corpo é sobrevivida por alguma outra região, essa região deve ser igual à região de do \emph{alias} de retorno anotado ou ser sobrevivida por este e não o sobreviver. Nessa regra ainda falta cavar uma exceção para a região estática $'0$.
 
 
 %   5.4 Definição via compilação
 \section{Definição via Compilação}
+\label{chap5:compile}
 
-A definição via compilação é relativamente simples. A linguagem foi criada de uma forma que esse processo fosse simples. Para a maioria dos elementos basta apenas apagar os tipos, entretanto para os operadores de troca ($:=:$,$:=:\!\!\text{*}$) e para o $\KW{new}$ é necessário algumas operações adicionais. Abaixo segue a função recursiva que define a compilação, ela se utiliza da função $\KW{newname}$ para gerar nomes únicos para variáveis.
+A definição via compilação é relativamente simples. A linguagem foi criada de uma forma que esse processo fosse simples. Para a maioria dos elementos basta apenas apagar os tipos, entretanto para os operadores de troca ($:=:$, $:=:\!\!\text{*}$) e para o $\KW{new}$ é necessário algumas operações adicionais. Abaixo segue a função recursiva que define a compilação, ela se utiliza da função $\KW{newname}$ para gerar nomes únicos para variáveis.
+
 
