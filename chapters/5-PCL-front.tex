@@ -25,15 +25,15 @@ A sintaxe da linguagem é bem próxima de um $PCL_{back}$ tipado. O modelo de li
 		Expression \ni e ::&= x \OR v \\
 		&\NLOR e\; op\; e \OR !e \OR \notmov{x +\!\!= e} \OR \notmov{x -\!\!= e_2}\\
 		&\NLOR e;e \OR \{e\} \\ 
-		&\NLOR \KW{new}\typearg\tau(e) \OR \KW{delete}(e, e) \; \\ 
+		&\NLOR \KW{let}\;x:\text{*}\!\tau = \KW{new}(e) \OR \KW{delete}(x, e) \; \\ 
 		&\NLOR \KW{var}\; x: \tau := e \OR e_1 := e_2 \\
 		&\NLOR \notmov{\text{*}e} \OR \notmov{\&x} \OR \notmov{\KW{alias} \; x} \OR \notmov{\KW{alias}\text{*} \; x}\\
-		&\NLOR \notmov{e_1 :=: e_2} \OR \notmov{e_1 :=:\!\text{*}\;e_2}\\
+		&\NLOR \notmov{x_1 :=: x_2} \OR \notmov{x_1 :=:\!\text{*}\;x_2}\\
 		&\NLOR \KW{if}(e) \; e \; \KW{else} \; e\\
-		&\NLOR f(\bar e) \\ 
+		&\NLOR \KW{let}\;x:\tau = f(\bar e) \\ 
 		&\NLOR \KW{stop}\\ 
 		&\NLOR \KW{nullprt}\typearg{\tau} \OR \KW{nullalias}\typearg{\tau}\\ 
-		Function \ni F ::&= \KW{fn} \; f(\overline{x : \tau}) \to \tau \; e \; F \; | \; \mathbf{let}\;() \; e \\
+		Function \ni F ::&= \KW{fn} \; f(\overline{x : \tau}) \to \tau \; e \; F \; | \; \KW{fn}\;() \; e \\
 	\end{align*}
 	\vspace{-4em}
 	\begin{flushleft}
@@ -47,9 +47,10 @@ A sintaxe da linguagem é bem próxima de um $PCL_{back}$ tipado. O modelo de li
  
 Há algumas omissões relevantes. Não há tipos tupla ou recursivos. Mesmo que $PCL_{back}$ pudesse representar eles, eles complicam o \emph{Borrow Checker} e o passo de compilação. Entretanto, a omissão é principalmente por limite de tempo e escopo do projeto. Essa é a mesma razão pela omissão do operador $\KW{while}$ e declarações globais.
 
+
 \section{Linearidade e \emph{Alias}}
 
-O sistema de \emph{Borrow Checker} de $PCL_{front}$ é fortemente conectado com o seu sistema de linearidade. O tipo ponteiro, $\text{*}\!\tau$, é linear e aponta para uma região da \emph{heap}. Ele é obtido através da função $\KW{new}$ e só é apagado através da função $\KW{delete}$. Os demais tipos são não lineares. O tipo \emph{alias}, $@\tau'a$ é uma forma de copiar o tipo ponteiro, e também é usado para referenciar valores na pilha. Ele denota uma cópia (\emph{alias}) de um ponteiro e é equivalente aos empréstimos de Rust. Uma consequência da modelagem com tipos lineares é quais operações consomem o valor, quais operações que, passado uma variável $x$ do tipo $\text{*}\!\tau$, consomem o valor e o tornam inacessíveis via a variável passada. As operações subscritas em {\color{blue}azul} não movem os valores passados a eles. Excluindo os operadores de dereferência (*) e referência (\&), são todos operadores novos, introduzidos com o propósito de não mover os valores no uso. Por exemplo, os operadores de incremento e decremento foram criados para poder-se aumentar o valor de um ponteiro sem que se usa o valor, dessa forma acessos a listas em memória ficam mais fáceis, como em \ref{fig:pcl-front:inc}.
+O sistema de \emph{Borrow Checker} de $PCL_{front}$ é fortemente conectado com o seu sistema de linearidade. O tipo ponteiro, $\text{*}\!\tau$, é linear e aponta para uma região da \emph{heap}. Ele é obtido através da função $\KW{new}$ e só é apagado através da função $\KW{delete}$. Os demais tipos são não lineares. O tipo \emph{alias}, $@\tau'a$ é uma forma de copiar o tipo ponteiro, e também é usado para referenciar valores na pilha. Ele denota uma cópia (\emph{alias}) de um ponteiro e é equivalente aos empréstimos de Rust. Uma consequência da modelagem com tipos lineares é quais operações consomem o valor: quais operações que, passado uma variável $x$ do tipo $\text{*}\!\tau$, consomem o valor e o tornam inacessíveis via a variável passada. As operações subscritas em {\color{blue}azul} não movem os valores passados a eles. Excluindo os operadores de dereferência (*) e referência (\&), são todos operadores novos, introduzidos com o propósito de não mover os valores no uso. Por exemplo, os operadores de incremento e decremento foram criados para poder-se aumentar o valor de um ponteiro sem que se usa o valor, dessa forma acessos a listas em memória ficam mais fáceis, como em \ref{fig:pcl-front:inc}.
 
 \begin{figure}[ht]
 	\caption{Acesso a listas em memória em $PCL_{front}$}
@@ -70,8 +71,9 @@ Porém, há um problema nesse sistema, especificamente com o fato que o ato de d
 	\caption{Geração de erro de \emph{Use-After-Free} com $PCL_{front}$ sem restrições.}
 	\label{fig:pcl-front:uaf}
 	\begin{lstlisting}[language=PCLfront]
-var a: **int := new<*int>(1);
-*a := new<int>(1);
+let a: **int = new<*int>(1);
+let b: *int = new<int>(1);
+*a := b;
 //acessa o ponteiro salvo no |.{\color{codegreen}endereço}. a
 delete(*a, 1);
 //acessa novamente
@@ -80,16 +82,15 @@ delete(*a, 1);
 	\legend{Fonte: Os Autores.}
 \end{figure}
 
-A operação de dereferência de valores precisa então ser restringida. Dessa forma, tem-se que uma operação de deferência $\text{*}\!e$ só é valida se $e$ for de um tipo não linear, $e\!:\,!\tau$ ($!$ prefixando um tipo indica que este é não linear). Essa limitação justifica os operadores $:=:\!\!\text{*}$ e $\KW{alias}\text{*}$, operações em que mesmo com um tipo $e$ linear, pode-se dereferenciar, pois a operação imediata após é segura e absorve o valor. Essa dinâmica vem inspirada nos \emph{tracked pointers} de Cyclone \cite[p.6]{CYCLONEMEM}, que limitam também o acesso a ponteiros alinhados da mesma forma. Um último adicional é que a função $\KW{new}$ inicializa a memória com o valor base do tipo indicado. Dessa forma \ref{fig:pcl-front:uaf} também está incorreto na sua segunda linha, pois descarta o tipo linear em memória. O trecho \ref{fig:pcl-front:init} descreve essa inicialização mais propriamente. O $\KW{delete}$ na linguagem pode consumir ponteiros nulos sem emissão de falhas.
-\todo{e os alias na memória?}
+A operação de dereferência de valores precisa então ser restringida. Dessa forma, tem-se que uma operação de deferência $\text{*}\!e$ só é valida se $e$ for de um tipo não linear, $e\!:\,!\tau$ ($!$ prefixando um tipo indica que este é não linear). Essa limitação justifica os operadores $:=:\!\!\text{*}$ e $\KW{alias}\text{*}$, operações em que mesmo com um tipo $e$ linear, pode-se dereferenciar, pois a operação imediata após é segura e absorve o valor. Essa dinâmica vem inspirada nos \emph{tracked pointers} de Cyclone \cite[p.6]{CYCLONEMEM}, que limitam também o acesso a ponteiros alinhados da mesma forma. Um último adicional é que a função $\KW{new}$ inicializa a memória com o valor base do tipo indicado. Dessa forma \ref{fig:pcl-front:uaf} também está incorreto na sua terceira linha, pois descarta o tipo linear em memória. A limitação sintática de troca ser só entre variáveis existe por esse motivo. O trecho \ref{fig:pcl-front:init} descreve essa inicialização mais propriamente. O $\KW{delete}$ na linguagem pode consumir ponteiros nulos sem emissão de falhas.
 
 \begin{figure}[ht]
 	\caption{Inicialização correta de ponteiros aninhados com $PCL_{front}$.}
 	\label{fig:pcl-front:init}
 	\begin{lstlisting}[language=PCLfront]
-var a: **int := new<*int>(1); //|.{\color{codegreen}Inicia espaço alocado com nullptr}.
-var b: *int := new<int>(1); //|.{\color{codegreen}Inicia espaço alocado com 0}.
-b := 2;
+let a: **int = new<*int>(1); //|.{\color{codegreen}Inicia espaço alocado com nullptr}.
+let b: *int = new<int>(1); //|.{\color{codegreen}Inicia espaço alocado com 0}.
+*b := 2;
 //|.{\color{codegreen}Troca o ponteiro $b$ pelo ponteiro na posição $a$}. 
 b :=:* a;
 delete(b, 1);
@@ -106,13 +107,24 @@ A checagem de tipos dessa linguagem inclui a validação de acessos a \emph{alia
 
 Os ambientes usados para computação são $\Gamma$, $U$, $R$ e $L$. O ambiente $\Gamma$ é o ambiente de variáveis para tipos, com $U$ sendo o seu coadjuvante. Ele também é um ambiente de variáveis para tipos, mas é o local em que variáveis acessada são movidas para que a operação imediatamente anterior a elas decida se serão descartadas ou reincorporadas em $\Gamma$. Os ambientes $R$ e $L$ são dedicados a avaliação dos \emph{alias} do programa, contendo o mesmo significado que o descrito em \ref{sec:chap4:polonius}, $R$ é a relação entre regiões e $L$ é a relação de regiões para conjuntos de concessões. 
 
-As regras de tipo usam algumas funções auxiliares que precisam ser definidas. Uma delas é a $\mathbf{newlabel}$, que retorna uma região única nova ao programa. A função $\mathbf{live}('r, L)$ (\ref{fig:def:live}) retorna verdadeiro se a região $'r$ está viva naquele ponto do programa, verificando que existe alguma concessão no conjunto de $'r$ em $L$. As funções de operação binária usam a função auxiliar $\mathbf{addSubType}(\tau_1, \tau_2)$ (\ref{fig:def:addsub}) para simplificar a notação. Ela retorna o tipo que corresponde uma operação entre os seus dois operandos. Há correspondência se $\tau_1$ e $\tau_2$ forem $\KW{int}$, resultando em $\KW{int}$ ou se um deles for $\KW{int}$ e o outro sendo tipo ponteiro ($\text{*}\!\tau$) ou tipo \emph{alias} ($@\tau'r$), resultando nos tipos ponteiro e \emph{alias} respectivamente. Uma notação complementar usada para reduzir o número de regras é a de chaves $\{\}$, assume-se que os elementos dentro desses, quanto falando de símbolos da linguagem, representam alternativas. Por exemplo, a regra \hyperref[trule:binop-comp]{(BINOP-COMP)} é valida para $op$ de valores $=$, ou $>$, ou $<$.
+As regras de tipo usam algumas funções auxiliares que precisam ser definidas. Uma delas é a $\mathbf{newlabel}$, que retorna uma região única nova ao programa. A função $\mathbf{live}('r, L)$ (\ref{fig:def:live}) retorna verdadeiro se a região $'r$ está viva naquele ponto do programa, verificando que existe alguma concessão no conjunto de $'r$ em $L$. O operador auxiliar complementar ao $\mathbf{live}$ é o $\mathbf{rmLoan}(x, L)$ (\ref{fig:def:rmloan}), que gera um novo $L$ sem as regiões que possuem uma concessão a $x$.
+
+As funções de operação binária usam a função auxiliar $\mathbf{addSubType}(\tau_1, \tau_2)$ (\ref{fig:def:addsub}) para simplificar a notação. Ela retorna o tipo que corresponde uma operação entre os seus dois operandos. Há correspondência se $\tau_1$ e $\tau_2$ forem $\KW{int}$, resultando em $\KW{int}$ ou se um deles for $\KW{int}$ e o outro sendo tipo ponteiro ($\text{*}\!\tau$) ou tipo \emph{alias} ($@\tau'r$), resultando nos tipos ponteiro e \emph{alias} respectivamente. Uma notação complementar usada para reduzir o número de regras é a de chaves $\{\}$, assume-se que os elementos dentro desses, quanto falando de símbolos da linguagem, representam alternativas. Por exemplo, a regra \hyperref[trule:binop-comp]{(BINOP-COMP)} é valida para $op$ de valores $=$, ou $>$, ou $<$.
 
 \begin{figure}[ht]
 	\caption{Função que determina se uma região $'r$ está viva em $L$.}
 	\label{fig:def:live}
 	\begin{align}
 		&\mathbf{live}('r, L) = \exists ('w, l^s) \in L, {'r} = {'w} \land l^s \neq \emptyset
+	\end{align}
+	\legend{Fonte: Os Autores.}
+\end{figure}
+
+\begin{figure}[ht]
+	\caption{Função que gera um $L'$ sem todas as regiões $'r$ de $L$ com uma concessão a $x$.}
+	\label{fig:def:rmloan}
+	\begin{align}
+		&\mathbf{rmLoan}(x, L) = \{(r, l^s) \OR \forall (r, l^s) \in L, x \notin l^s \}
 	\end{align}
 	\legend{Fonte: Os Autores.}
 \end{figure}
@@ -146,15 +158,13 @@ Uma característica da ausência do tipo tupla é que não há a existência do 
 \labelRule{\label{trule:lin-var}}{
 	\infrule[Var-lin]
 		{}
-		{\Gamma, x:\tau;U;R;L \vdash x : \tau \OR \Gamma;U, x:\tau;R; \\
-		\{(r, l^s) \OR \forall (r, l^s) \in L, x \notin l^s \} }
+		{\Gamma, x:\tau;U;R;L \vdash x : \tau \OR \Gamma;U, x:\tau;R;\mathbf{rmLoan}(x, L)}
 }
 
 \labelRule{\label{trule:ref}}{
 	\infrule[Ref]
 		{'r = \textbf{newlabel}()}
-		{\Gamma, x:\tau;U;R;L \vdash \&x : @\tau'r \OR \Gamma,x:\tau;U;R;
-		L, (r, \{ x \})}
+		{\Gamma, x:\tau;U;R;L \vdash \&x : @\tau'r \OR \Gamma,x:\tau;U;R;L, (r, \{ x \})}
 }
 
 \labelRule{\label{trule:binop-addsub}}{
@@ -181,23 +191,32 @@ Uma característica da ausência do tipo tupla é que não há a existência do 
 		}
 		{\Gamma;U;R;L \vdash e_1\;op\;e_2: \KW{int} \OR \Gamma'';\emptyset;R'';L''} 
 }
+\labelRule{\label{trule:inc-alias}}{
+	\infrule[Inc-Alias]
+		{ \Gamma;U;R;L \vdash e: \KW{int} \OR \Gamma';U';R';L' }
+		{\Gamma, x: @\tau'r;U;R;L \vdash x +\!\!= e : \KW{int}\\
+		\OR \Gamma', x: @\tau'r;\emptyset;R';L'} 
+}
 
 \labelRule{\label{trule:inc}}{
-	\infrule[Increment]
-		{
-			\Gamma;U;R;L \vdash e_1: \{\text{*}\!\tau, @\tau'r\} \OR \Gamma';U';R';L'\\
-			\Gamma' \cup U'; \emptyset;R';L' \vdash e_2: \KW{int} \OR \Gamma'';U'';R'';L''
-		}
-		{\Gamma;U;R;L \vdash e_1 +\!\!= e_2 : \KW{int} \OR \Gamma'';\emptyset;R'';L''} 
+	\infrule[Inc]
+		{ \Gamma;U;R;L \vdash e: \KW{int} \OR \Gamma';U';R';L' }
+		{\Gamma, x: \text{*}\tau;U;R;L \vdash x +\!\!= e : \KW{int}\\
+		\OR \Gamma', x: \text{*}\tau;\emptyset;R';L'} 
+}
+
+\labelRule{\label{trule:dec-alias}}{
+	\infrule[Dec-Alias]
+		{ \Gamma;U;R;L \vdash e: \KW{int} \OR \Gamma';U';R';L' }
+		{\Gamma, x: @\tau'r;U;R;L \vdash x -\!\!= e : \KW{int}\\
+		\OR \Gamma', x: @\tau'r;\emptyset;R';L'} 
 }
 
 \labelRule{\label{trule:dec}}{
-	\infrule[Decrement]
-		{
-			\Gamma;U;R;L \vdash e_1: \{\text{*}\!\tau, @\tau'r\} \OR \Gamma';U';R';L'\\
-			\Gamma' \cup U'; \emptyset;R';L' \vdash e_2: \KW{int} \OR \Gamma'';U'';R'';L''
-		}
-		{\Gamma;U;R;L \vdash e_1 -\!\!= e_2 : \KW{int} \OR \Gamma'';\emptyset;R'';L''} 
+	\infrule[Dec]
+		{ \Gamma;U;R;L \vdash e: \KW{int} \OR \Gamma';U';R';L' }
+		{\Gamma, x: \text{*}\tau;U;R;L \vdash x -\!\!= e : \KW{int}\\
+		\OR \Gamma', x: \text{*}\tau;\emptyset;R';L'} 
 }
 
 \labelRule{\label{trule:not}}{
@@ -232,7 +251,7 @@ Uma característica da ausência do tipo tupla é que não há a existência do 
 
 \labelRule{\label{trule:compose}}{
 	\infrule[Compose]
-		{\Gamma;U;R;L \vdash e_1 : \tau_1 \OR \Gamma';U';R';L' \\ \Gamma';\emptyset;R';L' \vdash e_2 : \tau_2 \OR \Gamma'';U'';R'';L''}{\Gamma;U;R;L \vdash e_1;e_2 : \tau_2 \OR \Gamma'';U'';R'';L''} 
+		{\Gamma;U;R;L \vdash e_1 :\,!\tau_1 \OR \Gamma';U';R';L' \\ \Gamma';\emptyset;R';L' \vdash e_2 : \tau_2 \OR \Gamma'';U'';R'';L''}{\Gamma;U;R;L \vdash e_1;e_2 : \tau_2 \OR \Gamma'';U'';R'';L''} 
 }
 
 \labelRule{\label{trule:scope}}{
@@ -246,24 +265,17 @@ Uma característica da ausência do tipo tupla é que não há a existência do 
 \labelRule{\label{trule:new}}{
 	\infrule[New]
 		{\Gamma;U;R;L \vdash e : \KW{int} \OR \Gamma';U';R';L'}
-		{\Gamma;U;R;L \vdash \KW{new}\typearg{\tau}(e):\text{*}\tau \OR \Gamma';\emptyset;R';L'}
+		{\Gamma;U;R;L \vdash \KW{let}\;x:\text{*}\!\tau = \KW{new}(e):\KW{int} \OR \Gamma', x: \text{*}\!\tau;\emptyset;R';L'}
 }
 
 % acho que tem que ser só o delete var, pq dá pra fazer *(&tau)
 % não dá, essa operação fica *(@*T) que é inválido via as regras que tu escreveu.
 
-\labelRule{\label{trule:delete-var}}{
-	\infrule[Delete-var]
-		{\Gamma;U;R;L \vdash e : \KW{int} \OR \Gamma';U';R';L'}
-		{\Gamma,x:\tau;U;R;L \vdash 
-		\KW{delete}(x, e): \KW{int} \OR \Gamma';\emptyset;R'; \\
-		\{(r, l^s) \OR \forall (r, l^s) \in L, x \notin l^s \}}
-}
-
 \labelRule{\label{trule:delete}}{
 	\infrule[Delete]
-		{\Gamma;U;R;L \vdash e_1: \text{*}\tau \OR \Gamma';U';R';L' \\ \Gamma';\emptyset;R';L' \vdash e_2 : \KW{int} \OR \Gamma'';U'';R'';L''}
-		{\Gamma;U;R;L \vdash \KW{delete}(e_1, e_2): \KW{int} \OR \Gamma'';\emptyset;R'';L''}
+		{\Gamma;U;R;L \vdash e : \KW{int} \OR \Gamma';U';R';L'}
+		{\Gamma,x:\text{*}\tau;U;R;L \vdash 
+		\KW{delete}(x, e): \KW{int} \OR \Gamma';\emptyset;R'; \mathbf{rmLoan}(x, L')}
 }
 
 \labelRule{\label{trule:var-alias}}{
@@ -287,23 +299,23 @@ Uma característica da ausência do tipo tupla é que não há a existência do 
 
 \labelRule{\label{trule:swap}}{
 	\infrule[Swap]
-		{\Gamma;U;R;L \vdash e_1: \tau \OR \Gamma';U';R';L' \\
-		\Gamma'\cup U';\emptyset;R';L' \vdash e_2 : \tau \OR \Gamma'';U'';R'';L''}
-		{\Gamma;U;R;L \vdash e_1 :=: e_2 : \KW{int} \OR \Gamma'' \cup U;\emptyset;R'';L''} 
+		{}
+		{\Gamma,x_1:\tau, x_2:\tau;U;R;L \vdash x_1 :=: x_2 : \KW{int} \\
+		\OR \Gamma,x_1:\tau, x_2:\tau;\emptyset;R;\mathbf{rmLoan}(x_1, \mathbf{rmLoan}(x_2, L))} 
 }
 
 \labelRule{\label{trule:swap-deref-ptr}}{
 	\infrule[Swap-Deref-Ptr]
-		{\Gamma;U;R;L \vdash e_1: \tau \OR \Gamma';U';R';L' \\
-		\Gamma' \cup U';\emptyset;R';L' \vdash e_2 : \text{*}\tau \OR \Gamma'';U'';R'';L''}
-		{\Gamma;U;R;L \vdash e_1 :=:\!\!\text{*} e_2: \KW{int} \OR \Gamma'' \cup U'';\emptyset;R'';L''} 
+		{}
+		{\Gamma,x_1:\tau, x_2:\text{*}\tau;U;R;L \vdash x_1 :=:\!\!\text{*} x_2 : \KW{int} \\
+		\OR \Gamma,x_1:\tau, x_2:\text{*}\tau;\emptyset;R;\mathbf{rmLoan}(x_1, \mathbf{rmLoan}(x_2, L))} 
 }
 
 \labelRule{\label{trule:swap-deref-alias}}{
 	\infrule[Swap-Deref-Alias]
-		{\Gamma;U;R;L \vdash e_1: \tau \OR \Gamma';U';R';L' \\
-		\Gamma' \cup U';\emptyset;R';L' \vdash e_2 : @\tau'r \OR \Gamma'';U'';R'';L'' \quad \mathbf{live}('r)}
-		{\Gamma;U;R;L \vdash e_1 :=:\!\!\text{*} e_2: \KW{int} \OR \Gamma'' \cup U'';\emptyset;R'';L''} 
+		{\mathbf{live}('r)}
+		{\Gamma,x_1:\tau, x_2:@\tau'r;U;R;L \vdash x_1 :=:\!\!\text{*} x_2 : \KW{int} \\
+		\OR \Gamma,x_1:\tau, x_2:@\tau'r;\emptyset;R;L} 
 }
 
 %adicionando as relações de região
@@ -313,8 +325,8 @@ Uma característica da ausência do tipo tupla é que não há a existência do 
 		\Gamma';\emptyset;R';L' \vdash \{ e_2 \} : @\tau'r \OR \Gamma''_2;U''_2;R''_2;L''_2\\
 		\Gamma';\emptyset;R';L' \vdash \{ e_3 \} : @\tau'w \OR \Gamma''_3;U''_3;R''_3;L''_3
 		}
-		{\Gamma;U;R;L \vdash \KW{if}(e_1)\;e_2\;\KW{else}\;e_3 : \tau \OR\\
-		\Gamma''_2 \cap \Gamma''_3;\emptyset;R'' \cup \{('r, 'w), ('w, 'r)\};L''_2 \cup L''_3} 
+		{\Gamma;U;R;L \vdash \KW{if}(e_1)\;e_2\;\KW{else}\;e_3 : \tau \\
+		\OR \Gamma''_2 \cap \Gamma''_3;\emptyset;R'' \cup \{('r, 'w), ('w, 'r)\};L''_2 \cup L''_3} 
 }
 
 \labelRule{\label{trule:if}}{
@@ -323,8 +335,8 @@ Uma característica da ausência do tipo tupla é que não há a existência do 
 		\Gamma';\emptyset;R';L' \vdash \{ e_2 \} : \tau \OR \Gamma''_2;U''_2;R''_2;L''_2\\
 		\Gamma';\emptyset;R';L' \vdash \{ e_3 \} : \tau \OR \Gamma''_3;U''_3;R''_3;L''_3
 		}
-		{\Gamma;U;R;L \vdash \KW{if}(e_1)\;e_2\;\KW{else}\;e_3 : \tau \OR\\
-		\Gamma''_2 \cap \Gamma''_3;\emptyset;R'';L''_2 \cup L''_3} 
+		{\Gamma;U;R;L \vdash \KW{if}(e_1)\;e_2\;\KW{else}\;e_3 : \tau \\
+		\OR \Gamma''_2 \cap \Gamma''_3;\emptyset;R'';L''_2 \cup L''_3} 
 }
 
 \labelRule{\label{trule:callfunc}}{
@@ -335,10 +347,11 @@ Uma característica da ausência do tipo tupla é que não há a existência do 
 			\Gamma_1;\emptyset;R_1;L_1 \vdash e_2: \tau_2^a \OR \Gamma_2;U_2;R_2;L_2 \quad \tau_2^f = \tau_2^a\\
 			... \\
 			\Gamma_{n-1};\emptyset;R_{n-1};L_{n-1} \vdash e_n: \tau_n^a \OR \Gamma_n;U_n;R_n;L_n \quad \tau_n^f = \tau_n^a\\
-			RR = \{(r_i, w_i) \OR \forall i, \tau_i^f = @{\tau}{'}{w_i} \land \tau_i^a = @{\tau}{'}{r_i}\}
+			RR = \{(r_i, w_i) \OR \forall i, \tau_i^f = @{\tau}{'}{w_i} \land \tau_i^a = @{\tau}{'}{r_i}\}\\
+			\forall (r, w) \in RR, \mathbf{live}(r)
 		}
-		{\Gamma, f: \tau;U;R;L \vdash f(\bar e) : \tau_r \OR
-		\Gamma_n, f: \tau ;\emptyset; R_n \cup RR ;L_n} 
+		{\Gamma, f: \tau;U;R;L \vdash \KW{let}\;x : \tau_r = f(\bar e) : \KW{int}\\ \OR
+		\Gamma_n, f: \tau, x: \tau_r ;\emptyset; R_n \cup RR ;L_n} 
 }
 
 \labelRule{\label{trule:stop}}{
@@ -378,15 +391,77 @@ Uma característica da ausência do tipo tupla é que não há a existência do 
 		{\Gamma;U;R;L \vdash \KW{fn}\;f(\overline{x_i:\tau_i}) \to \tau_r\;e\;F: \KW{int}} 
 }
 
-As regras \hyperref[trule:delete-var]{(DELETE-VAR)}, \hyperref[trule:scope]{(SCOPE)} realizam a limpeza de valores do ambiente de concessões $L$. A operação de deletar uma variável é mais granular, removendo apenas as regiões que tem essa variável na sua lista de concessões. A operação de escopo remove todas as variáveis locais definidas dentro do escopo, obtidas via $\Gamma'\backslash\Gamma$ (subtração do conjunto de várias declaradas antes da avaliação do escopo com o conjunto de variáveis declarada até o final do escopo). Usa-se notação $!\Gamma$, com o $!$, para indicar que todas as variáveis nesse ambiente são não lineares. O resultado do escopo também descarta todas as associações entre regiões criadas dentro dele, restaurando o conjunto de regiões $R$ externo.
+As regras \hyperref[trule:delete]{(DELETE)} e \hyperref[trule:scope]{(SCOPE)} realizam a limpeza de valores do ambiente de concessões $L$. A operação de deletar uma variável é mais granular, removendo apenas as regiões que tem essa variável na sua lista de concessões. A operação de escopo remove todas as variáveis locais definidas dentro do escopo, obtidas via $\Gamma'\backslash\Gamma$ (subtração do conjunto de várias declaradas antes da avaliação do escopo com o conjunto de variáveis declarada até o final do escopo). Usa-se notação $!\Gamma$, com o $!$, para indicar que todas as variáveis nesse ambiente são não lineares. O resultado do escopo também descarta todas as associações entre regiões criadas dentro dele, restaurando o conjunto de regiões $R$ externo.
 
-Por fim, discorre-se sobre as operações de funções. A chamada de função, regra \hyperref[trule:callfunc]{(CALLFUNC)}, descreve que cada argumento deve ser igual ao tipo correspondente na função, sendo avaliados em ordem e usando os ambientes gerados pelos anteriores. A última linha das pré-condições coleta todos os tipos que forem \emph{alias} e adiciona relações de sobrevivência entre eles para a avaliação da função. Essas funções são avaliadas na declaração, regra \hyperref[trule:func-alias]{(FUNC-ALIAS)} e caso retornem um \emph{alias}, precisam testar que o \emph{alias} de retorno do corpo só é sobrevivido pelo \emph{alias} de retorno anotado na função. Essa codição é dada pela segunda linha da pré-condição, que diz que se a região de retorno do \emph{alias} do corpo é sobrevivida por alguma outra região, essa região deve ser igual à região de do \emph{alias} de retorno anotado ou ser sobrevivida por este e não o sobreviver. Nessa regra ainda falta cavar uma exceção para a região estática $'0$.
-
+As operações que geram tipos ponteiros \hyperref[trule:new]{(NEW)} e \hyperref[trule:callfunc]{(CALLFUNC)} realizam sempre um \emph{bind} a uma variável. Isso serve para evitar o vazamento de memória e manter as regras de tipos consistentes. Essa chamada de função também descreve que cada argumento deve ser igual ao tipo correspondente na função, sendo avaliados em ordem e usando os ambientes gerados pelos anteriores. A última linha das pré-condições coleta todos os tipos que forem \emph{alias} e adiciona relações de sobrevivência entre eles para a avaliação da função. Essas funções são avaliadas na declaração, regra \hyperref[trule:func-alias]{(FUNC-ALIAS)} e caso retornem um \emph{alias}, precisam testar que o \emph{alias} de retorno do corpo só é sobrevivido pelo \emph{alias} de retorno anotado na função. Isso é discorrido na segunda linha da pré-condição, que diz que se a região de retorno do \emph{alias} do corpo é sobrevivida por alguma outra região, essa região deve ser igual à região de do \emph{alias} de retorno anotado ou ser sobrevivida por este e não o sobreviver. Nessa regra ainda falta cavar uma exceção para a região estática $'0$.
 
 %   5.4 Definição via compilação
 \section{Definição via Compilação}
 \label{chap5:compile}
 
-A definição via compilação é relativamente simples. A linguagem foi criada de uma forma que esse processo fosse simples. Para a maioria dos elementos basta apenas apagar os tipos, entretanto para os operadores de troca ($:=:$, $:=:\!\!\text{*}$) e para o $\KW{new}$ é necessário algumas operações adicionais. Abaixo segue a função recursiva que define a compilação, ela se utiliza da função $\KW{newname}$ para gerar nomes únicos para variáveis.
+\newcommand{\compf}[1]{\overset{\mathbf{fn}}{\underset{\mathbf{comp.}}{[\,#1\,]}}}
+\newcommand{\compe}[1]{\overset{\mathbf{exp}}{\underset{\mathbf{comp.}}{[\,#1\,]}}}
+\newcommand{\TMP}{{\color{red}tmp}}
+\newcommand{\DEF}{{\color{red}\mathbf{def}({\color{black}\tau})}}
 
+A definição via compilação é relativamente simples. A linguagem foi criada de uma forma que esse processo fosse simples. Para a maioria dos elementos basta apenas apagar os tipos, entretanto para os operadores de troca ($:=:$ e $:=:\!\!\text{*}$) e para o $\KW{new}$ é necessário algumas operações adicionais. Na compilação há duas operações destacadas em vermelho, $\TMP$ e $\DEF$. A primeira, $\TMP$, representa um nome temporário único no sistema, quanto o segundo, $\DEF$ retorna o valor base para o tipo $\tau$. O valor base para um $\KW{int}$ é 0 e para um ponteiro e \emph{alias} é o ponteiro nulo. Na definição da função recursiva, decidiu-se usar uma notação um tanto inconvencional para evitar que a notação que descreve a compilação seja confundida com o alvo de compilação em si. Dessa forma, há duas funções definidas, $\compf{F}$ e $\compe{e}$, compilando funções e expressões respectivamente. O lado esquerdo do $\Rightarrow$ define a entrada e o direito a saída. As definições da compilação estão na figura \ref{fig:def:compilation}.
 
+\begin{figure}[ht]
+	\caption{Função recursiva que define a compilação de $PCL_{front}$ para $PCL_{back}$}
+	\label{fig:def:compilation}
+	\begin{align}
+		&\compf{\KW{fn}\;f(\overline{x : \tau})\to \tau_r\;e\;F} \Rightarrow \KW{let}\;f(\bar x)\; \compe{e}\; \compf{F} \\
+		&\compf{\KW{fn}\;()\;e} \Rightarrow \KW{let}\;()\; \compe{e}
+	\end{align}
+	\begin{minipage}{.45\linewidth}
+		\begin{align}
+			&\compe{\text{*}e} \Rightarrow \text{*}\compe{e} \\
+			&\compe{\KW{alias}\;x} \Rightarrow x \\
+			&\compe{\KW{alias}\!\text{*}\;x} \Rightarrow \text{*}\!x \\
+			&\compe{e_1;e_2} \Rightarrow \compe{e_1};\compe{e_2} \\
+			&\compe{e_1 := e_2} \Rightarrow \compe{e_1} := \compe{e_2} \\
+			&\compe{\{e\}} \Rightarrow \{\compe{e}\} 
+		\end{align}
+	\end{minipage}
+	\hspace{.09\linewidth}
+	\begin{minipage}{.45\linewidth}
+		\begin{align}
+			&\compe{e_1 \; op \; e_2} \Rightarrow \compe{e_1} \; op \; \compe{e_2}\\
+			&\compe{x +\!\!= e} \Rightarrow x := x + \compe{e}; 1 \\
+			&\compe{x -\!\!= e} \Rightarrow x := x - \compe{e}; 1 \\
+			&\compe{!e} \Rightarrow\;!\compe{e} \\
+			&\compe{x} \Rightarrow x \\
+			&\compe{\&x} \Rightarrow \&x 
+		\end{align}
+	\end{minipage}
+	\begin{align}
+		&\compe{\KW{let}\; x: \text{*}\tau = \KW{new}(e)} \Rightarrow \KW{let}\;\TMP[1]; \TMP := \compe{e} + 1;\KW{let}\;x[1]; x := \KW{malloc}(\TMP);\nonumber\\
+		&\quad\quad \KW{while}(\TMP := \TMP - 1; \TMP > 0)\; \text{*}(x + \TMP - 1) := \DEF; 1 \label{fig:def:compilation:new} \\
+		&\compe{\KW{delete}(x, e)} \Rightarrow \KW{free}(x,\compe{e}); 1 \\
+		&\compe{\KW{var}\; x: \tau = e} \Rightarrow \KW{let}\;x[1]; x := \compe{e}; 1 \\
+		&\compe{x_1 :=: x_2} \Rightarrow \KW{let}\;\TMP[1]; \TMP := x_1; x_1 := x_2; x_2 := \TMP; 1 \label{fig:def:compilation:swap}\\
+		&\compe{x_1 :=:\!\!\text{*}\,x_2} \Rightarrow \KW{let}\;\TMP[1]; \TMP := x_1; x_1 := \text{*}x_2; \text{*}x_2 := \TMP; 1 \label{fig:def:compilation:swapderef}\\
+		&\compe{\KW{if}(e_1)\;e_2\;\KW{else}\;e_3} \Rightarrow if(\compe{e_1})\;\compe{e_2}\;\KW{else}\;\compe{e_3}\\
+		&\compe{\KW{let}\; x: \tau = f(\bar e)} \Rightarrow \KW{let}\;x[1]; x := f(\compe{\bar e}); 1 
+	\end{align}
+	\begin{minipage}{.25\linewidth}
+		\begin{align}
+			&\compe{\KW{stop}} \Rightarrow PANIC
+		\end{align}
+	\end{minipage}
+	\hspace{0.02\linewidth}
+	\begin{minipage}{.30\linewidth}
+		\begin{align}
+			&\compe{\KW{nullptr}\typearg{\tau}} \Rightarrow NULL 
+		\end{align}
+	\end{minipage}
+	\hspace{0.02\linewidth}
+	\begin{minipage}{.33\linewidth}
+		\begin{align}
+			\compe{\KW{nullalias}\typearg{\tau}} \Rightarrow NULL 
+		\end{align}
+	\end{minipage}
+	\legend{Fonte: Os Autores.}
+\end{figure}
+
+As definições de troca \ref{fig:def:compilation:swap} e \ref{fig:def:compilation:swapderef} realizam expressão idiomática de troca, usando a variável de nome auxiliar $\TMP$. A definição do operador $\KW{new}$, \ref{fig:def:compilation:new}, é simples se não pelo uso do  $\KW{while}$ para atribuir valores-base ao espaço alocado. A compilação de $PCL_{front}$ para $PCL_{back}$ ainda precisa ser testada e provada correta.
