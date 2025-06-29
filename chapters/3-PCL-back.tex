@@ -123,7 +123,7 @@ let ()
 \section{Modelo de Memória}
 \label{sec:memory-model}
 
-O layout de memória de um programa em C tem vários componentes\todo{Adicionar citação e um diagrama. Provavelmente retirar do livro de C}: o segmento de texto, que contém o programa em si; a seção de dados, que guarda elementos globais, assim como \emph{strings} literais e outros elementos escritos no código; a pilha e a \emph{heap}. A pilha é o lugar em que variáveis locais são alocadas e chamadas de funções são geridas. Ela realiza alocações de tamanho conhecido em tempo de compilação e libera essa memória no final do escopo da variável associada. A \emph{heap} é o lugar em que alocações dinâmicas são colocadas, seja porque o tamanho ou a duração não são conhecidos em tempo de compilação.
+O layout de memória de um programa em C tem vários componentes: o segmento de texto, que contém o programa em si; a seção de dados, que guarda elementos globais, assim como \emph{strings} literais e outros elementos escritos no código; a pilha e a \emph{heap}. A pilha é o lugar em que variáveis locais são alocadas e chamadas de funções são geridas. Ela realiza alocações de tamanho conhecido em tempo de compilação e libera essa memória no final do escopo da variável associada. A \emph{heap} é o lugar em que alocações dinâmicas são colocadas, seja porque o tamanho ou a duração não são conhecidos em tempo de compilação.
 
 A dinâmica entre alocações manuais, aquelas que acontecem na \emph{heap}, e alocações estáticas, aquelas que acontecem na pilha, é um componente importante na reprodução de \emph{bugs} de memória. Falhas na \emph{heap} tendem a ser mais difíceis de encontrar e lidar, pois o processo de requisitar memória e liberá-la manualmente tende a aumentar a superfície de falhas. 
 
@@ -140,7 +140,6 @@ Com essa distinção, pode-se notar que o elemento da sintaxe responsável por i
 	\caption{Layout dos metadados dos locais.}
 	\label{fig:ptr:metada}
 \end{figure*}
-\todo{Fazer um diagrama mais legal?}
 
 Nela, $i$ é o índice de acesso à memória; $k$ é a uma chave única, gerada através da função $\mathbf{newkey}$, que serve para validar os acessos quanto a falhas temporais; $o$ é o \emph{offset} (desvio) do índice base $i$, que recebe o valor das somas e subtrações, ao invés de alterar o índice diretamente; e $s$ é o tamanho da região alocada na memória, que serve para validar os acessos quanto a falhas espaciais. Esses metadados não são acessíveis na escrita do código, mas na semântica operacional tem seus valores internos expostos à avaliação usando a anotação de chaves acima.
 
@@ -813,10 +812,10 @@ O modelo de detecção de falhas permite agora demonstrar a paridade entre as si
 	\caption{Falha Espacial em $PCL_{back}$.} 
 	\label{lst:pcls:espacial-error}
 	\begin{lstlisting}[language=PCLback]
-	let get_val(list, len, idx){
-		if(idx < len) *(list + idx)
-		else (0 - 1)
-	}
+let get_val(list, len, idx){
+	if(idx < len) *(list + idx)
+	else (0 - 1)
+}
 	\end{lstlisting}
 	\legend{Fonte: Os Autores.}
 \end{figure}

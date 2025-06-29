@@ -78,7 +78,7 @@ Fundamentalmente, a classe lida com leitura e escrita a regiões de memória nã
 % Garbage Collection (GC)
 \phantomsection
 \label{sec:mem-error:GC}
-A mitigação dessa classe de erros é a mais ampla e complexa desta lista. Desde a sua invenção em 1959\todo{citar}, uma das soluções mais completas presente tem sido o uso de um GC (coletor de lixo). Esse mecanismo detecta e retorna automaticamente memória alocada e não mais utilizada para o OS. Em troca, o programa sofre breves pausa periódicas (GC \emph{pauses}) na execução e a gerência do GC custa processamento que certos ambientes não tem disponível para gastar.
+A mitigação dessa classe de erros é a mais ampla e complexa desta lista. Desde a sua invenção em 1959 \cite{GCSTART}, uma das soluções mais completas presente tem sido o uso de um GC (coletor de lixo). Esse mecanismo detecta e retorna automaticamente memória alocada e não mais utilizada para o OS. Em troca, o programa sofre breves pausa periódicas (GC \emph{pauses}) na execução e a gerência do GC custa processamento que certos ambientes não tem disponível para gastar.
 
 % Memory regions\cite{REGMEM}
 \phantomsection
@@ -101,7 +101,7 @@ Um método alternativo, com gerência automática de memória é o \emph{borrow 
 
 \textbf{Free}: Um componente importante dessa classe são as falhas associadas a liberação de memória, principalmente tratando-se da função \FREE da \emph{stdlib} de C. Falhas como \emph{Double-Free} (chamar \FREE para um endereço liberado), \emph{Free of Memory not on the Heap} (chamar \FREE em um ponteiro que não aponta para a \emph{heap}), \emph{Free of Pointer not at Start of Buffer} (chamar \FREE com um ponteiro que não inicia a lista) e \emph{Release of Invalid Pointer or Reference} (chamar uma função de liberação de memória para memória alocada com outro sistema) ocorrem devido a uma ação que corrompe a estrutura de dados usadas para gerir alocação. Assim, alocações subsequentes são UB e podem escalar a erros.
 
-Um grande componente de soluções de memória temporal como o GC \ref{sec:mem-error:GC}, as Regiões de Memórias \ref{sec:mem-error:MemReg} e o \emph{Borrow Checker} \ref{sec:mem-error:BorrowChecker} é a dispensa da liberação manual de memória. Isso diminui a superfície de falha do código, evitando possíveis erros.
+Um grande componente de soluções de memória temporal como o \hyperref[sec:mem-error:GC]{GC}, as \hyperref[sec:mem-error:MemReg]{Regiões de Memórias} e o \hyperref[sec:mem-error:BorrowChecker]{\emph{Borrow Checker}} é a dispensa da liberação manual de memória. Isso diminui a superfície de falha do código, evitando possíveis erros.
 
 \phantomsection
 \label{sec:mem-error:temporal:null}
