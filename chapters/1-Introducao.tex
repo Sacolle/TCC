@@ -1,39 +1,27 @@
 % 1. Introdução
 \chapter{Introdução}
 
-% The C programming language\cite{CLANG} is the foundation of systems programming. 
-% Up to the adoption of Rust in early 2024\cite{RUSTFORLINUX}, 
-% it was the (only) language of the Linux kernel. 
-% Despite this great importance, C is still prone to many types of memory safety violations, 
-% with very little guarantees from the compiler.
+A linguagem de programação C \cite{CLANG} é a fundação de programação de sistemas. Até a incorporação de Rust no começo de 2024 \cite{RUSTFORLINUX}, C era a única linguagem do \emph{kernel} do Linux. Mesmo com essa grande importância, C é extremamente vulnerável a falhas de memória, com muito poucas restrições do compilador a fim de evitar essas falhas. Essa liberdade é, em parte, o ponto da linguagem C, que serve como uma simples fachada genérica sobre o Assembly da máquina. Porém, C faz parte de muitas partes críticas de infraestrutura para que a validação de novos sistemas não seja feita de forma rigorosa. 
 
-% At the start of the millennium, Cyclone\cite{CYCLONE1} started the trend of low-level
-% programming languages with safe memory systems without the broad use of 
-% Garbage Collection (GC). 
-% This was followed by CCured\cite{CCURED}, Rust\cite{RUSTBOOK} and more, 
-% each with its own memory safety solution. 
+No começo do milênio, Cyclone \cite{CYCLONE1} começou a popularização de linguagens de programação de baixo nível com sistema de memória seguro sem o uso amplo de \emph{Garbage Collectors} (GC). Essa tendencia foi seguida pelo projeto da Microsoft, CCured \cite{CCURED}, alguns anos depois. Essas duas linguagens partiram da sintaxe de C e adicionaram elementos de segurança de memória, com o fim de facilitar o porte de programas C para essa versão com mais ferramentas de segurança.
 
-%	1.1 Motivação
-\section{Motivação}
+No começo dos 2010s, o projeto Rust \cite{RUSTBOOK} surgiu com novas propostas de solução de memória, quebrando o paradigma da similaridade com C. Essas novas técnicas, principalmente o \emph{Borrow Checker}, apresentaram oportunidades de segurança de memória sem perda de desempenho, coisa que os seus predecessores não conseguiram atingir. A partir disso, novos sistemas foram emergindo, partindo de novas tecnologias como LLVM \todo{citar} que simplificam o processo de desenvolvimento de linguagens de programação, cada uma com uma proposta nova de como evitar falhas de memória.
 
-% Given a memory safety solution, it is important for it to be formally proven correct, 
-% as was done by \citet{RUSTBELT} and \citet{RUSTSYMBOLIC} for Rust's borrow checker.
-% With that, this work introduces Porcelain: a Semantic Framework for Representing 
-% and Analyzing Memory Safety Techniques. 
-% The aim is to define a front-end language by compilation to porcelain's defined 
-% back-end language as a means to prove certain theorems about the front-end languages 
-% memory safety mechanisms.
+O ambiente rico em soluções de segurança de memória evoca o pensamento: quais são corretas? Quais são efetivas? Quais tornam a linguagem restrita? Para linguagens que pretendem ser posicionadas em caminhos críticos de infraestrutura, como Rust, a demonstração de sua corretude é fundamental para a sua adoção e a possibilidade de se concorrer com o atual déspota de sistemas de baixo nível, C.
+
+\section{Trabalhos Relacionados}
 
 
-%	1.2 Related Work
-\section{Trabalhos Relacionado}
+Muitos dos trabalhos de prova de solução de memória focam na linguagem Rust e seu \emph{Borrow Checker}. O projeto RustBelt \cite{RUSTBELT}, fundado em 2017, a meta do projeto era provar a corretude do \emph{Borrow Checker} de Rust e o seu sistema de tipos. Para isso, foi utilizado uma versão de Rust formulada em \emph{continuation-passing style} para gerar os sistemas de prova. O sistema de detecção de falhas deste inspirou o sistema de $PCL_{back}$. Uma alternativa a esse projeto foi \emph{Sound Borrow-Checking for Rust via Symbolic Semantics} \cite{RUSTSYMBOLIC}. Nele, realiza-se um método de prova similar ao alvejado a neste trabalho, de realizar provas sobre a compilação de um programa para uma linguagem base. A definição de $PCL_{front}$ foi baseada no algoritmo Polonius \cite{Stjerna1684081}, entretanto, outras formulações desses foram construídas e provadas corretas, como \emph{A Lightweight Formalism for Reference Lifetimes and Borrowing in Rust} \cite{RUSTFORMALISM}. 
 
 %	1.3 Objetivos
 \section{Objetivos}
 
+O objetivo desse projeto é explorar as falhas de memória que existem em sistemas e com isso construir uma linguagem alvo de compilação, $PCL_{back}$, que detecte falhas essas memória. Para provar a utilidade dessa estratégia, também se propõem a desenvolver uma linguagem que compilará para a linguagem base, $PCL_{front}$. Ela implementará um sistema de \emph{Borrow Checker} com o fim de, através de compilação a $PCL_{back}$ a implementação deste possa ser provada correta.
+
+Esse trabalho contribui para a discussão de falhas de memória e serve como um meio flexível de provas outras estratégias mais inconvencionais em um campo mais neutro. Dessa forma, ele permite estratégias mais \emph{bottom-up} no desenvolvimento de linguagens, em que primeiro decide-se e prova-se uma estratégia de memória para depois desenvolver a linguagem que a envolve.
+
 %	1.4 Organização
 \section{Organização}
 
-%This project in its current state includes a back-end language defined
-% by a small-step operational semantics as well as a front-end language,
-% modeling a borrow checker, defined via compilation to the back-end language.
+O restante deste trabalho é classificado da seguinte forma. No capítulo \ref{chap2} é elaborado conceitos básicos para o entendimento do projeto. Isso inclui uma explicação simples de semântica operacional e sistema de tipos junto de uma elaboração sobre falhas de memória, significado, tipos e soluções propostas ao longo dos anos. No capítulo \ref{chap3} é introduzido $PCL_{back}$, a linguagem alvo de compilação do projeto. Para isso, elabora-se sobre as suas estruturas de avaliação, regras e correspondência com os erros do capítulo \ref{chap2}. Com esses dois capítulos, define-se a base do projeto. A partir desse ponto, passa-se a discorrer um caso de uso do sistema. O capítulo \ref{chap4} discorre sobre os conceitos necessários para o desenvolvimento da linguagem $PCL_{front}$, explicada no capítulo \ref{chap5}. O projeto é concluído no capítulo \ref{chap7}.
