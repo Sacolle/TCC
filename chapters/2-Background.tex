@@ -6,61 +6,27 @@ Outros conceitos, específicos ao domínio do caso de uso da linguagem de front-
 são elaborado no Capítulo \ref{chap4}. 
 
 %	2.1 O que é Semantica Operacional
-\section{Semântica Operacional}
+\section{Semântica Operacional e Sistema de Tipos}
 
-Semântica operacional é uma forma de definir como será realizada a execução de um programa de uma certa sintaxe. Ela pode ser dividida em \emph{Natural Semantics} (Semântica Natural) e em \emph{Structural Operacional Semantics} (Semântica Operacional Estrutural). Esses dois modos também são conhecidos como semântica \emph{Big Step} e semântica \emph{Small Step}, respectivamente \cite{NIELSON}.
+Semântica formal diz respeito à descrição matemática e precisa do comportamento dos programas de uma dada linguagem de programação, os quais são descritos por meio de uma sintaxe formal. Ela pode ser dividida em \emph{Natural Semantics} (Semântica Natural) e em \emph{Structural Operacional Semantics} (Semântica Operacional Estrutural). Esses dois modos também são conhecidos como semântica \emph{Big Step} e semântica \emph{Small Step}, respectivamente \cite{NIELSON}.
 
 O significado dos programas é definido por um sistema de transições. No caso da Semântica \emph{Small Step}, utilizada na definição das linguagens deste trabalho, esse sistema de transições que leva um programa $P$ e um estado $s$ para um novo programa $P'$ e um novo estado $s'$, da forma $\St{P, s} \to \St{P', s'}$. Essas transições são definidas pela estrutura do programa $P$. Pode-se nomear cada estado possível do programa $P$ como $\gamma$. Alguns desses $\gamma$ são ditos estados terminais, por simbolizarem o fim da computação. Por outro lado, podem existir $\gamma$ não possui transição na semântica, dito que está \emph{stuck} (preso). Uma execução de um programa $P$ é uma sequência de derivações de estados $\gamma$ finitas, até que atinja um estado terminal ou preso. Essa sequência também pode ser infinita, sem nunca chegar nos estados que param a avaliação. Um fecho que executa $i$ transições pode ser descrito como $\gamma_0 \to^i \gamma_i$. Mais comumente, utiliza-se a notação $\gamma_0 \to^* \gamma_k$ para indicar que em 0 ou mais passos foi-se de uma configuração $\gamma_0$ para uma configuração $\gamma_k$. Assim, pode-se anotar a execução finita de um programa $P$, representado pelo estado inicial $\gamma_0$, para um estado final ou preso $\gamma_f$, como $\gamma_0 \to^* \gamma_f$.
 
-\section{Julgamento de Tipos}
+Tipos podem ser utilizados para classificar programas de forma estática e garantir a ausência de certos comportamentos indesejados. Tipicamente, em uma dada linguagem fortemente tipadas, somente programas que possuem tipos associados são efetivamente compilados ou interpretados. A associação de programas a tipos é formalmente especificada por meio de julgamentos de tipos, relações formais normalmente especificadas por um conjunto finito de regras. Essas regras são descritas como um conjunto de regras de inferência que atribuem tipos a termos. 
 
-Julgamentos de tipos, ou relações de tipo, de algum elemento $e$ com um tipo $\tau$ é dada na forma $e:\tau$. Essas regras são descritas como um conjunto de regras de inferência que atribuem tipos a termos. 
-
-\todo[inline]{Aqui tinha uma seção sobre julgamento de tipos, mas não sei. Livro do Pierce. }
 
 %   2.2 Erros de memória
 \section{Falhas de Memória}
 \label{sec:mem-error}
 
-Uma falha de memória é composto de duas partes, a falha e a de memória. A parte falha advém da definição da estrutura hierárquica fracasso, erro, falha, descrita em \citet{FAULTS}. Nele, elabora-se que: ``(...) um fracasso de serviço significa que pelo menos um (ou mais) estados externos do sistema desviaram do estado correto do serviço. Esse desvio é chamado de erro. A julgada ou hipotisada causa de um erro é chamada de falha.''\cite[p. 13, tradução nossa.]{FAULTS}.
+Uma falha de memória é composto de duas partes, a natureza da falha e o ambiente de memória. A parte falha advém da definição da estrutura hierárquica fracasso, erro, falha, descrita em \citet{FAULTS}. Nele, elabora-se que: ``(...) um fracasso de serviço significa que pelo menos um (ou mais) estados externos do sistema desviaram do estado correto do serviço. Esse desvio é chamado de erro. A julgada ou hipotisada causa de um erro é chamada de falha.''\cite[p. 13, tradução nossa.]{FAULTS}. A parte do ambiente de memória é o espaço do programa em que ocorrem alocações de dados, podendo ser na pilha ou na \emph{heap}. Uma falha de memória ocorre, então, quando um acesso à memória pode levar a execução do programa a um estado indefinido, tal evento é chamado comportamento indefinido (UB). Essas falhas, ou no coloquial \emph{bugs}, podem ser ativas, gerando um Erro e movendo o programa para um estado incorreto; ou dormentes, existindo como possíveis vetores de ataque para agentes maliciosos capazes de ativar essa falha. 
 
-
-% aqui fica especificamente se tratando de memória, mas revisar 
-A parte de memória, quato a falhas, ocorrem quando um acesso à memória consiste em comportamento indefinido (UB). Essas falhas, ou no coloquial \emph{bugs}, podem ser ativas, gerando um Erro e movendo o programa para um estado incorreto; ou dormentes, existindo como possíveis vetores de ataque para agentes maliciosos capazes de ativar essa falha. 
-
-As falhas de memória podem ser classificas em 5 classes: falha Espacial, 
-Temporal, de Tipo, de Inicialização e de Condição de Corrida \cite{Apple22,Google24}.
-\emph{Bugs} de memória podem ser subdivididos de mais formas \cite{7KINGDOMS,CWELIST},
-tendo em conta falhas mais específicas ao domínio do programa. 
-O uso das classes é mais interessante para o domínio deste projeto:
-cada uma delas mapeia uma série de problemas para soluções específicas e disjuntas das demais. 
-Ou seja, a solução para os problemas advindos de cada uma dessas classes pode ser 
-pensada independentemente. 
-
-% Memory safety bugs, as it concerns low level languages, can be subdivided in 5 classes: 
-% Spacial, Temporal, Type, Initialization and Data-Race Safety. 
-% Even though memory safety bugs can be subdivided in many more ways \cite{7KINGDOMS,CWELIST},
-% each of those classes maps to a distinct mechanism for solving them. 
-% Spacial safety can be solved with dependent types \cite{tarditi2018checked} and 
-% runtime bounds checks\cite{CYCLONE1}; Temporal safety can be solved with 
-% Garbage Collection (GC), memory regions\cite{REGMEM}, a static alias 
-% analyzer\cite{Stjerna1684081}, key-lock systems \cite{FATPOINTERS, CCURED}, 
-% and more. Both Type and Initialization can be solved by imposing stricter
-% constraints on declarations and type conversions. Data-Race safety is beyond
-% the scope of this project.
-\todo[inline]{Anotar que os exemplos foram em parte retirados do site do \emph{CWE}}
+As falhas de memória podem ser classificas em 5 classes: falha Espacial, Temporal, de Tipo, de Inicialização e de Condição de Corrida \cite{Apple22,Google24}. \emph{Bugs} de memória podem ser subdivididos de mais formas \cite{7KINGDOMS,CWELIST}, tendo em conta falhas mais específicas ao domínio do programa.  O uso das classes é mais interessante para o domínio deste projeto: cada uma delas mapeia uma série de problemas para soluções específicas e disjuntas das demais.  Ou seja, a solução para os problemas advindos de cada uma dessas classes pode ser pensada independentemente. A seguir será detalhado alguns tipos particulares de falhas de memória, classificadas entre as 5 classes, indicando quais destas serão efetivamente modeladas pelo trabalho.
 
 \subsection{Falhas Espaciais}
 \label{sec:mem-error:spacial}
 
-Essa classe de falhas ocorre quando há manipulação de memória a uma região 
-além do espaço alocado. Erros associados a acessos de memória em \emph{buffers} 
-podem ser classificados amplamente como \emph{Out-of-Bounds-Read} ou \emph{Out-of-Bounds-Write} 
-(leitura ou escrita fora dos limites). 
-Podendo ocorrer na pilha ou na memória, para o final ou para o começo do \emph{buffer}, 
-devido a um cálculo incorreto de tamanho do \emph{buffer} ou de índice de acesso. 
-Fundamentalmente, esses erros são associados ao acesso arbitrário a memória e 
-à falta de validação adequada.
+Essa classe de falhas ocorre quando há manipulação de memória a uma região além do espaço alocado. Erros associados a acessos de memória em \emph{buffers} podem ser classificados amplamente como \emph{Out-of-Bounds-Read} ou \emph{Out-of-Bounds-Write} (leitura ou escrita fora dos limites). Podendo ocorrer na pilha ou na memória, para o final ou para o começo do \emph{buffer}, devido a um cálculo incorreto de tamanho do \emph{buffer} ou de índice de acesso.  Fundamentalmente, esses erros são associados ao acesso arbitrário a memória e à falta de validação adequada.
 
 Um exemplo dessa falha é um \emph{Buffer Under-Read}, 
 leitura de um \emph{buffer} para uma posição anterior ao começo. No trecho a seguir
@@ -80,9 +46,7 @@ O método mais adotado atualmente é o de checagem de limite em tempo de execuç
 \subsection{Falhas Temporais}
 \label{sec:mem-error:temporal}
 
-Essa classe de falhas ocorre quando há acesso a uma região de memória não mais ativa no momento. Ela engloba casos de \emph{Use-After-Free} e \emph{Use-After-Return}, assim como erros associados a função free de C. 
-O caso de \emph{Use-After-Free}, é uma descrição de todo e qualquer acesso a \emph{heap} quando o objeto que se encontrava no local já havia sido liberado. Quando ocorre na pilha pode ser descrito pelo nome mais específico 
-\emph{Return-of-Stack-Variable-Adress}, sendo o acesso a um endereço na pilha que já foi liberado pelo desempilhamento desta.
+Essa classe de falhas ocorre quando há acesso a uma região de memória não mais ativa no momento. Ela engloba casos de \emph{Use-After-Free} e \emph{Use-After-Return}, assim como erros associados a função \lstinline[language=C]|free| de C. O caso de \emph{Use-After-Free}, é uma descrição de todo e qualquer acesso a \emph{heap} quando o objeto que se encontrava no local já havia sido liberado. Quando ocorre na pilha pode ser descrito pelo nome mais específico \emph{Return-of-Stack-Variable-Adress}, sendo o acesso a um endereço na pilha que já foi liberado pelo desempilhamento desta.
 
 Um exemplo dessa falha é o seguinte \emph{Use-After-Free}. Nele, num caminho de erro do código, libera-se o ponteiro $ptr$. Entretanto, no momento de arquivar esse erro, utiliza-se esse mesmo ponteiro liberado, gerando uma falha que pode escalar a erro dependendo do contexto de execução:
 \begin{lstlisting}[language=C, label={lst:temporal-error-heap-c}, caption=Exemplo de uma Falha Temporal na \emph{Heap}]
@@ -128,21 +92,20 @@ Um contemporâneo de Cyclone, CCured \cite{CCURED}, utilizou-se de um sistema de
 %borrow checker
 \phantomsection
 \label{sec:mem-error:BorrowChecker}
-Um método alternativo, com gerência automática de memória é o \emph{borrow checker} de Rust. Nele, limita-se o \emph{aliasing} de ponteiros e adicionam-se notações para que o acesso à memória possa ser validado em tempo de compilação. No Capítulo 4 \ref{chap4} será entrado em mais detalhes sobre esse sistema.
-
-\subsubsection{Free}
-\label{sec:mem-error:temporal:free}
+Um método alternativo, com gerência automática de memória é o \emph{borrow checker} de Rust. Nele, limita-se o \emph{aliasing} de ponteiros e adicionam-se notações para que o acesso à memória possa ser validado em tempo de compilação. O Capítulo 4 \ref{chap4} explorará em maior detalhes os elementos de interesse desse sistema. 
 
 \newcommand{\FREE}{\lstinline[language=C]|free()| }
+\phantomsection
+\label{sec:mem-error:temporal:free}
 
-Um componente importante dessa classe são as falhas associadas a liberação de memória, principalmente tratando-se da função \FREE da \emph{stdlib} de C. Falhas como \emph{Double-Free} (chamar \FREE para um endereço liberado), \emph{Free of Memory not on the Heap} (chamar \FREE em um ponteiro que não aponta para a \emph{heap}), \emph{Free of Pointer not at Start of Buffer} (chamar \FREE com um ponteiro que não inicia a lista) e \emph{Release of Invalid Pointer or Reference} (chamar uma função de liberação de memória para memória alocada com outro sistema) ocorrem devido a uma ação que corrompe a estrutura de dados usadas para gerir alocação. Assim, alocações subsequentes são UB e podem escalar a erros.
+\textbf{Free}: Um componente importante dessa classe são as falhas associadas a liberação de memória, principalmente tratando-se da função \FREE da \emph{stdlib} de C. Falhas como \emph{Double-Free} (chamar \FREE para um endereço liberado), \emph{Free of Memory not on the Heap} (chamar \FREE em um ponteiro que não aponta para a \emph{heap}), \emph{Free of Pointer not at Start of Buffer} (chamar \FREE com um ponteiro que não inicia a lista) e \emph{Release of Invalid Pointer or Reference} (chamar uma função de liberação de memória para memória alocada com outro sistema) ocorrem devido a uma ação que corrompe a estrutura de dados usadas para gerir alocação. Assim, alocações subsequentes são UB e podem escalar a erros.
 
 Um grande componente de soluções de memória temporal como o GC \ref{sec:mem-error:GC}, as Regiões de Memórias \ref{sec:mem-error:MemReg} e o \emph{Borrow Checker} \ref{sec:mem-error:BorrowChecker} é a dispensa da liberação manual de memória. Isso diminui a superfície de falha do código, evitando possíveis erros.
 
-\subsubsection{\emph{Nullptr}}
+\phantomsection
 \label{sec:mem-error:temporal:null}
 
-Acessar o ponteiro nulo é um caso interessante nessa taxonomia de classes. Não pode-se dizer que essa ação é, firmemente, uma falha de inicialização \ref{sec:mem-error:init} ou uma falha temporal \ref{sec:mem-error:temporal}. Afinal, o valor nunca é liberado ou inicializado em função do tempo. Mesmo assim, escalar essa falha ao erro tende fazer o OS interromper o programa. Em certos sistemas, pode ser usado para realizar ataques mais severos \cite[p.4]{MemErrorPastPresentFuture}.
+\textbf{Nullprt}: Acessar o ponteiro nulo é um caso interessante nessa taxonomia de classes. Não pode-se dizer que essa ação é, firmemente, uma falha de inicialização \ref{sec:mem-error:init} ou uma falha temporal \ref{sec:mem-error:temporal}. Afinal, o valor nunca é liberado ou inicializado em função do tempo. Mesmo assim, escalar essa falha ao erro tende fazer o OS interromper o programa. Em certos sistemas, pode ser usado para realizar ataques mais severos \cite[p.4]{MemErrorPastPresentFuture}.
 
 O ponteiro nulo é um elemento comum da maioria das linguagens, sendo elemento da linguagem mais influente da história. Entretanto, para lidar com referências é não necessário o seu uso. Linguagens funcionais, assim como inspiradas nelas - como Rust, se utilizam de tipos somatórios (\emph{tagged unions, variants, choice types, ...}) para representar a ausência de um valor, mantendo as referências não anuláveis.
 
@@ -169,8 +132,8 @@ printf("%s", test_string);
 
 \subsection{Falhas de Tipo}
 
-Essa classe de erros ocorre quando há acesso a uma região de memória com o tipo incorreto. Ela ocorre no caso de \emph{casts} incorretos de \emph{pointers} tanto para tipos de tamanhos diferentes, como com layouts diferentes. Essa classe de erros é interessante, pois é nela em que há a maior intersecção com \emph{undefined behavior}. UB é um tópico complicado e um buraco sem fundo que não será elaborado sobre. Mas, brevemente, o erro no caso do cast pode ser de ler a memória incorretamente, mas também pode ser por alguma otimização do compilador, que ou mudou o layout do objeto de origem/destino, ou alterou o resultado da operação, pois a ação era UB.
+Essa classe de erros ocorre quando há acesso a uma região de memória com o tipo incorreto. Ela ocorre no caso de \emph{casts} incorretos de \emph{pointers} tanto para tipos de tamanhos diferentes, como com layouts diferentes. Essa classe de erros é interessante, pois é nela em que há a maior intersecção com \emph{undefined behavior}. \emph{Undefined behaviors} (UBs) variam conforme a especificação de cada linguagem, e não será um tópico no qual exploraremos em detalhe neste texto. Mas, brevemente, o erro no caso do cast pode ser de ler a memória incorretamente, mas também pode ser por alguma otimização do compilador, que ou mudou o layout do objeto de origem/destino, ou alterou o resultado da operação, pois a ação era UB.
 
 \subsection{Falhas de Condição de Corrida}
 
-Essa classe de falhas compreende todos os problemas gerados com código concorrente/paralelo. Essa classe é extremamente complexa e está fora do escopo deste projeto. Caso fique de curiosidade ao leitor, o livro \todo{Citar um livro} trata bem desse assunto. 
+Essa classe de falhas compreende todos os problemas gerados com código concorrente/paralelo. Condições de corrida são extremamente importantes em programas paralelos e concorrentes, e causas de muitas falhas de difícil detecção. Neste trabalho focaremos nas falhas presentes em modelos sequenciais de computação,   portanto essa classe particular de problemas não será desenvolvida. Caso o leitor tenha interesse sobre o tema, recomenda-se a seguinte referência (botar citação)\todo{Citar um livro}.

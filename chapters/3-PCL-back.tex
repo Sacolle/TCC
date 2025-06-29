@@ -7,7 +7,7 @@
 % proofs, but expressive enough to express common memory
 % errors in C. Its syntax is defined as such:
 
-Tendo em vista as falhas de memória descritas na seção \ref{sec:mem-error}, e visando analisá-las mais profundamente, é necessário desenvolver uma linguagem alvo para o fim de prova via compilação. A meta desse projeto é ter uma base relativamente agnóstica a solução a ser provada. Assim, introduz-se $PCL_{back}$, uma linguagem núcleo similar a C desenvolvida para detectar violações de segurança de memória e classificá-las. Ela é definida por sintaxe e semântica operacional \emph{small-step}. 
+Este capítulo descreve $PCL_{back}$, uma linguagem com sintaxe e semântica formalmente definidas cujo objetivo é expressar falhas de memória presentes em linguagens \emph{C-like} ao mesmo tempo que permite a identificação e classificação das mesmas falhas. Assim, introduz-se $PCL_{back}$, uma linguagem núcleo similar a C desenvolvida para detectar violações de segurança de memória e classificá-las. Ela é definida por sintaxe e semântica operacional \emph{small-step}. 
 
 A escolha de C como base serviu para englobar todos as falhas de memórias, visto que C é uma linguagem que permite acesso e manipulação (quase) irrestrita à memória. Ou seja, pode-se expressar todas as falhas na seção \ref{sec:mem-error}. Essa é uma razão bem circular, as falhas são comuns em C porque este permite acesso brando a memória e assim elas são descritas; a linguagem que melhor reproduz elas é C, pois tem acesso \emph{laissez-faire} a memória.
 
@@ -15,8 +15,7 @@ A escolha de C como base serviu para englobar todos as falhas de memórias, vist
 %	3.1 Syntax
 \section{Sintaxe}
 
-A sintaxe baseada em C também se demonstrou familiar e facilitou a compreensão dos problemas e exemplos. Adicionalmente, esta é uma linguagem de expressões, permitindo certos padrões funcionais. Mesmo destoando de C, essa característica emergiu acidentalmente da implementação de funções na linguagem. A  sintaxe é definida em \ref{fig:pclback:sintax}.
-\todo{Adicionar linebreak para fazer o split de das regras em várias páginas?}
+A sintaxe baseada em C também se demonstrou familiar e facilitou a compreensão dos problemas e exemplos. Adicionalmente, esta é uma linguagem de expressões, permitindo certos padrões funcionais. Mesmo destoando de C, essa característica emergiu acidentalmente da implementação de funções na linguagem. A sintaxe é definida em \ref{fig:pclback:sintax}.
 \begin{figure*}[ht]
 	\begingroup
 	%\setlength{\jot}{-0.2ex} 
@@ -52,8 +51,7 @@ A sintaxe baseada em C também se demonstrou familiar e facilitou a compreensão
 % NOTE: funciona, yeyyyyyy
 \FloatBarrier
 
-Nela, o termo $x$ cobre todos os possíveis nomes de variáveis em um programa. 
-$f$ cobre todos os nomes de funções. O conjunto $PanicCodes$ são so tipos de falhas de memória, que podem ser divididos nas 5 classes (mais extras) da seguinte forma:
+\noindent com o termo $x$ cobrindo todos os possíveis nomes de variáveis em um programa e $f$ cobrindo todos os nomes de funções. O conjunto $PanicCodes$ são os tipos de falhas de memória, que podem ser divididos nas 5 classes (mais extras) da seguinte forma:
 \begin{enumerate}
 	\item $\mathbf{OutofBoundsRead}$ e $\mathbf{OutofBoundsWrite}$ são falhas espaciais (\ref{sec:mem-error:spacial}), sendo leitura e escrita para além dos limites do \emph{buffer} respectivamente.
 	\item $\mathbf{UseAfterFree}$, $\mathbf{FreeMemoryNotOnHeap}$, $\mathbf{Partial ree}$ e $\mathbf{Double Free}$ são falhas temporais (\ref{sec:mem-error:temporal}), sendo uso de uma região liberada de memória para o primeiro e corrupção da estrutura alocadora por diversos meios para os demais.
@@ -66,7 +64,7 @@ $f$ cobre todos os nomes de funções. O conjunto $PanicCodes$ são so tipos de 
 
 Esses códigos de pânico $pcode$ servem como interrupções na avaliação da linguagem, indicando uma falha de memória. Eles são um importante componente no processo de compilação e prova. Um método de segurança de memória não precisa ser compreensivo e cobrir todas as falhas geradas, mas se a sua compilação para $PCL_{back}$ não gerar o conjunto de $PanicCodes$ que se almeja evitar, então afirma-se que o método é correto no que se propõem. Ou seja, dado um processo de indução estrutural em um $PCL_{back}$ compilado de uma linguagem que deseja evitar falhas espaciais, basta que na derivação nunca se atinjam as expressões $\KW{panic}\;\KW{OutofBoundsRead}$ e $\KW{panic}\;\mathbf{OutofBoundsWrite}$.
 
-Na hora da escrita da linguagem, certos componentes não são acessíveis: $\KW{pop}$ e $\KW{Fpop}$ são gerados exclusivamente como consequência de $\{\}$ e de $f(\bar x)$ respectivamente; $l$ não pode ser escrita diretamente, para evitar a forja de metadados; $\KW{panic}$ não pode ser escrito para evitar a forja de erros. No caso de $l$, utiliza-se a expressão $\KW{NULL}$ para escrever o ponteiro nulo, sendo este o valor $l^m\{0, 0, 0, 0\}$. No caso de $\KW{panic}$, o $\KW{UserError}$ é o único panico de execução do usuário, assim, para gerá-lo usa-se a diretiva $PANIC$, que é equivalente a $\KW{panic}\;\KW{UserError}$.
+Na hora da escrita de programas da linguagem, certos componentes não são acessíveis: $\KW{pop}$ e $\KW{Fpop}$ são gerados exclusivamente como consequência de $\{\}$ e de $f(\bar x)$ respectivamente; $l$ não pode ser escrita diretamente, para evitar a forja de metadados; $\KW{panic}$ não pode ser escrito para evitar a forja de erros. No caso de $l$, utiliza-se a expressão $\KW{NULL}$ para escrever o ponteiro nulo, sendo este o valor $l^m\{0, 0, 0, 0\}$. No caso de $\KW{panic}$, o $\KW{UserError}$ é o único panico de execução do usuário, assim, para gerá-lo usa-se a diretiva $PANIC$, que é equivalente a $\KW{panic}\;\KW{UserError}$.
 
 Um exemplo da expressividade da linguagem é a figura \ref{lst:pclback:tree}, que mostra uma simples estrutura de árvore na sintaxe da linguagem
 
@@ -148,7 +146,7 @@ Nela, $i$ é o índice de acesso à memória; $k$ é a uma chave única, gerada 
 \subsection{Pilha}
 \label{sec:pcl-back:pilha}
 
-A pilha é uma lista de elementos, que podem ser valores $v \in \{l, n, \bot, -\}$ ou códigos de controle $c_{ctrl} \in \{\mathbf{stack},\mathbf{func}\}$. Dentre os valores, $l$ e $n$ são os elementos de locais e números da sintaxe da linguagem. $\bot$ e $-$, assim como em \citet{WESSEL2019}, são elementos utilizados na representação da inicialização de um valor, representando um espaço alocado, mas ainda não inicializado, e um espaço não alocado, respectivamente. 
+A pilha é uma lista de elementos, que podem ser valores $v \in \{l, n, \bot, -\}$ ou códigos de controle $c_{ctrl} \in \{\mathbf{stack},\mathbf{func}\}$. Dentre os valores, $l$ e $n$ são os elementos de locais e números da sintaxe da linguagem. Os elementos $\bot$ e $-$, assim como em \citet{WESSEL2019}, são elementos utilizados na representação da inicialização de um valor, representando um espaço alocado, mas ainda não inicializado, e um espaço não alocado, respectivamente. 
 
 Junto desses elementos guarda-se uma fechadura $k \in \mathbb{N}\text{*}$. Esse elemento serve para a checagem de falhas temporais, similar ao sistema de \emph{key-lock} \ref{sec:mem-error:KeyLock}. Para um acesso ser válido, é necessário que a chave $k$ do local $l$ que tenta acessar a célula seja igual à fechadura $k'$ salva junto ao valor na célula. Valor de controle, junto do $\bot$ e $-$ sempre são empilhados com a chave de valor 0 associada. Uma pilha $p$ da linguagem pode ser definida como uma lista de pares, com o primeiro elemento sendo ou um valor, ou um código de controle, e com o segundo elemento sendo a fechadura de acesso, tal como $p := [(v\,|\,c_{ctrl}, k)]$.
 
@@ -183,7 +181,7 @@ O acesso a pilha $p$ na posição $i$, $p(i)$ é descrito pela função:
 
 A notação é similar a \ref{fig:def:pop}, usando a primeira expressão, \ref{fig:def:px1}, para chamar uma função auxiliar associada, neste caso $\mathbf{get(i, size, p)}$ com o índice de acesso $i$, o tamanho atual da pilha $size$ e a pilha $p$ em sí. \ref{fig:def:px1} checa se o índice é igual ao tamanho $size$, se sim retorna o fim da lista, ou seja, o topo da pilha, se não repete recursivamente para o restante da lista, com o $size - 1$. Isso se repete até $i = size$ ou, em \ref{fig:def:px3}, chegar no fim da pilha, retornando $(-,0)$, que representa o valor não inicializado.
 
-A função auxiliar $\mathbf{top}(p)$ utilizada em \ref{fig:def:px1} retorna o tamanho da lista. Esse tamanho também pode ser interpretado como índice para o elemento acima do último elemento da lista. Esse fato é usado na notação da semântica operacional para gerar o índice das alocações na pilha \todo{Referir-se a regra let.}. Uma definição com a notação atual pode ser escrita como:
+A função auxiliar $\mathbf{top}(p)$ utilizada em \ref{fig:def:px1} retorna o tamanho da lista. Esse tamanho também pode ser interpretado como índice para o elemento acima do último elemento da lista. Esse fato é usado na notação da semântica operacional para gerar o índice das alocações na pilha, como na regra \hyperref[rule:let]{(LET)}. Uma definição com a notação atual pode ser escrita como:
 
 \begin{figure}[ht]
 	\begin{align}
@@ -219,7 +217,7 @@ Uma notação alternativa, para quando se precisa alterar várias posições na 
 
 A memória (\emph{heap}) é extremamente similar a pilha, porém sem os códigos de controle. Partindo disso, a memória $m$ é uma lista de pares, valor $v \in \{n, l, \bot, -\}$ fechadura $k \in \mathbb{N}$, podendo ser escrito na forma $m := [(v, k)]$. Essa lista pode ser imaginada infinitamente grande, tendo todas as células inicializadas com o valor $-$.
 
-As células da memória são manualmente liberadas com a função $\mathbf{free}$ e alocadas com a função $\mathbf{malloc}$. Essa última usa uma função auxiliar $mathbf{loc(m,n)}$ para encontrar na memória $m$, $n$ células contíguas não alocadas (com o valor $-$) e retorna o índice do começo dessa região. Ela é descrita mais formalmente da seguinte forma:
+As células da memória são manualmente liberadas com a função $\mathbf{free}$ e alocadas com a função $\mathbf{malloc}$. Essa última usa uma função auxiliar $\mathbf{loc(m,n)}$ para encontrar na memória $m$, $n$ células contíguas não alocadas (com o valor $-$) e retorna o índice do começo dessa região. Ela é descrita mais formalmente da seguinte forma:
 
 \begin{figure}[ht]
 	\begin{align}
@@ -331,13 +329,9 @@ Essa operação de coleta continua até chegar na função principal do programa
 
 \subsection{Expressões}
 
-A avaliação das expressões começa com um ambiente de funções globais já formado, assim como uma pilha e ambiente de nomes com valores advindos da avaliação das globais. A memória é inicializada vazia, mas como elaborado em \ref{sec:pcl-back:mem}, virtualmente todas as células já possuem o valor $(-, 0)$. 
+A avaliação das expressões começa com um ambiente de funções globais já formado, assim como uma pilha e ambiente de nomes com valores advindos da avaliação das globais. A memória é inicializada vazia, mas como elaborado em \ref{sec:pcl-back:mem}, virtualmente todas as células já possuem o valor $(-, 0)$.  As regras podem ser dividas por funcionalidade. Assim, tem-se a semântica da linguagem da forma:
 
-As regras podem ser dividas por funcionalidade. Assim, tem-se a semântica da linguagem da forma:
-
-\subsubsection{Regras de Composição}
-
-Mesmo sendo uma semântica de expressões, a linguagem segue o padrão de C e possui operadores de composição $;$ e de escopo $\{\}$. O escopo é importantíssimo na emulação das falhas de memória, principalmente quanto se diz a falhas de \emph{Use-After-Free}. Dessa forma, têm-se as regras de composição:
+\textbf{Regras de Composição}: Mesmo sendo uma semântica de expressões, a linguagem segue o padrão de C e possui operadores de composição $;$ e de escopo $\{\}$. O escopo é importantíssimo na emulação das falhas de memória, principalmente quanto se diz a falhas de \emph{Use-After-Free}. Dessa forma, têm-se as regras de composição:
 
 \labelRule{\label{rule:compose-s}}{
 	\infrule[Compose-s]
@@ -373,10 +367,10 @@ As regras \hyperref[rule:pop-s]{(COMPOSE-S)} e \hyperref[rule:compose-s]{(POP-S)
 
 A regra \hyperref[rule:escopo]{(ESCOPO)} utiliza-se da expressão auxiliar $\KW{pop}$ para diferenciar a sua inicialização, empilhar um mapa novo em $a$ e o código de controle $\mathbf{stack}$ em $p$, da avaliação desse escopo, pois a inicialização só acontece uma vez. No fim, com a regra \hyperref[rule:pop]{(POP)}, remove-se o mapa inserido em $a$ por \hyperref[rule:escopo]{(ESCOPO)}, assim como todos os elementos colocados no topo da pilha acima do código de controle $\mathbf{stack}$ inserido, e retorna-se o valor avaliado dentro do escopo.
 
-\subsubsection{Regras de Declaração e Atribuição}
+\phantomsection
 \label{sec:pcl-back:semantica:atribui}
 
-As declarações de variáveis na pilha, com a palavra-chave $\KW{let}$, operam muito similarmente a regra \hyperref[rule:globals-collect]{(GLOBALS-COLLECT)}. Entretanto \hyperref[rule:let]{(LET)} salva o local gerado no mapa no topo de $a_l$ de $a$. 
+\textbf{Regras de Declaração e Atribuição}: As declarações de variáveis na pilha, com a palavra-chave $\KW{let}$, operam muito similarmente a regra \hyperref[rule:globals-collect]{(GLOBALS-COLLECT)}. Entretanto \hyperref[rule:let]{(LET)} salva o local gerado no mapa no topo de $a_l$ de $a$. 
 
 \labelRule{\label{rule:let}}{
 	\infrule[Let]
@@ -468,10 +462,10 @@ Para as atribuições, pode-se realizá-las quando o elemento da esquerda avalia
 
 Várias dessas regras tratam do sistema de detecção de memória, que será elaborado em \ref{sec:pcl-back:errors}. Mas a avaliação final de uma atribuição, como na regra \hyperref[rule:atribui-var]{(ATRIBUI-VAR)}, consiste em atribuir o valor no espaço de memória especificado, avaliando para esse mesmo valor a fim de permitir padrões como $x := y := 2$, que atribui para $x$ e $y$ o número 2.
 
-\subsubsection{Funções de Memória}
+\phantomsection
 \label{sec:pcl-back:semantica:mem-func}
 
-As funções de memória $\KW{malloc}$ e $\KW{free}$ operam sobre o ambiente $m$. $\KW{malloc}(e)$ recebe como argumentos quantas células de memórias serão alocadas, usando a função auxiliar \hyperref[fig:def:loc]{$\KW{loc}$}. $\KW{free}(e_1, e_2)$ por sua vez recebe dois argumentos, o local que inicia a região a ser liberada em $e_1$ e o número de células a serem liberadas em $e_2$. Esse segundo argumento é necessário, pois não se utiliza de mecanismo macro para guardar quais alocações foram feitas no programa, apenas a visão micro de quais células foram alocadas.
+\textbf{Funções de Memória}: As funções de memória $\KW{malloc}$ e $\KW{free}$ operam sobre o ambiente $m$. A chamada $\KW{malloc}(e)$ recebe como argumentos quantas células de memórias serão alocadas, usando a função auxiliar \hyperref[fig:def:loc]{$\KW{loc}$}. $\KW{free}(e_1, e_2)$ por sua vez recebe dois argumentos, o local que inicia a região a ser liberada em $e_1$ e o número de células a serem liberadas em $e_2$. Esse segundo argumento é necessário, pois não se utiliza de mecanismo macro para guardar quais alocações foram feitas no programa, apenas a visão micro de quais células foram alocadas.
 
 \labelRule{\label{rule:malloc-s}}{
 	\infrule[Malloc-s]
@@ -529,9 +523,7 @@ As funções de memória $\KW{malloc}$ e $\KW{free}$ operam sobre o ambiente $m$
 
 A operação de $\KW{malloc}(n)$, assim como nas declarações globais, gera um local para o acesso, desta vez na memória, com os metadados associados. Esse local é da forma $l^m\{i, k, 0, n\}$, com $i$ sendo o início da região de memória encontrada por $\mathbf{loc}$, $k$ a chave única gerada por $\mathbf{newkey}$, 0 como o desvio $o$ inicial e $n$ como o tamanho da região alocada $s$.
 
-\subsubsection{Expressões Aritméticas}
-
-As expressões aritméticas de $PCL_{back}$ são as operações binárias $op \in BinOp$, assim como o operador unário $!$, a negação booleana. No caso das operações binárias, elas avaliam primeiro o elemento da esquerda completamente para depois avaliar o elemento da direita. Para simplificar a definição dessas regras, utiliza-se de algumas funções auxiliares: $\mathbf{binop}(op, v_1, v_2)$, $\mathcal{N}(n)$ e $\mathcal{N}^{-1}(N)$. 
+\textbf{Expressões Aritméticas}: As expressões aritméticas de $PCL_{back}$ são as operações binárias $op \in BinOp$, assim como o operador unário $!$, a negação booleana. No caso das operações binárias, elas avaliam primeiro o elemento da esquerda completamente para depois avaliar o elemento da direita. Para simplificar a definição dessas regras, utiliza-se de algumas funções auxiliares: $\mathbf{binop}(op, v_1, v_2)$, $\mathcal{N}(n)$ e $\mathcal{N}^{-1}(N)$. 
 
 $\mathcal{N}(n)$ é a função que converte o símbolo da linguagem $n$ em um número matemático $N \in \mathbb{z}$. O inverso, ir de um número matemático $N$ para um número da sintaxe, é realizado com a operação $\mathcal{N}^{-1}(N)$. A função $\mathbf{binop}(op, v_1, v_2)$ define a operação $op$ entre valores $v_1$ e $v_2$ da linguagem, sendo definido da seguinte forma:
 
@@ -616,10 +608,9 @@ Com essas funções, pode-se definir as regras da seguinte forma:
 		{F \vdash \St{!n, a, p, m} \to \St{n', a, p, m}}
 }
 
-\subsubsection{Acesso a Valores}
+\phantomsection
 \label{sec:pcl-back:semantica:acessa}
-
-O acesso a valores consiste nas regras de acesso a valores de variáveis \hyperref[rule:var]{(VAR)}, dereferência de valores na pilha \hyperref[rule:deref-pilha]{(DEREF-PILHA)} e na memória \hyperref[rule:deref-mem]{(DEREF-MEM)}. Elas acessam a respectiva memória do valor associado, retornando o valor. 
+\textbf{Acesso a Valores}: O acesso a valores consiste nas regras de acesso a valores de variáveis \hyperref[rule:var]{(VAR)}, dereferência de valores na pilha \hyperref[rule:deref-pilha]{(DEREF-PILHA)} e na memória \hyperref[rule:deref-mem]{(DEREF-MEM)}. Elas acessam a respectiva memória do valor associado, retornando o valor. 
 
 \labelRule{\label{rule:var-obr}}{
 	\infrule[Var-obr]
@@ -713,9 +704,7 @@ O acesso a valores consiste nas regras de acesso a valores de variáveis \hyperr
 
 Adicionalmente há a regra para se obter o endereço de uma variável \hyperref[rule:ref]{(REF)}. Ela é similar a \hyperref[rule:var]{(VAR)}, porém ao invés de pegar o valor do local associado ao nome $x$, ela retorna esse local.
 
-\subsubsection{Condicionais}
-
-A linguagem se usa de um $\KW{if}$ expressão\emph{lazy}. Ou seja, ele computa o caminho a ser tomado, avaliando o condicional \hyperref[rule:if-s]{(IF-S)}, e retorna a expressão correspondente sem avaliar, \hyperref[rule:if-true]{(IF-TRUE)} e \hyperref[rule:if-false]{(IF-FALSE)}. Dessa forma, a expressão $x := \KW{if}\;(1)\; 1 + 1 \;\KW{else}\; 0$ avalia, em um passo, para $x := 1 + 1$.
+\textbf{Condicionais}: A linguagem se usa de um $\KW{if}$ expressão \emph{lazy}. Ou seja, ele computa o caminho a ser tomado, avaliando o condicional \hyperref[rule:if-s]{(IF-S)}, e retorna a expressão correspondente sem avaliar, \hyperref[rule:if-true]{(IF-TRUE)} e \hyperref[rule:if-false]{(IF-FALSE)}. Dessa forma, a expressão $x := \KW{if}\;(1)\; 1 + 1 \;\KW{else}\; 0$ avalia, em um passo, para $x := 1 + 1$.
 
 
 \labelRule{\label{rule:if-s}}{
@@ -744,9 +733,7 @@ A linguagem se usa de um $\KW{if}$ expressão\emph{lazy}. Ou seja, ele computa o
 
 O $\KW{while}$ é definido em função do $\KW{if}$, tal qual a regra \hyperref[rule:while]{(WHILE)} descreve. Ele se deriva em um passo para um condicional que se verdadeiro resulta no corpo do $\KW{while}$ seguido da expressão inicial e se falso no valor 0. Seguindo o modelo OCaml \cite{leroy3ocaml}, $\KW{while}$ deveria retornar o tipo $Unit$. Como $PCL_{back}$ não possui tipos, pode-se interpretar o 0 como o $Unit$. Talvez uma interpretação melhor para o retorno de 0 no caso falso é que 0 é o valor da condicional computada quando se para de iterar o loop.
 
-\subsubsection{Chamada de Funções}
-
-Por fim, basta elaborar sobre as regras de chamada de função. Usando as funções salvas no ambiente global, uma chamada de $f(\bar e)$ quando $f \in F$ computa a função de nome $f$ do programa. A avaliação dos componentes da função é \emph{eager}, ou seja, primeiro avaliam-se completamente os argumentos em ordem passados a função para depois computar o corpo desta. Essa avaliação é definida pelas regras \hyperref[rule:callfunc-s(j,0)]{(CALLFUNC-S(J,0))} e \hyperref[rule:callfunc-s(j,i)]{(CALLFUNC-S(J,I))}. Essas regras, diferentes das demais, não são exaustivas, mas apenas representam a avaliação do elemento de índice 0 de uma função com $j$ argumentos e a avaliação do argumento de índice $i$ de uma função com $j$ argumentos respectivamente. Elas demonstram que para avaliar um argumento de índice $i$ em uma função com $j$ argumentos, é necessário ter avaliado os argumentos de 0 até $i$ anteriormente.
+\textbf{Chamada de Funções}: Por fim, basta elaborar sobre as regras de chamada de função. Usando as funções salvas no ambiente global, uma chamada de $f(\bar e)$ quando $f \in F$ computa a função de nome $f$ do programa. A avaliação dos componentes da função é \emph{eager}, ou seja, primeiro avaliam-se completamente os argumentos em ordem passados a função para depois computar o corpo desta. Essa avaliação é definida pelas regras \hyperref[rule:callfunc-s(j,0)]{(CALLFUNC-S(J,0))} e \hyperref[rule:callfunc-s(j,i)]{(CALLFUNC-S(J,I))}. Essas regras, diferentes das demais, não são exaustivas, mas apenas representam a avaliação do elemento de índice 0 de uma função com $j$ argumentos e a avaliação do argumento de índice $i$ de uma função com $j$ argumentos respectivamente. Elas demonstram que para avaliar um argumento de índice $i$ em uma função com $j$ argumentos, é necessário ter avaliado os argumentos de 0 até $i$ anteriormente.
 
 Com todos os argumentos avaliados, realiza-se a regra \hyperref[rule:callfunc]{(CALLFUNC)}. Nela, obtém-se os nomes dos argumentos da função $f$ assim como o seu corpo $e$, declarando-os dentro da expressão $\KW{Fpop}$ e num escopo $\{\}$. A atribuição dos valores dos argumentos ao nome das respectivas posições é feito usando os operadores de $\KW{let}$ para criar o espaço para os nomes na pilha dentro da função e de $:=$ para atribuir os valores aos nomes dentro da função. Essa forma de realizar a passagem de parâmetros simplifica a semântica da linguagem, fazendo construtos serem dependentes de outros construtos da linguagem, sem criar novos sem necessidade, mas também é capaz de realizar funções recursivas sem nenhum problema.
 
@@ -786,7 +773,6 @@ A palavra-chave $\KW{Fpop}$ empilhada é utilizada no ambiente de nomes $a$, com
 \label{sec:pcl-back:errors}
 
 Em várias regras descritas na seção anterior (\ref{sec:pcl-back:semantica}) há a geração da expressão $\KW{panic}$ seguida de algum código de erro dado algumas pré-condições. Nesta sessão será discorrido o porquê desses erros e quais mecanismos usados. 
-
 
 A detecção de falhas é completamente associada as regras que acessam memória, ou seja, as regras das seções \ref{sec:pcl-back:semantica:atribui}, \ref{sec:pcl-back:semantica:mem-func} e \ref{sec:pcl-back:semantica:acessa}. A detecção parte dos metadados associados aos locais $l\{i, k, o, s\}$. Inicialmente, valida-se se o acesso à memória está dentro da região delimitada. Para isso, o valor de $o$ do local deve ser igual ou maior que 0 e menor que o seu valor de $s$, da forma $ 0 \le o < s$. Caso contrário, essa é uma falha temporal de \emph{Out-of-Bounds-Read} ou \emph{Out-of-Bounds-Write}, dependendo da regra associada, como em \hyperref[rule:deref-mem-obr]{(DEREF-MEM-OBR)} e \hyperref[rule:atribui-deref-mem-obe]{(ATRIBUI-DEREF-MEM-OBE)} respectivamente. Se o aceso for dentro dos limites, então deve-se validar se a chave $k$ do local $l$ é igual à fechadura $k'$ da célula associada na memória, da forma $k = k'$. Caso contrário, essa é uma falha temporal de \emph{Use-After-Free}, podendo ser de um valor da pilha como em \hyperref[rule:deref-pilha-uaf]{(DEREF-PILHA-UAF)} ou de um valor na memória como em \hyperref[rule:deref-mem-uaf]{(DEREF-MEM-UAF)}. Essas duas formas de detecção de falha foram inspiradas nas estratégias de \emph{fat pointers} e de mecanismos \emph{key-lock} de detecção.
 
@@ -906,5 +892,5 @@ let sanitize_input(user_supplied_string){
 \end{figure}
 \FloatBarrier
 
-Como $PCL_{back}$ não possui tipo \lstinline[language=C]|char|, utiliza-se dos números da codificação ASCII \todo{citar a tabela ascii?}. Além disso, a sintaxe é extremamente similar. Se uma pessoa entende o exemplo em C, o corolário em $PCL_{back}$ apresenta mínimas barreiras sintáticas.
+Como $PCL_{back}$ não possui tipo \lstinline[language=C]|char|, utiliza-se dos números da codificação ASCII. Além disso, a sintaxe é extremamente similar. Se uma pessoa entende o exemplo em C, o corolário em $PCL_{back}$ apresenta mínimas barreiras sintáticas.
 
