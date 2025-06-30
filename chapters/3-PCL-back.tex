@@ -10,14 +10,16 @@
 
 Este capítulo descreve $PCL_{back}$, uma linguagem com sintaxe e semântica formalmente definidas cujo objetivo é expressar falhas de memória presentes em linguagens \emph{C-like} ao mesmo tempo que permite a identificação e classificação das mesmas falhas. Assim, introduz-se $PCL_{back}$, uma linguagem núcleo similar a C desenvolvida para detectar violações de segurança de memória e classificá-las. Ela é definida por sintaxe e semântica operacional \emph{small-step}. 
 
-A escolha de C como base serviu para englobar todos as falhas de memórias, visto que C é uma linguagem que permite acesso e manipulação (quase) irrestrita à memória. Ou seja, pode-se expressar todas as falhas na seção \ref{sec:mem-error}. Essa é uma razão bem circular, as falhas são comuns em C porque este permite acesso brando a memória e assim elas são descritas; a linguagem que melhor reproduz elas é C, pois tem acesso \emph{laissez-faire} a memória.
+A escolha de C como base serviu para englobar todas as falhas de memórias, visto que C é uma linguagem que permite acesso e manipulação (quase) irrestrita à memória. Ou seja, pode-se expressar todas as falhas da seção \ref{sec:mem-error}. Essa é uma razão bem circular, as falhas são comuns em C porque este permite acesso brando a memória e assim elas são descritas; a linguagem que melhor reproduz elas é C, pois tem acesso \emph{laissez-faire} a memória.
 
 
 %	3.1 Syntax
 \section{Sintaxe}
 
-A sintaxe baseada em C também se demonstrou familiar e facilitou a compreensão dos problemas e exemplos. Adicionalmente, esta é uma linguagem de expressões, permitindo certos padrões funcionais. Mesmo destoando de C, essa característica emergiu acidentalmente da implementação de funções na linguagem. A sintaxe é definida em \ref{fig:pclback:sintax}.
+A sintaxe baseada em C também se demonstrou familiar e facilitou a compreensão dos problemas e exemplos. Adicionalmente, esta é uma linguagem de expressões, permitindo certos padrões funcionais. Mesmo destoando de C, essa característica emergiu acidentalmente da implementação de funções na linguagem. A sintaxe é definida na Figura \ref{fig:pclback:sintax}.
 \begin{figure*}[ht]
+	\caption{Sintaxe de $PCL_{back}$}
+	\label{fig:pclback:sintax}
 	\begingroup
 	%\setlength{\jot}{-0.2ex} 
 		\begin{align*}
@@ -46,8 +48,7 @@ A sintaxe baseada em C também se demonstrou familiar e facilitou a compreensão
 			Globals \ni G ::&= \mathbf{global}\; x[n] \;G \;|\; F
 		\end{align*}
 	\endgroup
-	\caption{Sintaxe de $PCL_{back}$}
-	\label{fig:pclback:sintax}
+	\legend{Fonte: Os Autores.}
 \end{figure*}
 % NOTE: funciona, yeyyyyyy
 \FloatBarrier
@@ -67,7 +68,7 @@ Esses códigos de pânico $pcode$ servem como interrupções na avaliação da l
 
 Na hora da escrita de programas da linguagem, certos componentes não são acessíveis: $\KW{pop}$ e $\KW{Fpop}$ são gerados exclusivamente como consequência de $\{\}$ e de $f(\bar x)$ respectivamente; $l$ não pode ser escrita diretamente, para evitar a forja de metadados; $\KW{panic}$ não pode ser escrito para evitar a forja de erros. No caso de $l$, utiliza-se a expressão $\KW{NULL}$ para escrever o ponteiro nulo, sendo este o valor $l^m\{0, 0, 0, 0\}$. No caso de $\KW{panic}$, o $\KW{UserError}$ é o único panico de execução do usuário, assim, para gerá-lo usa-se a diretiva $PANIC$, que é equivalente a $\KW{panic}\;\KW{UserError}$.
 
-Um exemplo da expressividade da linguagem é a figura \ref{lst:pclback:tree}, que mostra uma simples estrutura de árvore na sintaxe da linguagem
+Um exemplo da expressividade da linguagem é a Figura \ref{lst:pclback:tree}, que mostra uma simples estrutura de árvore na sintaxe da linguagem
 
 \begin{figure}[ht]
 	\caption{Árvore Binária em $PCL_{back}$}
@@ -123,11 +124,11 @@ let ()
 \section{Modelo de Memória}
 \label{sec:memory-model}
 
-O layout de memória de um programa em C tem vários componentes: o segmento de texto, que contém o programa em si; a seção de dados, que guarda elementos globais, assim como \emph{strings} literais e outros elementos escritos no código; a pilha e a \emph{heap}. A pilha é o lugar em que variáveis locais são alocadas e chamadas de funções são geridas. Ela realiza alocações de tamanho conhecido em tempo de compilação e libera essa memória no final do escopo da variável associada. A \emph{heap} é o lugar em que alocações dinâmicas são colocadas, seja porque o tamanho ou a duração não são conhecidos em tempo de compilação.
+O \emph{layout} de memória de um programa em C tem vários componentes: o segmento de texto, que contém o programa em si; a seção de dados, que guarda elementos globais, assim como \emph{strings} literais e outros elementos escritos no código; a pilha e a \emph{heap}. A pilha é o lugar em que variáveis locais são alocadas e chamadas de funções são geridas. Ela realiza alocações de tamanho conhecido em tempo de compilação e libera essa memória no final do escopo da variável associada. A \emph{heap} é o lugar em que alocações dinâmicas são colocadas, seja porque o tamanho ou a duração não são conhecidos em tempo de compilação.
 
 A dinâmica entre alocações manuais, aquelas que acontecem na \emph{heap}, e alocações estáticas, aquelas que acontecem na pilha, é um componente importante na reprodução de \emph{bugs} de memória. Falhas na \emph{heap} tendem a ser mais difíceis de encontrar e lidar, pois o processo de requisitar memória e liberá-la manualmente tende a aumentar a superfície de falhas. 
 
-Com o intuito de modelar essa dinâmica, a memória em $PCL_{back}$ usa dois ambientes disjuntos, $p$ para modelar a pilha e $m$ para modelar a \emph{heap}, que, com o intuito de diminuir os estrangeirismos, poderá ser referida como memória a partir deste ponto. 
+Com o intuito de modelar essa dinâmica, a memória em $PCL_{back}$ usa dois ambientes disjuntos, $p$ para modelar a pilha e $m$ para modelar a \emph{heap}. Nota-se que o termo memória pode ser usado, no contexto das estruturas de $PCL_{back}$, no lugar de \emph{heap}, por isso o uso de $m$ como símbolo da \emph{heap}/memória.
 
 \subsection{Ponteiros}
 \label{sec:pcl-back:ptr}
@@ -137,7 +138,7 @@ Com essa distinção, pode-se notar que o elemento da sintaxe responsável por i
 	\begin{align*}
 		l^p\{i, k, o, s \} && l^m\{i, k, o, s \}
 	\end{align*}
-	\caption{Layout dos metadados dos locais.}
+	\caption{\emph{Layout} dos metadados dos locais.}
 	\label{fig:ptr:metada}
 \end{figure*}
 
@@ -163,7 +164,7 @@ Os códigos de controle citados existem para essa lista se comportar como um pil
 	\label{fig:def:pop}
 \end{figure}
 
-A notação para descrever as funções neste projeto é similar a Haskell \cite{HASKELL}, com casamento de padrões nos argumentos das funções e as definições recursivas. Para o caso acima, em \ref{fig:def:pop1} e \ref{fig:def:pop2} definem as funções $\mathbf{pop}_{stack}(p)$ e $\mathbf{pop}_{func}(p)$ com base na função $\mathbf{pop}(p, v)$, usando como valor inicial de $v$ os seus elementos subscritos. Em \ref{fig:def:pop3} e \ref{fig:def:pop4} realiza a lógica. Se os argumentos casarem o padrão $h : t$, que nesse contexto é a lista poder ser dividida entre o elemento no fim $(v, \_)$ e no restante $t$, então executa-se \ref{fig:def:pop3}. Se a lista for vazia, representada por $[]$, realiza-se \ref{fig:def:pop4}. $(v,\_)$ também é um casamento de padrão, que atribui o nome $v$ para o primeiro elemento da dupla, o valor, e descarta o segundo, a chave. Com esses elementos, \ref{fig:def:pop3} checa se o valor no fim da lista é igual ao código de controle $c_{ctrl}$, se é retorna o restante da lista $t$, se não chama $\mathbf{pop}(t, c_{ctr})$ recursivamente para o restante da lista. Isso descarta elementos do topo da lista até finalmente descartar o $c_{ctrl}$ ou, pela definição \ref{fig:def:pop4}, chegar no final e retorna a lista vazia.
+A notação para descrever as funções neste projeto é similar a Haskell \cite{HASKELL}, com casamento de padrões nos argumentos das funções e as definições recursivas. Para o caso acima, em \ref{fig:def:pop1} e \ref{fig:def:pop2} definem as funções $\mathbf{pop}_{stack}(p)$ e $\mathbf{pop}_{func}(p)$ com base na função $\mathbf{pop}(p, v)$, usando como valor inicial de $v$ os seus elementos subscritos. Em \ref{fig:def:pop3} e \ref{fig:def:pop4} realiza-se a lógica. Se os argumentos casarem o padrão $h : t$, que nesse contexto é a lista poder ser dividida entre o elemento no fim $(v, \_)$ e no restante $t$, então executa-se \ref{fig:def:pop3}. Se a lista for vazia, representada por $[]$, realiza-se \ref{fig:def:pop4}. $(v,\_)$ também é um casamento de padrão, que atribui o nome $v$ para o primeiro elemento da dupla, o valor, e descarta o segundo, a chave. Com esses elementos, \ref{fig:def:pop3} checa se o valor no fim da lista é igual ao código de controle $c_{ctrl}$, se é retorna o restante da lista $t$, se não chama $\mathbf{pop}(t, c_{ctr})$ recursivamente para o restante da lista. Isso descarta elementos do topo da lista até finalmente descartar o $c_{ctrl}$ ou, pela definição \ref{fig:def:pop4}, chegar no final e retorna a lista vazia.
 
 Outras funções similares existem para descrever o acesso, inserção de elementos e edição de elementos na pilha. A inserção no topo da pilha, tal qual em Haskell, utiliza-se o símbolo $:$ como uma operação binária de valor e pilha para pilha. Escreve-se $v : p$ para realizar o empilhamento de $v$ em $p$, retornando $p'$ com $v$ no topo. Caso se deseje empilhar várias cópias de um elemento na pilha, subscreve-se este com um número indicando a quantidade. Dessa forma, escrever $\bot_n : p$ empilha $n$ vezes o valor $\bot$ no topo da pilha. 
 
@@ -232,7 +233,7 @@ As células da memória são manualmente liberadas com a função $\mathbf{free}
 
 \noindent Ela primeiro chama uma função auxiliar em \ref{fig:def:loc1}, com 0 para $n_1$, o tamanho atual da região encontrada,  e 1 para $i$, o índice de início de busca. Parte-se do índice de número um, mesmo a indexação da lista iniciando no 0, pois se reserva esse espaço para a implementação do ponteiro nulo. Em \ref{fig:def:loc2} realiza-se a computação: se o valor no índice $i$ da memória $m$ mais o tamanho da região atual encontrada $n_1$ não for o par $(-,0)$ (célula não alocada), então reinicia a busca, partindo no índice seguinte ao analisado nesse teste; se não for o caso, verifica-se se já se encontrou a região do tamanho esperado, se sim, retorna o índice $i$, que é o índice do começo desta, se não, avalia-se a célula seguinte, chamando $\mathbf{loc}'$ recursivamente, incrementando o valor da região encontrada em 1.
 
-Na definição dessa função, utilizou-se a expressão $m(i)$ para indicar o acesso ao elemento de índice $i$ da memória $m$. Assim como o acesso na pilha, essa operação pode ser vista como uma simples indexação a um \emph{buffer}. Neste caso, como há a intuição da memória ser infinita, para qualquer índice $i$ há uma célula correspondente na memória. Como todas elas iniciam com o valor $(-,0)$, o comportamento de acessar para além do espaço alocado é o mesmo de quando isso acontece na pilha. A atribuição segue o mesmo padrão, inserir o valor $v$ no índice $i$ da memória $m$ é escrito como $m[i \mapsto v]$. Aqui omiti-se a definição porque estas são (quase) idênticas às definições da pilha, visto que a memória não pode ser realmente infinita. O mesmo segue para a atribuição de várias células com a notação $m[i_{m..n} \mapsto v]$ cujo comportamento é o mesmo que na pilha, porém no contexto da memória essa função é mais usada, visto que é  instrumental as definições de $\mathbf{malloc}$ e $\mathbf{free}$.
+Na definição dessa função, utilizou-se a expressão $m(i)$ para indicar o acesso ao elemento de índice $i$ da memória $m$. Assim como o acesso na pilha, essa operação pode ser vista como uma simples indexação a um \emph{buffer}. Neste caso, como há a intuição da memória ser infinita, para qualquer índice $i$ há uma célula correspondente na memória. Como todas elas iniciam com o valor $(-,0)$, o comportamento de acessar para além do espaço alocado é o mesmo de quando isso acontece na pilha. A atribuição segue o mesmo padrão, inserir o valor $v$ no índice $i$ da memória $m$ é escrito como $m[i \mapsto v]$. Aqui omite-se a definição porque estas são (quase) idênticas às definições da pilha, visto que a memória não pode ser realmente infinita. O mesmo segue para a atribuição de várias células com a notação $m[i_{m..n} \mapsto v]$ cujo comportamento é o mesmo que na pilha, porém no contexto da memória essa função é mais usada, visto que é  instrumental as definições de $\mathbf{malloc}$ e $\mathbf{free}$.
 
 
 %	3.3 Operational Semantics
@@ -292,7 +293,7 @@ As globais do programa são declaradas todas juntas no começo do programa. Para
     {\St{\mathbf{global} \; x[n]\; G , g, p} \to_G\\ \St{G, g[x \mapsto l^p \{i, k, 0, n\}],(\bot, k)_n : p,}} 
 }
 
-\noindent Dada a declaração $\KW{global}\;x[n]$, empilha-se no topo da pilha $n$ vezes a dupla $(\bot, k)$ representando $n$ posições alocadas, mas não inicializadas, que só podem ser acessadas com um ponteiro que tenha uma chave de valor $k$. Esse valor de $n$ é salvo como o tamanho da região alocada $s$ de $l$, a fins de validação espacial. Para associar o nome $x$ a posição gerada na pilha, salva o local construído com os metadados gerados no ambiente de nomes globais $g$.
+\noindent Dada a declaração $\KW{global}\;x[n]$, empilha-se no topo da pilha $n$ vezes a dupla $(\bot, k)$ representando $n$ posições alocadas, mas não inicializadas, que só podem ser acessadas com um ponteiro que tenha uma chave de valor $k$. Esse valor de $n$ é salvo como o tamanho da região alocada $s$ de $l$, a fim de validação espacial. Para associar o nome $x$ a posição gerada na pilha, salva o local construído com os metadados gerados no ambiente de nomes globais $g$.
 
 Esse ambiente, $g$, é um mapa de nomes a locais na pilha, podendo ser escrito como $g := Map\;nome\;l^p$. Obter o valor associado a um nome $x$ no mapa $g$, escreve $g(x)$. Essa operação  retorna $-$ quando $x \notin g$. Atribuir um valor no mapa usa a mesma notação das atribuições nos demais ambiente. Para atribuir o local $l^p$ ao nome $x$ no mapa $g$, escreve-se $g[x \mapsto l^p]$. 
 
@@ -566,7 +567,7 @@ Ela define as operações por tipo de dados. Todos os $op \in BinOp$ são defini
 \end{figure}
 \FloatBarrier
 
-Além disso, existe também a função $\KW{not}$ nega o valor de um número, tal como: 
+Além disso, existe também a função $\KW{not}$ que nega o valor de um número, tal como: 
 \begin{figure}[ht]
 	\begin{align}
 		\mathbf{not}(n) = \mathcal{N}^{-1}(\mathbf{if}\; \mathcal{N}(n) \neq 0 \;\mathbf{then}\; 0 \;\mathbf{else} \;1)
@@ -731,7 +732,7 @@ Adicionalmente há a regra para se obter o endereço de uma variável \hyperref[
 		{F \vdash \St{\mathbf{while}\;(e_1)\; e_2, a, p, m} \to \\ \St{\mathbf{if}\;(e_1)\; (e_2;\mathbf{while}\;(e_1)\; e_2)\; \mathbf{else}\; 0, a, p, m}} 
 }
 
-O $\KW{while}$ é definido em função do $\KW{if}$, tal qual a regra \hyperref[rule:while]{(WHILE)} descreve. Ele se deriva em um passo para um condicional que se verdadeiro resulta no corpo do $\KW{while}$ seguido da expressão inicial e se falso no valor 0. Seguindo o modelo OCaml \cite{leroy3ocaml}, $\KW{while}$ deveria retornar o tipo $Unit$. Como $PCL_{back}$ não possui tipos, pode-se interpretar o 0 como o $Unit$. Talvez uma interpretação melhor para o retorno de 0 no caso falso é que 0 é o valor da condicional computada quando se para de iterar o loop.
+O $\KW{while}$ é definido em função do $\KW{if}$, tal qual a regra \hyperref[rule:while]{(WHILE)} descreve. Ele se deriva em um passo para um condicional que se verdadeiro resulta no corpo do $\KW{while}$ seguido da expressão inicial e se falso no valor 0. Seguindo o modelo OCaml \cite{leroy3ocaml}, $\KW{while}$ deveria retornar o tipo $Unit$. Como $PCL_{back}$ não possui tipos, pode-se interpretar o 0 como o $Unit$. Talvez uma interpretação melhor para o retorno de 0 no caso falso é que 0 é o valor da condicional computada quando se para de iterar o \emph{loop}.
 
 \textbf{Chamada de Funções}: Por fim, basta elaborar sobre as regras de chamada de função. Usando as funções salvas no ambiente global, uma chamada de $f(\bar e)$ quando $f \in F$ computa a função de nome $f$ do programa. A avaliação dos componentes da função é \emph{eager}, ou seja, primeiro avaliam-se completamente os argumentos em ordem passados a função para depois computar o corpo desta. Essa avaliação é definida pelas regras \hyperref[rule:callfunc-s(j,0)]{(CALLFUNC-S(J,0))} e \hyperref[rule:callfunc-s(j,i)]{(CALLFUNC-S(J,I))}. Essas regras, diferentes das demais, não são exaustivas, mas apenas representam a avaliação do elemento de índice 0 de uma função com $j$ argumentos e a avaliação do argumento de índice $i$ de uma função com $j$ argumentos respectivamente. Elas demonstram que para avaliar um argumento de índice $i$ em uma função com $j$ argumentos, é necessário ter avaliado os argumentos de 0 até $i$ anteriormente.
 
@@ -774,13 +775,13 @@ A palavra-chave $\KW{Fpop}$ empilhada é utilizada no ambiente de nomes $a$, com
 
 Em várias regras descritas na seção anterior (\ref{sec:pcl-back:semantica}) há a geração da expressão $\KW{panic}$ seguida de algum código de erro dado algumas pré-condições. Nesta sessão será discorrido o porquê desses erros e quais mecanismos usados. 
 
-A detecção de falhas é completamente associada as regras que acessam memória, ou seja, as regras das seções \ref{sec:pcl-back:semantica:atribui}, \ref{sec:pcl-back:semantica:mem-func} e \ref{sec:pcl-back:semantica:acessa}. A detecção parte dos metadados associados aos locais $l\{i, k, o, s\}$. Inicialmente, valida-se se o acesso à memória está dentro da região delimitada. Para isso, o valor de $o$ do local deve ser igual ou maior que 0 e menor que o seu valor de $s$, da forma $ 0 \le o < s$. Caso contrário, essa é uma falha temporal de \emph{Out-of-Bounds-Read} ou \emph{Out-of-Bounds-Write}, dependendo da regra associada, como em \hyperref[rule:deref-mem-obr]{(DEREF-MEM-OBR)} e \hyperref[rule:atribui-deref-mem-obe]{(ATRIBUI-DEREF-MEM-OBE)} respectivamente. Se o aceso for dentro dos limites, então deve-se validar se a chave $k$ do local $l$ é igual à fechadura $k'$ da célula associada na memória, da forma $k = k'$. Caso contrário, essa é uma falha temporal de \emph{Use-After-Free}, podendo ser de um valor da pilha como em \hyperref[rule:deref-pilha-uaf]{(DEREF-PILHA-UAF)} ou de um valor na memória como em \hyperref[rule:deref-mem-uaf]{(DEREF-MEM-UAF)}. Essas duas formas de detecção de falha foram inspiradas nas estratégias de \emph{fat pointers} e de mecanismos \emph{key-lock} de detecção.
+A detecção de falhas é completamente associada as regras que acessam memória, ou seja, as regras da seção \ref{sec:pcl-back:semantica}. A detecção parte dos metadados associados aos locais $l\{i, k, o, s\}$. Inicialmente, valida-se se o acesso à memória está dentro da região delimitada. Para isso, o valor de $o$ do local deve ser igual ou maior que 0 e menor que o seu valor de $s$, da forma $ 0 \le o < s$. Caso contrário, essa é uma falha temporal de \emph{Out-of-Bounds-Read} ou \emph{Out-of-Bounds-Write}, dependendo da regra associada, como em \hyperref[rule:deref-mem-obr]{(DEREF-MEM-OBR)} e \hyperref[rule:atribui-deref-mem-obe]{(ATRIBUI-DEREF-MEM-OBE)} respectivamente. Se o aceso for dentro dos limites, então deve-se validar se a chave $k$ do local $l$ é igual à fechadura $k'$ da célula associada na memória, da forma $k = k'$. Caso contrário, essa é uma falha temporal de \emph{Use-After-Free}, podendo ser de um valor da pilha como em \hyperref[rule:deref-pilha-uaf]{(DEREF-PILHA-UAF)} ou de um valor na memória como em \hyperref[rule:deref-mem-uaf]{(DEREF-MEM-UAF)}. Essas duas formas de detecção de falha foram inspiradas nas estratégias de \emph{fat pointers} e de mecanismos \emph{key-lock} de detecção.
 
-No contexto de acesso a um valor na memória (\ref{sec:pcl-back:semantica:acessa}) também deve-se validar se o valor acessado é inicializado, da forma $v \neq \bot$. Caso contrário, essa é uma falha de inicialização de \emph{Uninitialized-Access}, como em \hyperref[rule:var-ua]{(VAR-UA)}. Nota-se que em nenhuma regra há a validação de se a célula acessada é não inicializada, ou seja, não se valida se $v \neq -$. Isso se deve ao fato das checagem de falhas serem sequenciais. Só se realiza a operação $v \neq \bot$ após saber que o acesso é a um valor dentro do espaço alocado e esse espaço não foi liberado ainda no momento de acesso. Dessa forma, o espaço foi alocado por uma operação de $\KW{Let}$ ou $\KW{malloc}$ em algum ponto, atribuindo o valor $\bot$ a região e uma operação de limpeza, $\KW{pop}$ e $\KW{free}$, ainda não foi realizada na região, impedindo que o valor pudesse ser redefinido para $-$.
+No contexto de acesso a um valor na memória (\ref{sec:pcl-back:semantica:acessa}) também deve-se validar se o valor acessado é inicializado, da forma $v \neq \bot$. Caso contrário, essa é uma falha de inicialização de \emph{Uninitialized-Access}, como em \hyperref[rule:var-ua]{(VAR-UA)}. Nota-se que em nenhuma regra há a validação de se a célula acessada é não inicializada, ou seja, não se valida se $v \neq -$. Isso se deve ao fato das checagens de falhas serem sequenciais. Só se realiza a operação $v \neq \bot$ após saber que o acesso é a um valor dentro do espaço alocado e esse espaço não foi liberado ainda no momento de acesso. Dessa forma, o espaço foi alocado por uma operação de $\KW{Let}$ ou $\KW{malloc}$ em algum ponto, atribuindo o valor $\bot$ a região e uma operação de limpeza, $\KW{pop}$ e $\KW{free}$, ainda não foi realizada na região, impedindo que o valor pudesse ser redefinido para $-$.
 
-Por fim vale uma atenção especial às falhas detectadas na função $\KW{free}$. No contexto de $PCL_{back}$, a ausência de uma estrutura global para acompanhar as alocações limita a paridade da operação \lstinline[language=C]|free(void*)| de C com o $\KW{free}(l^m, n)$ de $PCL_{back}$. Mesmo assim, vários das falhas descritas em \ref{sec:mem-error:temporal:free} tem paralelos com possíveis falhas de $\KW{free}$ em $PCL_{back}$. Passar o local nulo ou um local com a etiqueta da pilha, são similares a \emph{Free-Memory-Not-On-Heap}, pois em C a pilha e o ponteiro nulo também não são parte da \emph{heap}. Um \emph{Partial-Free} e \emph{Double-Free} não corromperiam a execução de um programa em $PCL_{back}$, porém pode-se usar os metadados de um local $l\{i, k, o, s\}$ para emitir um $\KW{panic}$ quando uma situação que geraria esse tipo de falha em C acontecer em $PCL_{back}$. Para o \emph{Partial-Free}, que acontece na regra \hyperref[rule:free-partial]{(FREE-PARTIAL)}, basta checar que o desvio $o$ é 0 (o local é para o início da região) e o tamanho da região liberada $n$ é igual ao tamanho da região $s$ associada ao local, da forma $s = n$. Escolheu-se, por simplicidade, gerar esse mesmo erro quando se escolhe um $n > s$. Mesmo essa situação não ocorrendo em C, é uma continuação clara dessa falha para $PCL_{back}$. Para o \emph{Double-Free}, que acontece na regra \hyperref[rule:free-double]{(FREE-DOUBLE)}, usa o mesmo mecanismo de detecção de \emph{Use-After-Free} das demais regras, validando se o primeiro elemento tem uma fechadura $k'$ igual à chave $k$ do local que acessa, da forma $k = k'$. Só é necessário fazer a comparação para a chave do primeiro elemento, pois se sabe que a região a ser liberada foi corretamente descrita ($o = 0$ e $s = n$) e não poderia ter sido liberada e realocada parcialmente. Dessa forma, as chaves dessa região são todas as mesmas e fazer a comparação só com a primeira é suficiente.
+Por fim vale uma atenção especial às falhas detectadas na função $\KW{free}$. No contexto de $PCL_{back}$, a ausência de uma estrutura global para acompanhar as alocações limita a paridade da operação \lstinline[language=C]|free(void*)| de C com o $\KW{free}(l^m, n)$ de $PCL_{back}$. Mesmo assim, várias das falhas descritas em \ref{sec:mem-error:temporal:free} tem paralelos com possíveis falhas de $\KW{free}$ em $PCL_{back}$. Passar o local nulo ou um local com a etiqueta da pilha, são similares a \emph{Free-Memory-Not-On-Heap}, pois em C a pilha e o ponteiro nulo também não são parte da \emph{heap}. Um \emph{Partial-Free} e \emph{Double-Free} não corromperiam a execução de um programa em $PCL_{back}$, porém pode-se usar os metadados de um local $l\{i, k, o, s\}$ para emitir um $\KW{panic}$ quando uma situação que geraria esse tipo de falha em C acontecer em $PCL_{back}$. Para o \emph{Partial-Free}, que acontece na regra \hyperref[rule:free-partial]{(FREE-PARTIAL)}, basta checar que o desvio $o$ é 0 (o local é para o início da região) e o tamanho da região liberada $n$ é igual ao tamanho da região $s$ associada ao local, da forma $s = n$. Escolheu-se, por simplicidade, gerar esse mesmo erro quando se escolhe um $n > s$. Mesmo essa situação não ocorrendo em C, é uma continuação clara dessa falha para $PCL_{back}$. Para o \emph{Double-Free}, que acontece na regra \hyperref[rule:free-double]{(FREE-DOUBLE)}, usa o mesmo mecanismo de detecção de \emph{Use-After-Free} das demais regras, validando se o primeiro elemento tem uma fechadura $k'$ igual à chave $k$ do local que acessa, da forma $k = k'$. Só é necessário fazer a comparação para a chave do primeiro elemento, pois se sabe que a região a ser liberada foi corretamente descrita ($o = 0$ e $s = n$) e não poderia ter sido liberada e realocada parcialmente. Dessa forma, as chaves dessa região são todas as mesmas e fazer a comparação só com a primeira é suficiente.
 
-Uma característica importante dessas regras de detecção de falhas é que elas acabam definindo o que significa uma falha de memória em $PCL_{back}$. No caso de uma falha espacial, se o acesso a pilha ou a memória é via um local $l\{i, k, o, s\}$ com o seu desvio $o$ menor que 0 ou maior ou igual a $s$, então o programa termina de execução e sabe-se que a interrupção foi devido a uma falha espacial. Para as temporais, há mais granularidade. Com \emph{Use-After-Free}, se o acesso a pilha ou a memória é via um local $l\{i, k, o, s\}$ com a sua chave $k$ diferente da fechadura $k'$ do local acessado $i + o$, então o programa termina de execução e sabe-se que a interrupção foi devido a uma falha temporal de tipo \emph{Use-After-Free}. Essas relações podem ser observadas na tabela \ref{table:invariants}, em que os símbolos usados na coluna dos invariantes seriam os símbolos disponíveis no momento da falha correspondente.
+Uma característica importante dessas regras de detecção de falhas é que elas acabam definindo o que significa uma falha de memória em $PCL_{back}$. No caso de uma falha espacial, se o acesso a pilha ou a memória é via um local $l\{i, k, o, s\}$ com o seu desvio $o$ menor que 0 ou maior ou igual a $s$, então o programa termina de executar e sabe-se que a interrupção foi devido a uma falha espacial. Para as temporais, há mais granularidade. Com \emph{Use-After-Free}, se o acesso a pilha ou a memória é via um local $l\{i, k, o, s\}$ com a sua chave $k$ diferente da fechadura $k'$ do local acessado $i + o$, então o programa termina de executar e sabe-se que a interrupção foi devido a uma falha temporal de tipo \emph{Use-After-Free}. Essas relações podem ser observadas na tabela \ref{table:invariants}, em que os símbolos usados na coluna dos invariantes seriam os símbolos disponíveis no momento da falha correspondente.
 
 
 \begin{table}[ht]
@@ -801,7 +802,7 @@ Uma característica importante dessas regras de detecção de falhas é que elas
 		Extra 	    & \emph{Nullptr-Deref} & $i = 0 \quad k = 0 \quad o = 0 \quad s = 0$  \\
 		\bottomrule
 	\end{tabular}
-	\legend{Fonte: O Autor}
+	\legend{Fonte: Os Autores}
 \end{table}
 
 \subsection{Exemplos}
@@ -820,7 +821,7 @@ let get_val(list, len, idx){
 	\legend{Fonte: Os Autores.}
 \end{figure}
 
-Uma falha espacial comum também em C é o de \emph{Incorret-Calculation-of-Buffer-Size}. Ela é uma predecessora de falhas de leitura para fora do buffer, visto que ao calcular um tamanho errado para este, vir-se-á, possivelmente, acessá-lo para fora dos seus limites. Segue então em \ref{lst:c:spacial} o código em C e em \ref{lst:pclback:spacial} a reprodução deste em $PCL_{back}$.
+Uma falha espacial comum também em C é o de \emph{Incorret-Calculation-of-Buffer-Size}. Ela é uma predecessora de falhas de leitura para fora do \emph{buffer}, visto que ao calcular um tamanho errado para este, vir-se-á, possivelmente, acessá-lo para fora dos seus limites. Segue então em \ref{lst:c:spacial} o código em C e em \ref{lst:pclback:spacial} a reprodução deste em $PCL_{back}$.
 
 
 \begin{figure}[ht]
@@ -888,9 +889,9 @@ let sanitize_input(user_supplied_string){
 	dst_buf
 }
 	\end{lstlisting}
-	\legend{Fonte: os Autores.}
+	\legend{Fonte: Os Autores.}
 \end{figure}
 \FloatBarrier
 
-Como $PCL_{back}$ não possui tipo \lstinline[language=C]|char|, utiliza-se dos números da codificação ASCII. Além disso, a sintaxe é extremamente similar. Se uma pessoa entende o exemplo em C, o corolário em $PCL_{back}$ apresenta mínimas barreiras sintáticas.
+Como $PCL_{back}$ não possui tipo \lstinline[language=C]|char|, utiliza-se dos números da codificação ASCII (Código Padrão Americano para o Intercâmbio de Informação). Além disso, a sintaxe é extremamente similar. Se uma pessoa entende o exemplo em C, o corolário em $PCL_{back}$ apresenta mínimas barreiras sintáticas.
 
