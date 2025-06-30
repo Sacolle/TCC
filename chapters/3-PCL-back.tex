@@ -8,9 +8,7 @@
 % proofs, but expressive enough to express common memory
 % errors in C. Its syntax is defined as such:
 
-Este capítulo descreve $PCL_{back}$, uma linguagem com sintaxe e semântica formalmente definidas cujo objetivo é expressar falhas de memória presentes em linguagens \emph{C-like} ao mesmo tempo que permite a identificação e classificação das mesmas falhas. Assim, introduz-se $PCL_{back}$, uma linguagem núcleo similar a C desenvolvida para detectar violações de segurança de memória e classificá-las. Ela é definida por sintaxe e semântica operacional \emph{small-step}. 
-
-A escolha de C como base serviu para englobar todas as falhas de memórias, visto que C é uma linguagem que permite acesso e manipulação (quase) irrestrita à memória. Ou seja, pode-se expressar todas as falhas da seção \ref{sec:mem-error}. Essa é uma razão bem circular, as falhas são comuns em C porque este permite acesso brando a memória e assim elas são descritas; a linguagem que melhor reproduz elas é C, pois tem acesso \emph{laissez-faire} a memória.
+Este capítulo descreve $PCL_{back}$, uma linguagem definida por sintaxe e semântica operacional \emph{small-step} cujo objetivo é expressar falhas de memória presentes em linguagens \emph{C-like} ao mesmo tempo que permite a identificação e classificação das mesmas falhas. A sintaxe da linguagem é fortemente inspirado na sintaxe de C. Essa base serve para englobar todas as falhas de memórias, visto que C é uma linguagem que permite acesso e manipulação (quase) irrestrita à memória. Ou seja, pode-se expressar todas as falhas da seção \ref{sec:mem-error}. Essa é uma razão bem circular, as falhas são comuns em C porque este permite acesso brando a memória e assim elas são descritas; a linguagem que melhor reproduz elas é C, pois tem acesso \emph{laissez-faire} a memória.
 
 
 %	3.1 Syntax
@@ -66,7 +64,7 @@ A sintaxe baseada em C também se demonstrou familiar e facilitou a compreensão
 
 Esses códigos de pânico $pcode$ servem como interrupções na avaliação da linguagem, indicando uma falha de memória. Eles são um importante componente no processo de compilação e prova. Um método de segurança de memória não precisa ser compreensivo e cobrir todas as falhas geradas, mas se a sua compilação para $PCL_{back}$ não gerar o conjunto de $PanicCodes$ que se almeja evitar, então afirma-se que o método é correto no que se propõem. Ou seja, dado um processo de indução estrutural em um $PCL_{back}$ compilado de uma linguagem que deseja evitar falhas espaciais, basta que na derivação nunca se atinjam as expressões $\KW{panic}\;\KW{OutofBoundsRead}$ e $\KW{panic}\;\mathbf{OutofBoundsWrite}$.
 
-Na hora da escrita de programas da linguagem, certos componentes não são acessíveis: $\KW{pop}$ e $\KW{Fpop}$ são gerados exclusivamente como consequência de $\{\}$ e de $f(\bar x)$ respectivamente; $l$ não pode ser escrita diretamente, para evitar a forja de metadados; $\KW{panic}$ não pode ser escrito para evitar a forja de erros. No caso de $l$, utiliza-se a expressão $\KW{NULL}$ para escrever o ponteiro nulo, sendo este o valor $l^m\{0, 0, 0, 0\}$. No caso de $\KW{panic}$, o $\KW{UserError}$ é o único panico de execução do usuário, assim, para gerá-lo usa-se a diretiva $PANIC$, que é equivalente a $\KW{panic}\;\KW{UserError}$.
+Na hora da escrita de programas da linguagem, certos componentes não são acessíveis: $\KW{pop}$ e $\KW{Fpop}$ são gerados exclusivamente como consequência do operador de escopo $\{\}$ e de chamadas de função $f(\bar x)$ respectivamente; $l$ não pode ser escrita diretamente, para evitar que metadados sejam forjados; $\KW{panic}$ não pode ser escrito para evitar que falhas sejam forjadas. No caso de $l$, utiliza-se a expressão $\KW{NULL}$ para escrever o ponteiro nulo, sendo este o valor $l^m\{0, 0, 0, 0\}$. No caso de $\KW{panic}$, o $\KW{UserError}$ é o único panico de execução do usuário, assim, para gerá-lo usa-se a diretiva $PANIC$, que é equivalente a $\KW{panic}\;\KW{UserError}$.
 
 Um exemplo da expressividade da linguagem é a Figura \ref{lst:pclback:tree}, que mostra uma simples estrutura de árvore na sintaxe da linguagem
 
@@ -133,7 +131,8 @@ Com o intuito de modelar essa dinâmica, a memória em $PCL_{back}$ usa dois amb
 \subsection{Ponteiros}
 \label{sec:pcl-back:ptr}
 
-Com essa distinção, pode-se notar que o elemento da sintaxe responsável por indexar a memória, a localização $l$, é divida em $l^p$ e $l^m$. Nesse contexto, $p$ e $m$ são etiquetas de $l$ que indicam se essa localização é para a pilha ou para memória. Essas localizações também possuem outros metadados, utilizados na avaliação da linguagem para detectar as falhas. Assim, a representação interna dos locais pode ser escrita como:
+Com essa distinção, pode-se notar que o elemento da sintaxe responsável por indexar a memória, a localização $l$, é divida em $l^p$ e $l^m$. Nesse contexto, $p$ e $m$ são etiquetas de $l$ que indicam se essa localização é para a pilha ou para memória. Essas localizações também possuem outros metadados, utilizados na avaliação da linguagem para detectar as falhas. 
+
 \begin{figure*}[ht]
 	\begin{align*}
 		l^p\{i, k, o, s \} && l^m\{i, k, o, s \}
@@ -142,7 +141,7 @@ Com essa distinção, pode-se notar que o elemento da sintaxe responsável por i
 	\label{fig:ptr:metada}
 \end{figure*}
 
-Nela, $i$ é o índice de acesso à memória; $k$ é a uma chave única, gerada através da função $\mathbf{newkey}$, que serve para validar os acessos quanto a falhas temporais; $o$ é o \emph{offset} (desvio) do índice base $i$, que recebe o valor das somas e subtrações, ao invés de alterar o índice diretamente; e $s$ é o tamanho da região alocada na memória, que serve para validar os acessos quanto a falhas espaciais. Esses metadados não são acessíveis na escrita do código, mas na semântica operacional tem seus valores internos expostos à avaliação usando a anotação de chaves acima.
+Os outros metadados da localização $l$ são, como descrito na Figura \ref{fig:ptr:metada}: $i$ é o índice de acesso à memória; $k$ é a uma chave única, gerada através da função $\mathbf{newkey}$, que serve tanto para validar os acessos quanto a falhas temporais; $o$ é o \emph{offset} (desvio) do índice base $i$, que recebe o valor das somas e subtrações, ao invés de alterar o índice diretamente; e $s$ é o tamanho da região alocada na memória, que serve para validar os acessos quanto a falhas espaciais. Esses metadados não são acessíveis na escrita do código, mas na semântica operacional tem seus valores internos expostos à avaliação usando a anotação de chaves acima.
 
 \subsection{Pilha}
 \label{sec:pcl-back:pilha}
@@ -164,7 +163,7 @@ Os códigos de controle citados existem para essa lista se comportar como um pil
 	\label{fig:def:pop}
 \end{figure}
 
-A notação para descrever as funções neste projeto é similar a Haskell \cite{HASKELL}, com casamento de padrões nos argumentos das funções e as definições recursivas. Para o caso acima, em \ref{fig:def:pop1} e \ref{fig:def:pop2} definem as funções $\mathbf{pop}_{stack}(p)$ e $\mathbf{pop}_{func}(p)$ com base na função $\mathbf{pop}(p, v)$, usando como valor inicial de $v$ os seus elementos subscritos. Em \ref{fig:def:pop3} e \ref{fig:def:pop4} realiza-se a lógica. Se os argumentos casarem o padrão $h : t$, que nesse contexto é a lista poder ser dividida entre o elemento no fim $(v, \_)$ e no restante $t$, então executa-se \ref{fig:def:pop3}. Se a lista for vazia, representada por $[]$, realiza-se \ref{fig:def:pop4}. $(v,\_)$ também é um casamento de padrão, que atribui o nome $v$ para o primeiro elemento da dupla, o valor, e descarta o segundo, a chave. Com esses elementos, \ref{fig:def:pop3} checa se o valor no fim da lista é igual ao código de controle $c_{ctrl}$, se é retorna o restante da lista $t$, se não chama $\mathbf{pop}(t, c_{ctr})$ recursivamente para o restante da lista. Isso descarta elementos do topo da lista até finalmente descartar o $c_{ctrl}$ ou, pela definição \ref{fig:def:pop4}, chegar no final e retorna a lista vazia.
+A notação para descrever as funções neste projeto é similar a de Haskell \cite{HASKELL}, com casamento de padrões nos argumentos das funções e as definições recursivas. Para o caso acima, em \ref{fig:def:pop1} e \ref{fig:def:pop2} definem as funções $\mathbf{pop}_{stack}(p)$ e $\mathbf{pop}_{func}(p)$ com base na função $\mathbf{pop}(p, v)$, usando como valor inicial de $v$ os seus elementos subscritos. Em \ref{fig:def:pop3} e \ref{fig:def:pop4} realiza-se a lógica. Se os argumentos casarem o padrão $h : t$, nesse contexto sendo que a lista pode ser dividida entre o elemento no fim $(v, \_)$ e no restante $t$, então executa-se \ref{fig:def:pop3}. Se a lista for vazia, representada por $[]$, realiza-se \ref{fig:def:pop4}. $(v,\_)$ também é um casamento de padrão, que atribui o nome $v$ para o primeiro elemento da dupla, o valor, e descarta o segundo, a chave. Com esses elementos, \ref{fig:def:pop3} checa se o valor no fim da lista é igual ao código de controle $c_{ctrl}$, se é, retorna o restante da lista $t$, se não, chama $\mathbf{pop}(t, c_{ctr})$ recursivamente para o restante da lista. Isso descarta elementos do topo da lista até finalmente descartar o $c_{ctrl}$ ou, pela definição \ref{fig:def:pop4}, chegar no final e retorna a lista vazia.
 
 Outras funções similares existem para descrever o acesso, inserção de elementos e edição de elementos na pilha. A inserção no topo da pilha, tal qual em Haskell, utiliza-se o símbolo $:$ como uma operação binária de valor e pilha para pilha. Escreve-se $v : p$ para realizar o empilhamento de $v$ em $p$, retornando $p'$ com $v$ no topo. Caso se deseje empilhar várias cópias de um elemento na pilha, subscreve-se este com um número indicando a quantidade. Dessa forma, escrever $\bot_n : p$ empilha $n$ vezes o valor $\bot$ no topo da pilha. 
 
@@ -317,7 +316,7 @@ Não há função específica para alterar o valor de um nome $x$ em $a$. Para r
 
 \subsection{Funções}
 
-O passo seguinte, após a avaliação das globais, é o de captura das funções. Para isso, define-se o fecho transitivo $\to_F$ da seguinte forma:
+O passo seguinte após a avaliação das globais, é o de captura das funções. Para isso, define-se o fecho transitivo $\to_F$ da seguinte forma:
 
 \labelRule{\label{rule:func-collect}}{
 \infrule[LetFunction-collect]
@@ -381,7 +380,7 @@ A regra \hyperref[rule:escopo]{(ESCOPO)} utiliza-se da expressão auxiliar $\KW{
 
 Como $PCL_{back}$ é uma linguagem de expressões, todas elas precisam retornar algum valor. \hyperref[rule:let]{(LET)} avalia para o endereço alocado na pilha $l$. A decisão de qual elemento a expressão seria avaliada, para os casos menos comuns, foi baseada no comportamento de C. Se a expressão equivalente não avalia para um valor em C, decidiu-se basear no comportamento em OCaml, principalmente para as regras \hyperref[rule:if-true]{(IF-TRUE)}, \hyperref[rule:if-false]{(IF-FALSE)} e \hyperref[rule:while]{(WHILE)}.
 
-Para as atribuições, pode-se realizá-las quando o elemento da esquerda avalia para uma variável ou para um local, prefixado pelo operador de dereferência, tal como $\text{*}l := e$. A ordem dessa operação é definida como primeiramente avalia-se completamente o termo da esquerda para depois avaliar o termo da direita, exemplificado por \hyperref[rule:atribui-deref-ls]{(ATRIBUI-DEREF-LS)} e \hyperref[rule:atribui-deref-rs]{(ATRIBUI-DEREF-RS)}.
+Para as atribuições, pode-se realizá-las quando o elemento da esquerda avalia para uma variável ou para um local, prefixado pelo operador de dereferência, tal como $\text{*}l := e$. A ordem dessa operação é definida como: primeiramente avalia-se completamente o termo da esquerda para depois se avaliar o termo da direita, exemplificado por \hyperref[rule:atribui-deref-ls]{(ATRIBUI-DEREF-LS)} e \hyperref[rule:atribui-deref-rs]{(ATRIBUI-DEREF-RS)}.
 
 \labelRule{\label{rule:atribui-deref-ls}}{
 	\infrule[Atribui-deref-ls]
