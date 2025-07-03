@@ -8,7 +8,8 @@
 % to validate temporal memory access. Although, properly validating its claims 
 % has been a challenge\cite{RUSTBELT, RUSTSYMBOLIC}.
 
-Com a base $PCL_{back}$ definida, agora se avança para a próxima etapa do projeto, provar alguma solução de memória. Uma das soluções mais estudadas é o \emph{Borrow Checker} de Rust \cite{RUSTBOOK}. Ele promete uma solução para \emph{bugs} temporais com zero custo no desempenho do programa. Para isso, não só se limita a habilidade do programador de realizar \emph{alias}, como se necessita que ele anote o código para validar os acessos temporais. Entretanto, a validação desse sistema todo tem sido um desafio \cite{RUSTBELT,RUSTSYMBOLIC}.
+%Com a base $PCL_{back}$ definida, agora se avança para a próxima etapa do projeto: definir uma linguagem de {front-end} com algum mecanismo de segurança de memória que compile para $PCL_{back}$. 
+Este capítulo descreve uma das soluções mais estudadas para obter segurança de memória:  o \emph{Borrow Checker} de Rust \cite{RUSTBOOK}. Ele promete uma solução para \emph{bugs} temporais com zero custo no desempenho do programa. Para isso, Rust restringe a possibilidade do programador de realizar \emph{aliasing} e requer que ele anote o código para validar os acessos temporais. Entretanto, a validação formal desse sistema todo tem sido um desafio \cite{RUSTBELT,RUSTSYMBOLIC}.
 
 % In the case of $PCL_{back}$, there is an interesting bijection between the key locks 
 % used to check for temporal safety and the lifetimes used for computing the correctness 
