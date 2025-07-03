@@ -87,13 +87,20 @@ operation(a);
 	\legend{Fonte: Os Autores.}
 \end{figure}
 
-As regiões de Polonius também definem regras de subtipagem $<:$ entre si. Dado a linha 2 de \ref{fig:ex:polonius}, há uma relação de subtipo entre $\&'a String$ e $\&'b String$ (s é do tipo \lstinline[language=Rust]|String|), podendo ser expressa como:
-\[ \frac{'b \subseteq {'a}}{\&'b\;String <: \&'a\;String} \]
+As regiões de Polonius também definem regras de subtipagem $<:$ entre si. Dado a linha 2 de \ref{fig:ex:polonius}, há uma relação de subtipo entre $\&'a String$ e $\&'b String$ (s é do tipo \lstinline[language=Rust]|String|), podendo ser expressa como na Equação \ref{eq:subtype}.
+\begin{equation}
+	\frac{'b \subseteq {'a}}{\&'b\;String <: \&'a\;String}
+	\label{eq:subtype}
+\end{equation}
+
 
 A parte relevante é a pré-condição, $'b \subseteq {'a}$, ela é mais comumente expressa como $'b : {'a}$, em que se lê $b$ \emph{outlives} (sobrevive) $a$. Essas relações de sobrevivência são transitivas em um programa, da forma $'b : {'a} \land {'a} : {'c} \to {'b} : {'c}$. Todas as regiões sobrevivem a si mesmas, ${'b} : {'b}$ e são sobrevividas pela região estática $'static$. Pode-se formular essa relação da seguinte forma: dado todas as regiões de um programa $r_1,r_2 \in Reg$, define-se a relação de sobrevivência como o fechamento binário $r_1\;R\;r_2$ sobre $Reg$, sendo $R$ transitivo e tendo a propriedade $\forall (r_1, r_2) \in R, (r_1, r_1) \in R \land (r_2, r_2) \in R$.
 
-Essas regiões $r \in Regs$ são associadas a um conjunto de empréstimos $l^s \subseteq Loans$ do programa no fechamento binário $r\;L\;l^s$. Essa relação é criada no processo de criação de empréstimo usando o operador $\&$. Um exemplo disso é a linha 2 de \ref{fig:ex:polonius}, nela, cria-se a relação $('b, \{ \&x \})$, em que descreve que a região $'b$ tem uma referência imutável a $x$ no seu conjunto de concessões. Essas concessões $l \in Loans$ propagam-se sobre as relações de $R$ em $L$. Desse jeito, todas as concessões em $'b$ existem em todos os elementos que ele sobrevive, sendo descrito na forma:
-\[ \forall ('b, 'a) \in R, \exists ('c, ls_1), ('d, ls_2) \in L, {'b} = {'c} \land {'a} = {'d} \to ls_1 \subseteq ls_2 \]
+Essas regiões $r \in Regs$ são associadas a um conjunto de empréstimos $l^s \subseteq Loans$ do programa no fechamento binário $r\;L\;l^s$. Essa relação é criada no processo de criação de empréstimo usando o operador $\&$. Um exemplo disso é a linha 2 de \ref{fig:ex:polonius}, nela, cria-se a relação $('b, \{ \&x \})$, em que descreve que a região $'b$ tem uma referência imutável a $x$ no seu conjunto de concessões. Essas concessões $l \in Loans$ propagam-se sobre as relações de $R$ em $L$. Desse jeito, todas as concessões em $'b$ existem em todos os elementos que ele sobrevive, sendo descrito como na Equação \ref{eq:propagate}.
+\begin{equation}
+	\forall ('b, 'a) \in R, \forall ('c, ls_1), ('d, ls_2) \in L, {'b} = {'c} \land {'a} = {'d} \to ls_1 \subseteq ls_2 
+	\label{eq:propagate}
+\end{equation}
 
 Com essa propagação, quando uma concessão tem seus termos invalidados, ela invalida todas as regiões que a tem associada. Um exemplo de um caso que é valido é \ref{fig:ex:polonius:1}, em que mesmo que o empréstimo tenha sido feito dentro do escopo, devido à propagação, esse valor é vivo fora deste. Um exemplo de um caso que é inválido é \ref{fig:ex:polonius:2}, em que o empréstimo é invalidado no final do escopo, propagando esse fato e invalidando o acesso ao empréstimo.
 

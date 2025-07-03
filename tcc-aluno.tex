@@ -186,6 +186,19 @@
 \setlength{\marginparwidth}{2.5cm}
 
 
+\newcommand{\POP}[1]{\texttt{pop}\;#1}
+\newcommand{\FPOP}[1]{\texttt{fpop}\;#1}
+\newcommand{\MALLOC}[1]{\texttt{malloc}(#1)}
+\newcommand{\PFREE}[2]{\texttt{free}(#1, #2)}
+\newcommand{\LET}[2]{\texttt{let}\;#1[#2]}
+\newcommand{\IF}[3]{\texttt{if}(#1)\;#2\;\texttt{else}\;#3}
+\newcommand{\WHILE}[2]{\texttt{while}(#1)\;#2}
+\newcommand{\PANIC}[1]{\texttt{panic}\;\texttt{#1}}
+
+\newcommand{\LETFN}[1]{\texttt{let}\;#1}
+\newcommand{\GLOBAL}[2]{\texttt{let}\;#1[#2]}
+
+
 %
 % palavras-chave na lingua estrangeira
 % iniciar todas com letras maiúsculas, exceto no caso de abreviaturas

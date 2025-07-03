@@ -6,7 +6,7 @@ O propósito deste projeto é utilizar a linguagem $PCL_{back}$ como um meio de 
 
 O \emph{design} de $PCL_{front}$ partiu do formato de $PCL_{back}$, focando em gerar o menor número de modificações sintáticas para que a compilação fosse simples de se definir. Duas decisões foram tomadas que alteraram o funcionamento do \emph{Borrow Checker} de $PCL_{back}$ comparado com o de Rust, a fim de manter a simplicidade da linguagem. (a) Ao invés de se utilizar um sistema de Rust que evoca tipos lineares, decidiu-se usá-los propriamente, voltando a alocações e desalocações manuais, regidas pela regra do uso exatamente uma vez. Na linguagem, o tipo $\text{*}\tau$ é linear enquanto os demais são não lineares. Isso simplifica a compilação por evitar as chamadas implícitas de liberação de memória que existem em Rust, mas ainda modela o comportamento deste, com liberações sendo necessárias no fim de escopos para que um programa seja bem tipado. (b) Sem paralelismo, há menos necessidade de utilizar a regra de apenas um empréstimo mutável ou, exclusivamente, vários empréstimos imutáveis. Assim, $PCL_{front}$ permite várias referências mutáveis, chamadas \emph{alias} ($@\tau'a$) no sistema de tipos. 
 
-O objetivo dessa linguagem é, quando um dado programa $PCL_{front}$ é compilado para um código $PCL_{back}$, esse código nunca atinge uma derivação de $\KW{panic}\;\KW{UseAfterFree}$. As demais falhas temporais são permitidas na atual configuração do programa. Ao se aproximar mais do sistema de linearidade de Rust, movendo-se para um sistema de liberação automática de memória, pode-se começar a validar as demais falhas de memória temporais.
+O objetivo dessa linguagem é, quando um dado programa $PCL_{front}$ é compilado para um código $PCL_{back}$, esse código nunca atinge uma derivação de $\KW{panic}$ $\KW{UseAfterFree}$. As demais falhas temporais são permitidas na atual configuração do programa. Ao se aproximar mais do sistema de linearidade de Rust, movendo-se para um sistema de liberação automática de memória, pode-se começar a validar as demais falhas de memória temporais.
 
 % 	5.1 Syntax
 \section{Sintaxe}
@@ -466,3 +466,7 @@ A definição via compilação é relativamente simples. A linguagem foi criada 
 \end{figure}
 
 As definições de troca \ref{fig:def:compilation:swap} e \ref{fig:def:compilation:swapderef} realizam expressão idiomática de troca, usando a variável de nome auxiliar $\TMP$. A definição do operador $\KW{new}$, \ref{fig:def:compilation:new}, é simples se não pelo uso do  $\KW{while}$ para atribuir valores-base ao espaço alocado. A compilação de $PCL_{front}$ para $PCL_{back}$ ainda precisa ser testada e provada correta.
+
+\section{Implementação}
+
+\todo[inline]{escrever}
