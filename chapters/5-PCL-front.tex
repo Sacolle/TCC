@@ -108,15 +108,15 @@ A checagem de tipos dessa linguagem inclui a validação de acessos a \emph{alia
 
 Os ambientes usados para computação são $\Gamma$, $U$, $R$ e $L$. O ambiente $\Gamma$ é o ambiente de variáveis para tipos, com $U$ sendo o seu coadjuvante. Ele também é um ambiente de variáveis para tipos, mas é o local em que variáveis acessadas são movidas para que a operação imediatamente anterior a elas decida se serão descartadas ou reincorporadas em $\Gamma$. Os ambientes $R$ e $L$ são dedicados a avaliação dos \emph{alias} do programa, contendo o mesmo significado que o descrito em \ref{sec:chap4:polonius}, $R$ é a relação entre regiões e $L$ é a relação de regiões para conjuntos de concessões. 
 
-As regras de tipo usam algumas funções auxiliares que precisam ser definidas. Uma delas é a $\mathbf{newlabel}$, que retorna uma região única nova ao programa. A função $\mathbf{live}('r, L)$ (\ref{fig:def:live}) retorna verdadeiro se a região $'r$ está viva naquele ponto do programa, verificando se existe alguma concessão no conjunto de $'r$ em $L$. O operador auxiliar complementar ao $\mathbf{live}$ é o $\mathbf{rmLoan}(x, L)$ (\ref{fig:def:rmloan}), que gera um novo $L$ sem as regiões que possuem uma concessão a $x$.
+As regras de tipo usam algumas funções auxiliares que precisam ser definidas. Uma delas é a $\FN{newlabel}$, que retorna uma região única nova ao programa. A função $\FN{live}('r, L)$ (\ref{fig:def:live}) retorna verdadeiro se a região $'r$ está viva naquele ponto do programa, verificando se existe alguma concessão no conjunto de $'r$ em $L$. O operador auxiliar complementar ao $\FN{live}$ é o $\FN{rmLoan}(x, L)$ (\ref{fig:def:rmloan}), que gera um novo $L$ sem as regiões que possuem uma concessão a $x$.
 
-As funções de operação binária usam a função auxiliar $\mathbf{addSubType}(\tau_1, \tau_2)$ (\ref{fig:def:addsub}) para simplificar a notação. Ela retorna o tipo que corresponde uma operação entre os seus dois operandos. Há correspondência se $\tau_1$ e $\tau_2$ forem $\KW{int}$, resultando em $\KW{int}$ ou se um deles for $\KW{int}$ e o outro sendo tipo ponteiro ($\text{*}\!\tau$) ou tipo \emph{alias} ($@\tau'r$), resultando nos tipos ponteiro e \emph{alias} respectivamente. Uma notação complementar usada para reduzir o número de regras é a de chaves ($\{\}$), assume-se que os elementos dentro desses, quando falando de símbolos da linguagem, representam alternativas. Por exemplo, a regra \hyperref[trule:binop-comp]{(BINOP-COMP)} é valida para $op$ de valores $=$, ou $>$, ou $<$.
+As funções de operação binária usam a função auxiliar $\FN{addSubType}(\tau_1, \tau_2)$ (\ref{fig:def:addsub}) para simplificar a notação. Ela retorna o tipo que corresponde uma operação entre os seus dois operandos. Há correspondência se $\tau_1$ e $\tau_2$ forem $\KW{int}$, resultando em $\KW{int}$ ou se um deles for $\KW{int}$ e o outro sendo tipo ponteiro ($\text{*}\!\tau$) ou tipo \emph{alias} ($@\tau'r$), resultando nos tipos ponteiro e \emph{alias} respectivamente. 
 
 \begin{figure}[ht]
 	\caption{Função que determina se uma região $'r$ está viva em $L$.}
 	\label{fig:def:live}
 	\begin{align}
-		&\mathbf{live}('r, L) = \exists ('w, l^s) \in L, {'r} = {'w} \land l^s \neq \emptyset
+		&\FN{live}('r, L) = \exists ('w, l^s) \in L, {'r} = {'w} \land l^s \neq \emptyset
 	\end{align}
 	\legend{Fonte: Os Autores.}
 \end{figure}
@@ -125,7 +125,7 @@ As funções de operação binária usam a função auxiliar $\mathbf{addSubType
 	\caption{Função que gera um $L'$ sem todas as regiões $'r$ de $L$ com uma concessão a $x$.}
 	\label{fig:def:rmloan}
 	\begin{align}
-		&\mathbf{rmLoan}(x, L) = \{(r, l^s) \OR \forall (r, l^s) \in L, x \notin l^s \}
+		&\FN{rmLoan}(x, L) = \{(r, l^s) \OR \forall (r, l^s) \in L, x \notin l^s \}
 	\end{align}
 	\legend{Fonte: Os Autores.}
 \end{figure}
@@ -134,16 +134,16 @@ As funções de operação binária usam a função auxiliar $\mathbf{addSubType
 	\caption{Função que gera o tipo resultante entre $\tau_1$ e $\tau_2$ no caso de soma ou subtração.}
 	\label{fig:def:addsub}
 	\begin{align}
-		&\mathbf{addSubType}(\KW{int}, \KW{int}) = \KW{int}\\ 
-		&\mathbf{addSubType}(\KW{int}, \text{*}\!\tau) = \text{*}\!\tau\\ 
-		&\mathbf{addSubType}(\text{*}\!\tau, \KW{int}) = \text{*}\!\tau\\ 
-		&\mathbf{addSubType}(\KW{int}, @\tau'r) = @\tau'r\\ 
-		&\mathbf{addSubType}(@\tau'r, \KW{int}) = @\tau'r
+		&\FN{addSubType}(\KW{int}, \KW{int}) = \KW{int}\\ 
+		&\FN{addSubType}(\KW{int}, \text{*}\!\tau) = \text{*}\!\tau\\ 
+		&\FN{addSubType}(\text{*}\!\tau, \KW{int}) = \text{*}\!\tau\\ 
+		&\FN{addSubType}(\KW{int}, @\tau'r) = @\tau'r\\ 
+		&\FN{addSubType}(@\tau'r, \KW{int}) = @\tau'r
 	\end{align}
 	\legend{Fonte: Os Autores}
 \end{figure}
 
-Uma característica da ausência do tipo tupla é que não há a existência do tipo unitário por consequência. Decidiu-se não o adicionar por simplicidade. Dessa forma, algumas regras como \hyperref[trule:var]{(VAR)}, \hyperref[trule:delete]{(DELETE)}e \hyperref[trule:swap]{(SWAP)} retornam $\KW{int}$ como forma de retorno do tipo unitário. Na parte de compilação \ref{chap5:compile}, essas operações retornarão o número 1. Dessa forma, a seguir se tem as regras de tipo de $PCL_{front}$:
+Uma característica da ausência do tipo tupla é que não há a existência do tipo unitário por consequência. Decidiu-se não o adicionar por simplicidade. Dessa forma, algumas regras como \hyperref[trule:var]{(VAR)}, \hyperref[trule:delete]{(DELETE)} e \hyperref[trule:swap]{(SWAP)} retornam $\KW{int}$ como forma de retorno do tipo unitário. Na parte de compilação \ref{chap5:compile}, essas operações retornarão o número 1. Dessa forma, a seguir se tem as regras de tipo de $PCL_{front}$:
 
 \labelRule{\label{trule:number}}{
 	\infrule[Number]
@@ -159,7 +159,7 @@ Uma característica da ausência do tipo tupla é que não há a existência do 
 \labelRule{\label{trule:lin-var}}{
 	\infrule[Var-lin]
 		{}
-		{\Gamma, x:\tau;U;R;L \vdash x : \tau \OR \Gamma;U, x:\tau;R;\mathbf{rmLoan}(x, L)}
+		{\Gamma, x:\tau;U;R;L \vdash x : \tau \OR \Gamma;U, x:\tau;R;\FN{rmLoan}(x, L)}
 }
 
 \labelRule{\label{trule:ref}}{
@@ -172,17 +172,18 @@ Uma característica da ausência do tipo tupla é que não há a existência do 
 	\infrule[Binop-AddSub]
 		{\Gamma;U;R;L \vdash e_1: \tau_1 \OR \Gamma';U';R';L' \\ 
 		\Gamma';\emptyset;R';L' \vdash e_2 : \tau_2 \OR \Gamma'';U'';R'';L''\\
-		\tau_r = \mathbf{addSubType}(\tau_1, \tau_2)
+		op \in \{+, -\} \quad \tau_r = \FN{addSubType}(\tau_1, \tau_2)
 		}
-		{\Gamma;U;R;L \vdash e_1\;\{+, -\}\;e_2: \tau_r \OR \Gamma'';\emptyset;R'';L''} 
+		{\Gamma;U;R;L \vdash e_1\;op\;e_2: \tau_r \OR \Gamma'';\emptyset;R'';L''} 
 }
 
 \labelRule{\label{trule:binop-comp}}{
 	\infrule[Binop-Comp]
 		{\Gamma;U;R;L \vdash e_1: \tau \OR \Gamma';U';R';L' \\ 
-		\Gamma';\emptyset;R';L' \vdash e_2 : \tau \OR \Gamma'';U'';R'';L''
+		\Gamma';\emptyset;R';L' \vdash e_2 : \tau \OR \Gamma'';U'';R'';L''\\
+		op \in \{=, <, >\}
 		}
-		{\Gamma;U;R;L \vdash e_1\;\{=, >, <\}\;e_2: \tau \OR \Gamma'';\emptyset;R'';L''} 
+		{\Gamma;U;R;L \vdash e_1\;op\;e_2: \tau \OR \Gamma'';\emptyset;R'';L''} 
 }
 
 \labelRule{\label{trule:binop}}{
@@ -234,7 +235,7 @@ Uma característica da ausência do tipo tupla é que não há a existência do 
 
 \labelRule{\label{trule:deref-alias}}{
 	\infrule[Deref-Alias]
-		{\Gamma;U;R;L \vdash e : @!\tau'r \OR \Gamma';U';R';L' \quad \mathbf{live}('r)}
+		{\Gamma;U;R;L \vdash e : @!\tau'r \OR \Gamma';U';R';L' \quad \FN{live}('r)}
 		{\Gamma;U;R;L \vdash \text{*}e : !\tau \OR \Gamma' \cup U';\emptyset;R';L'} 
 }
 
@@ -246,7 +247,7 @@ Uma característica da ausência do tipo tupla é que não há a existência do 
 
 \labelRule{\label{trule:alias-deref}}{
 	\infrule[Alias-Deref]
-		{\mathbf{live}('r)}
+		{\FN{live}('r)}
 		{\Gamma, x:@\text{*}\tau'r;U;R;L \vdash \KW{alias}\text{*}\;x : @\tau'r \OR \Gamma,x: @\text{*}\tau'r;U;R;L} 
 }
 
@@ -276,7 +277,7 @@ Uma característica da ausência do tipo tupla é que não há a existência do 
 	\infrule[Delete]
 		{\Gamma;U;R;L \vdash e : \KW{int} \OR \Gamma';U';R';L'}
 		{\Gamma,x:\text{*}\tau;U;R;L \vdash 
-		\KW{delete}(x, e): \KW{int} \OR \Gamma';\emptyset;R'; \mathbf{rmLoan}(x, L')}
+		\KW{delete}(x, e): \KW{int} \OR \Gamma';\emptyset;R'; \FN{rmLoan}(x, L')}
 }
 
 \labelRule{\label{trule:var-alias}}{
@@ -302,19 +303,19 @@ Uma característica da ausência do tipo tupla é que não há a existência do 
 	\infrule[Swap]
 		{}
 		{\Gamma,x_1:\tau, x_2:\tau;U;R;L \vdash x_1 :=: x_2 : \KW{int} \\
-		\OR \Gamma,x_1:\tau, x_2:\tau;\emptyset;R;\mathbf{rmLoan}(x_1, \mathbf{rmLoan}(x_2, L))} 
+		\OR \Gamma,x_1:\tau, x_2:\tau;\emptyset;R;\FN{rmLoan}(x_1, \FN{rmLoan}(x_2, L))} 
 }
 
 \labelRule{\label{trule:swap-deref-ptr}}{
 	\infrule[Swap-Deref-Ptr]
 		{}
 		{\Gamma,x_1:\tau, x_2:\text{*}\tau;U;R;L \vdash x_1 :=:\!\!\text{*} x_2 : \KW{int} \\
-		\OR \Gamma,x_1:\tau, x_2:\text{*}\tau;\emptyset;R;\mathbf{rmLoan}(x_1, \mathbf{rmLoan}(x_2, L))} 
+		\OR \Gamma,x_1:\tau, x_2:\text{*}\tau;\emptyset;R;\FN{rmLoan}(x_1, \FN{rmLoan}(x_2, L))} 
 }
 
 \labelRule{\label{trule:swap-deref-alias}}{
 	\infrule[Swap-Deref-Alias]
-		{\mathbf{live}('r)}
+		{\FN{live}('r)}
 		{\Gamma,x_1:\tau, x_2:@\tau'r;U;R;L \vdash x_1 :=:\!\!\text{*} x_2 : \KW{int} \\
 		\OR \Gamma,x_1:\tau, x_2:@\tau'r;\emptyset;R;L} 
 }
@@ -349,7 +350,7 @@ Uma característica da ausência do tipo tupla é que não há a existência do 
 			... \\
 			\Gamma_{n-1};\emptyset;R_{n-1};L_{n-1} \vdash e_n: \tau_n^a \OR \Gamma_n;U_n;R_n;L_n \quad \tau_n^f = \tau_n^a\\
 			RR = \{(r_i, w_i) \OR \forall i, \tau_i^f = @{\tau}{'}{w_i} \land \tau_i^a = @{\tau}{'}{r_i}\}\\
-			\forall (r, w) \in RR, \mathbf{live}(r, L_n)
+			\forall (r, w) \in RR, \FN{live}(r, L_n)
 		}
 		{\Gamma, f: \tau;U;R;L \vdash \KW{let}\;x : \tau_r = f(\bar e) : \KW{int}\\ \OR
 		\Gamma_n, f: \tau, x: \tau_r ;\emptyset; R_n \cup RR ;L_n} 
@@ -400,10 +401,10 @@ As operações que geram tipos ponteiros \hyperref[trule:new]{(NEW)} e \hyperref
 \section{Definição via Compilação}
 \label{chap5:compile}
 
-\newcommand{\compf}[1]{\overset{\mathbf{fn}}{\underset{\mathbf{comp.}}{[\,#1\,]}}}
-\newcommand{\compe}[1]{\overset{\mathbf{exp}}{\underset{\mathbf{comp.}}{[\,#1\,]}}}
+\newcommand{\compf}[1]{\overset{\texttt{fn}}{\underset{\texttt{comp.}}{[\,#1\,]}}}
+\newcommand{\compe}[1]{\overset{\texttt{exp}}{\underset{\texttt{comp.}}{[\,#1\,]}}}
 \newcommand{\TMP}{{\color{red}tmp}}
-\newcommand{\DEF}{{\color{red}\mathbf{def}({\color{black}\tau})}}
+\newcommand{\DEF}{{\color{red}\FN{def}({\color{black}\tau})}}
 
 A definição via compilação é relativamente simples. A linguagem foi criada de uma forma que esse processo fosse simples. Para a maioria dos elementos basta apenas apagar os tipos, entretanto para os operadores de troca ($:=:$ e $:=:\!\!\text{*}$) e para o $\KW{new}$ é necessário algumas operações adicionais. Na compilação há duas operações destacadas em vermelho, $\TMP$ e $\DEF$. A primeira, $\TMP$, representa um nome temporário único no sistema, quanto o segundo, $\DEF$ retorna o valor base para o tipo $\tau$. O valor base para um $\KW{int}$ é 0 e para um ponteiro e \emph{alias} é o ponteiro nulo. Na definição da função recursiva, decidiu-se usar uma notação um tanto inconvencional para evitar que a notação que descreve a compilação seja confundida com o alvo de compilação em si. Dessa forma, há duas funções definidas, $\compf{F}$ e $\compe{e}$, compilando funções e expressões respectivamente. O lado esquerdo do $\Rightarrow$ define a entrada e o direito a saída. As definições da compilação estão na figura \ref{fig:def:compilation}.
 
@@ -447,19 +448,19 @@ A definição via compilação é relativamente simples. A linguagem foi criada 
 	\end{align}
 	\begin{minipage}{.25\linewidth}
 		\begin{align}
-			&\compe{\KW{stop}} \Rightarrow PANIC
+			&\compe{\KW{stop}} \Rightarrow \KW{PANIC}
 		\end{align}
 	\end{minipage}
 	\hspace{0.02\linewidth}
 	\begin{minipage}{.30\linewidth}
 		\begin{align}
-			&\compe{\KW{nullptr}\typearg{\tau}} \Rightarrow NULL 
+			&\compe{\KW{nullptr}\typearg{\tau}} \Rightarrow \KW{NULL} 
 		\end{align}
 	\end{minipage}
 	\hspace{0.02\linewidth}
 	\begin{minipage}{.33\linewidth}
 		\begin{align}
-			\compe{\KW{nullalias}\typearg{\tau}} \Rightarrow NULL 
+			\compe{\KW{nullalias}\typearg{\tau}} \Rightarrow \KW{NULL} 
 		\end{align}
 	\end{minipage}
 	\legend{Fonte: Os Autores.}
