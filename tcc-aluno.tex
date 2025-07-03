@@ -187,8 +187,6 @@
 % NOTE: usado para o todonotes fazer o display correto
 \setlength{\marginparwidth}{2.5cm}
 
-
-
 %
 % palavras-chave na lingua estrangeira
 % iniciar todas com letras maiúsculas, exceto no caso de abreviaturas
@@ -240,7 +238,7 @@
 %
 % [1] reserve keywords
 % [2] mem keywords
-, morekeywords={if, else, let, var, alias}  
+, morekeywords={if, else, let, fn, var, alias, int, @int}  
 , morekeywords=[2]{new, delete, stop, nullalias, nullptr}  % mem funcs
 }
 % folha de rosto
@@ -266,17 +264,22 @@
 % agradecimentos
 \chapter*{Agradecimentos}
 A Célio e Marli, nada mais do que todos os agradecimentos 
-do mundo por serem meus pais e por me apoiarem nessa jornada. Muito obrigado ao Vinicius, João Pedro e Eduardo, por revisarem o meu TCC e estarem comigo nos últimos dias de sufoco antes da entrega. Obrigado a Sofia por todo o apoio e amor nesses anos. Obrigado ao Tales, Tomas e Pedro, por serem família mesmo não sendo família. Por fim, dedico esse texto ao Snooby, que não pôde ler isso; e ao Chico, que não pode ler isso.
+do mundo por me amarem tanto. Muito obrigado ao Vinicius, João Pedro, Eduardo e os demais Cacimbinhos, por revisarem o meu TCC e estarem comigo nos últimos dias de sufoco antes da entrega. Obrigado a Sofia por todo o apoio e amor nesses anos. Obrigado ao Tales, Tomas e Pedro, por serem família mesmo não sendo família. Por fim, dedico esse texto ao Snooby, que não pôde ler isso; e ao Chico, que não pode ler isso.
 
 
 % resumo na língua do documento
 \begin{abstract}
-	Muitos \emph{designers} de linguagens de programação modernas notam que uma estratégia de segurança de memória é necessária para a linguagem ser levada em consideração. Mas como validar essas estratégias? Como prová-las corretas? Esse trabalho estabelece Porcelain: um \emph{framework} semântico para representar e analisar técnicas de segurança de memória. Nele, elabora-se sobre as falhas de memória, propondo uma linguagem de programação que as exemplifica. Para demonstrar a utilidade desse \emph{framework}, desenvolve-se uma das estratégias de memória com o intuito de demonstrar as capacidades de prova do modelo.
+	A linguagem de programação C é a fundação de programação de sistemas. No começo do milênio, Cyclone iniciou o movimento de linguagens de baixo nível com segurança no acesso à memória, com o fim de gerar sistemas sem as comuns falhas de memória de C. Nos anos seguintes, mais e mais linguagens foram surgindo, cada uma com uma nova estratégia de gerência de memória. É importante validar a corretude de cada uma dessas estratégias, porém a prova delas fica normalmente restringida ao domínio da linguagem, dificultando a análise do panorama geral. Dessa forma, este trabalho introduz Porcelain: um \emph{framework} semântico para representar e analisar técnicas de segurança de memória. Ele é composto de duas partes: uma linguagem \emph{back-end} definida, modelada para detectar e classificar falhas de memória; e uma linguagem de \emph{front-end} com alguma técnica que se deseja provar via compilação para a linguagem base de \emph{back-end}. A técnica de segurança de memória escolhida para se implementar neste trabalho é um \emph{Borrow Checker}, inspirado em Rust e no sistema de \emph{alias} de Cyclone. Este projeto realiza a definição e implementação desse sistema, gerando testes para validar a sua execução. Mesmo com a intenção de realizar provas formais da corretude desse sistema, esse processo ficou reservado para trabalhos futuros.
 \end{abstract}
+
+
+% Muitos \emph{designers} de linguagens de programação modernas notam que uma estratégia de segurança de memória é necessária para a linguagem ser levada em consideração. Mas como validar essas estratégias? Como prová-las corretas?  
+
+%Nele, elabora-se sobre as falhas de memória, propondo uma linguagem de programação que as exemplifica. Para demonstrar a utilidade desse \emph{framework}, desenvolve-se uma das estratégias de memória com o intuito de demonstrar as capacidades de prova do modelo.
 
 % resumo na outra língua
 \begin{translatedabstract}
-Many modern programming language designers have noticed that a memory safety strategy is necessary for a language to be taken into consideration. But how to validate those strategies? How to prove them correct? This project aims to establish Porcelain: a semantic framework for representing and analyzing memory safety techniques. In it, memory faults are elaborated about, for the purpose of proposing a programing language that exemplifies them. To demonstrate the utility of this framework, it was developed one memory safety strategy in order to demonstrate the model's proof capabilities.
+The C programming language is the foundation of systems programming. At the beginning of the millennium, Cyclone initiated the movement of low-level languages with memory safety, aiming to build systems free from the common memory faults of C. In the following years, more and more languages emerged, each with its own memory management strategy. It is important to validate the correctness of each of these strategies; however, their proofs are usually restricted to the domian of language domain itself, hindering a broader analysis. Therefore, this work introduces Porcelain: a semantic framework for representing and analyzing memory safety techniques. It consists of two parts: a defined back-end language, designed to detect and classify memory faults; and a front-end language implementing a technique to be verified via compilation to the base back-end language. The memory safety technique chosen for implementation in this work is a borrow checker, inspired by Rust and Cyclone’s alias system. This project defines and implements that system, generating tests to validate its execution. Although there is an intention to formally prove the correctness of this system, that process is left for future work. 
 \end{translatedabstract}
 
 % lista de figuras

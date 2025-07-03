@@ -803,30 +803,26 @@ Uma característica importante dessas regras de detecção de falhas é que elas
 	\end{tabular}
 	\legend{Fonte: Os Autores}
 \end{table}
+\FloatBarrier
 
 \subsection{Exemplos}
 
-O modelo de detecção de falhas permite agora demonstrar a paridade entre as situações de falha em C com as situações de falha em $PCL_{back}$. A função \lstinline[language=C]|get_val|, descrita em \ref{lst:spacial-error-c}, pode ser emulada como em \ref{lst:pcls:espacial-error}.
+O modelo de detecção de falhas permite agora demonstrar a paridade entre as situações de falha em C com as situações de falha em $PCL_{back}$. O Programa \ref{lst:spacial-error-c}, que define a função \lstinline[language=C]|get_val|, pode ser emulada pelo Programa \ref{lst:pcls:espacial-error}, em $PCL_{back}$.
 
-\begin{figure}[ht]
-	\caption{Falha Espacial em $PCL_{back}$.} 
-	\label{lst:pcls:espacial-error}
-	\begin{lstlisting}[language=PCLback]
+\begin{lstlisting}[
+	language=PCLback, 
+	label={lst:pcls:espacial-error}, 
+	caption={Falha Espacial em $PCL_{back}$.}]
 let get_val(list, len, idx){
 	if(idx < len) *(list + idx)
 	else (0 - 1)
 }
-	\end{lstlisting}
-	\legend{Fonte: Os Autores.}
-\end{figure}
+\end{lstlisting}
 
-Uma falha espacial comum também em C é o de \emph{Incorret-Calculation-of-Buffer-Size}. Ela é uma predecessora de falhas de leitura para fora do \emph{buffer}, visto que ao calcular um tamanho errado para este, vir-se-á, possivelmente, acessá-lo para fora dos seus limites. Segue então em \ref{lst:c:spacial} o código em C e em \ref{lst:pclback:spacial} a reprodução deste em $PCL_{back}$.
+Uma falha espacial comum também em C é o de \emph{Incorret-Calculation-of-Buffer-Size}. Ela é uma predecessora de falhas de leitura para fora do \emph{buffer}, visto que ao calcular um tamanho errado para este, vir-se-á, possivelmente, acessá-lo para fora dos seus limites. O Programa \ref{lst:c:spacial} descreve essa falha em código C e o Programa \ref{lst:pclback:spacial} reproduz essa falha em $PCL_{back}$.
 
 
-\begin{figure}[ht]
-	\caption{Exemplo de \emph{Incorret-Calculation-of-Buffer-Size} em C}
-	\label{lst:c:spacial}
-	\begin{lstlisting}[language=C]
+\begin{lstlisting}[language=C, label={lst:c:spacial}, caption={Exemplo de \emph{Incorret-Calculation-of-Buffer-Size} em C, extraído do CWE}]
 char* sanitize_input(char *user_supplied_string){
 	char *dst_buf = (char*) malloc(4*sizeof(char) * MAX_SIZE);  
 	if ( MAX_SIZE <= strlen(user_supplied_string) ){
@@ -849,17 +845,11 @@ char* sanitize_input(char *user_supplied_string){
 	}  
 	return dst_buf;
 }
-	\end{lstlisting}
-	\legend{Fonte: CWE.}
-\end{figure}
-\FloatBarrier
+\end{lstlisting}
 
-Em \ref{lst:c:spacial}, é realizada uma sanitização de caracteres de controle de uma \emph{string}, gerando uma nova \emph{string} com caracteres adicionais marcando os caracteres de controle. Nesse caso, o número que deveria ser multiplicado para gerar um \emph{buffer} de tamanho correto é 5, visto que a substituição de $\&$ é composta 5 caracteres. Entretanto, multiplicou-se por 4. O problema dessa falha é que ela só será escalada para um erro quando uma \emph{string} de entrada por $80\%$ composta de $\&$. Nessa situação, ocorrerá um acesso para além dos limites do \emph{buffer} alocado.
+O Programa \ref{lst:c:spacial} realiza uma sanitização de caracteres de controle de uma \emph{string}, gerando uma nova \emph{string} com caracteres adicionais marcando os caracteres de controle. Nesse caso, o número que deveria ser multiplicado para gerar um \emph{buffer} de tamanho correto é 5, visto que a substituição de $\&$ é composta 5 caracteres. Entretanto, multiplicou-se por 4. O problema dessa falha é que ela só será escalada para um erro quando uma \emph{string} de entrada por $80\%$ composta de $\&$. Nessa situação, ocorrerá um acesso para além dos limites do \emph{buffer} alocado.
 
-\begin{figure}[ht]
-	\caption{Exemplo de \emph{Incorret-Calculation-of-Buffer-Size} em $PCL_{back}$}
-	\label{lst:pclback:spacial}
-	\begin{lstlisting}[language=PCLback]
+\begin{lstlisting}[language=PCLback, caption={Exemplo de \emph{Incorret-Calculation-of-Buffer-Size} em $PCL_{back}$}, label={lst:pclback:spacial}]
 let sanitize_input(user_supplied_string){
 	let string_size[1]; string_size := strlen(user_supplied_string);
 	//MAX\_SIZE hardcoded como 100.
@@ -887,13 +877,15 @@ let sanitize_input(user_supplied_string){
 	};
 	dst_buf
 }
-	\end{lstlisting}
-	\legend{Fonte: Os Autores.}
-\end{figure}
-\FloatBarrier
+\end{lstlisting}
 
 Como $PCL_{back}$ não possui tipo \lstinline[language=C]|char|, utiliza-se dos números da codificação ASCII (Código Padrão Americano para o Intercâmbio de Informação). Além disso, a sintaxe é extremamente similar. Se uma pessoa entende o exemplo em C, o corolário em $PCL_{back}$ apresenta mínimas barreiras sintáticas.
 
 \section{Implementação}
 
-\todo[inline]{escrever}
+A linguagem $PCL_{back}$ foi implementada como uma AST (árvore sintática abstrata) e uma função avaliadora dessa em Haskell. Esse processo aconteceu paralelamente com o desenvolvimento da linguagem, vide as definições das funções usarem a notação de Haskell. Posteriormente também se desenvolveu um \emph{Lexer} e um \emph{Parser} para a linguagem, com o propósito de facilitar a geração de exemplos e casos testes, pois quanto maior o exemplo gerado, mais complexo se tornou alterar o código via AST. 
+
+O processo de iteração: falha de C, reprodução em $PCL_{back}$; serviu para evoluir a linguagem, demonstrando a necessidade de novas construções. No primeiro \emph{draft} da linguagem\footnote{Essa primeira iteração da linguagem foi publicada no blog do Autor: \url{https://sacolle.github.io/blog/posts/porcelain-memory-model/}}, ela era dividida entre expressões e declarações. Isso a tornava mais próxima de C, mas no momento de implementar funções, que não havia nessa etapa, essa separação se tornou um problema. Assim, a linguagem passou a ser uma de expressões. Mais no fim do desenvolvimento, com o propósito de reproduzir falhas associadas a estruturas globais, como as associadas ao \FREE, viu-se a necessidade de adicionar declarações globais na linguagem.
+
+
+O código se encontra hospedado no Github do autor\footnote{\url{https://github.com/Sacolle/Interpretador-PCL}}. A pasta \texttt{cs} contém exemplos em código C de falhas, com suas reproduções correspondentes em $PCL_{back}$ localizadas na pasta \texttt{pcls}. O código-fonte se encontra na pasta \texttt{app}, comportamento comum para projetos Haskell que usam Cabal como \emph{bundler}. 

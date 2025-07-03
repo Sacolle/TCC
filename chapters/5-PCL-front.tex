@@ -46,7 +46,40 @@ A sintaxe da linguagem é bem próxima de um $PCL_{back}$ tipado. O modelo de li
 
 A sintaxe é descrita na Figura \ref{fig:pcl-front:sintax}. As meta-variáveis \noindent$'a$, $x$ e $f$ cobrem as regiões, nomes de variáveis e nomes de funções de um programa, respectivamente. Os nomes de variáveis $x$ também são usados como o nome dos empréstimos, visto que nesta versão do \emph{Borrow Checker} não se precisa anotar o modo de acesso: todos os acessos são mutáveis.
  
-Há algumas omissões relevantes. Não há tipos tupla ou recursivos. Mesmo que $PCL_{back}$ pudesse representar eles, eles complicam o \emph{Borrow Checker} e o passo de compilação. Entretanto, a omissão é principalmente por limite de tempo e escopo do projeto. Essa é a mesma razão pela omissão do operador $\KW{while}$ e declarações globais.
+Há algumas omissões relevantes. Não há tipos tupla ou recursivos. Mesmo que $PCL_{back}$ pudesse representar eles, eles complicam o \emph{Borrow Checker} e o passo de compilação. Entretanto, a omissão é principalmente por limite de tempo e escopo do projeto. Essa é a mesma razão pela omissão do operador $\KW{while}$ e declarações globais. Ainda assim pode-se gerar programas bem complexos, como o porte do Programa \ref{lst:pclback:spacial} em $PCL_{back}$ para $PCL_{front}$, descrito no Programa \ref{lst:pclfront:spacial}. Essa nova versão ainda é suscetível a erros espaciais, pois esse não é o tipo de falha em foque para $PCL_{front}$ evitar.
+
+\begin{lstlisting}[language=PCLfront, caption={Porte do Programa \ref{lst:pclback:spacial} de $PCL_{back}$ para $PCL_{front}$}, label={lst:pclfront:spacial}]
+fn sanitization_loop(src: @int'a, dst:@int'a,
+	i: int, dst_i: int, size: int) -> int {
+	if(i < size){
+		if(*(src + i) = 38){
+			*(dst + dst_i) := 38; dst_i += 1;
+			*(dst + dst_i) := 97; dst_i += 1;
+			*(dst + dst_i) := 109; dst_i += 1;
+			*(dst + dst_i) := 112; dst_i += 1; 
+			*(dst + dst_i) := 59; dst_i += 1;
+		}else{
+			*(dst + dst_i) := *(src + i);
+			dst_i += 1
+		};
+		sanitization_loop(src, dst, i + 1, dst_i, size)
+	}else{ 0 }
+}
+
+fn sanitize_input(user_supplied_string: *int) -> *int{
+	var string_size: int := strlen(alias user_supplied_string);
+	//MAX_SIZE hardcoded como 100.
+	let dst_buf: *int := new(4 * 100); 
+	if(99 < string_size) PANIC else 0;
+	sanitization_loop(
+		alias user_supplied_string, 
+		alias dst_buf, 
+		0, 0, string_size)
+	// precisa deletar devido a linearidade
+	delete(user_supplied_string, string_size + 1); 
+	dst_buf
+}
+\end{lstlisting}
 
 
 \section{Linearidade e \emph{Alias}}
@@ -470,4 +503,6 @@ As definições de troca \ref{fig:def:compilation:swap} e \ref{fig:def:compilati
 
 \section{Implementação}
 
-\todo[inline]{escrever}
+A linguagem $PCL_{front}$ foi implementada como uma AST, função de checagem de tipos dessa e função de compilação dessa a AST de $PCL_{back}$. Dessa forma, todas as regras apresentadas para o \emph{Borrow Checker} de $PCL_{front}$ foram implementadas como funções Haskell. Mesmo sem ser possível atingir a etapa de prova desse sistema, vários exemplos foram gerados para testar o \emph{Borrow Checker} e validar que esse se comporta como esperado. Dos testes gerados, a lógica do sistema se mantém. Faltou-se ainda cavar exceções para a região estática do programa ($0$) e testar essa inclusão.
+
+O código se encontra hospedado junto ao de $PCL_{back}$, na pasta \texttt{app/front}. A integração com a linha de comando ainda não foi feita, assim como o \emph{Lexer} e o\emph{Parse} da linguagem, de forma que a execução desse módulo precisa alterar o código associado a função \texttt{main}. Com a introdução de \emph{Lexer} e \emph{Parse} para a linguagem, uma forma de executar o programa de forma mais direta e com opções será adicionado.
