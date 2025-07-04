@@ -19,13 +19,65 @@ Muitos dos trabalhos de prova de solução de memória focam na linguagem Rust e
 
 O objetivo desse projeto é a construção de um framework formal, denominado Porcelain,  que expõe as falhas de memória que ocorrem durante a execução de programas e permite provar a ausência de tais falhas como consequência da introdução de certas técnicas de segurança de memória. Os principais componentes de Porcelain podem ser observados na Figura~\ref{fig:pcl:framework}. Neste, temos uma linguagem similar a C denominada $PCL_{back}$ (back-end Porcelain), instrumentada para detectar e classificar falhas de memória. Também temos uma linguagem que compilará para a linguagem base, $PCL_{front}$ (\emph{front-end Porcelain}), a qual terá um sistema de análise estática, similar ao sistema de \emph{Borrow Checker} de Rust, incorporado às regras de seu sistema de tipos. Dado que todos esses elementos serão formalmente definidos, espera-se tornar possível a garantia de ausência de certas falhas em memória para a execução (em $PCL_{back}$) de programas obtidos através da compilação de programas  $PCL_{front}$ bem tipados, através de técnicas tais como indução estrutural nas derivações de tipos. 
 
-
 \begin{figure*}[ht]
-	\caption{Componentes do framework Porcelain}
-	\label{fig:pcl:framework}
-	\begin{center}
-    \includegraphics[scale=0.9]{figures/pcl.drawio.pdf}
-    \end{center}
+	\centering
+	\caption{Componentes do \emph{Framework} Porcelain.}
+	\label{fig:structure}
+	\vspace{0.3cm}
+	\begin{tikzpicture}[
+		squarednode/.style={rectangle, draw=red!60, fill=red!5, very thick, minimum size=5mm},
+	]
+		%Nodes
+		\node (front) {$PCL_{front}$};
+		\node (sintaxf)[
+			below=0.1em of front,
+			align=left,
+			anchor=west,
+			xshift=-0.8cm
+			]{- Sintaxe};
+		\node (types) [
+			below=1.3em of front,
+			align=left,
+			anchor=west,
+			xshift=-0.8cm
+		] {- Sistema de Tipos};
+
+		\node (back) [below=2.5cm of front]{$PCL_{back}$};
+		\node (sintaxb)[
+			below=0.2em of back,
+			align=left,
+			anchor=west,
+			xshift=-0.8cm
+			]{- Sintaxe};
+		\node (semantics) [
+			below=1.3em of back,
+			align=left,
+			anchor=west,
+			xshift=-0.8cm
+		] {- Semântica Operacional};
+
+		\node (boxfront) [draw, dashed, fit=(front) (sintaxf) (types), inner sep=0.1cm] {};
+
+		\node (boxback) [draw, dashed, fit=(back) (sintaxb) (semantics), inner sep=0.1cm] {};
+		
+		%Lines
+		\draw[->, thick, shorten >= 8pt] ($(front) + (0, -42pt)$) -- (back) node[midway, right=2pt] {compilação};
+
+		\draw[decorate, decoration={brace, amplitude=10pt}, thick]
+			($(boxfront.north east) + (2mm, 0)$) -- ($(boxfront.south east) + (2mm, 0)$) node[midway,right=10pt, align=left] 
+			{
+				Projetado para não atingir uma \\ 
+				derivação de $\KW{panic}$ $\KW{UseAfterFree}$ \\ 
+				em um programa bem tipado.
+			};
+
+		\draw[decorate, decoration={brace, amplitude=10pt}, thick]
+			($(boxback.north east) + (2mm, 0)$) -- ($(boxback.south east) + (2mm, 0)$) node[midway,right=10pt, align=left] 
+			{
+				Instrumentada para identificar \\ e classificar falhas de memória \\ em programas arbitrários.
+			};
+	\end{tikzpicture}
+	\vspace{0.3cm}
 	\legend{Fonte: Os Autores.}
 \end{figure*}
 
