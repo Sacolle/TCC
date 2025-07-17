@@ -15,7 +15,7 @@ Este capítulo descreve $PCL_{back}$, uma linguagem definida por sintaxe e semâ
 \section{Sintaxe}
 \label{sec:pclback:sintax}
 
-A sintaxe baseada em C também se demonstrou familiar e facilitou a compreensão dos problemas e exemplos. Adicionalmente, $PCL_{back}$ é uma linguagem de expressões, permitindo certos padrões funcionais. Mesmo destoando de C, essa característica emergiu acidentalmente da implementação de funções na linguagem. A sintaxe é definida na Figura \ref{fig:pclback:sintax}.
+A sintaxe baseada em C também se demonstrou familiar e facilitou a compreensão dos problemas e exemplos. Adicionalmente, $PCL_{back}$ é uma linguagem de expressões, permitindo certos padrões funcionais. Mesmo destoando de C, essa característica emergiu acidentalmente da implementação de funções na linguagem. A sintaxe é de um programa de $PCL_{back}$ é definida na Figura \ref{fig:pclback:sintax}. Dessa forma, um programa $PCL_{back}$ é composto de 0 a $n$ declarações de variáveis globais, seguido de 0 a $m$ declarações de funções, seguido da função principal.
 \begin{figure*}[ht]
 	\caption{Sintaxe de $PCL_{back}$}
 	\label{fig:pclback:sintax}
@@ -55,7 +55,7 @@ A sintaxe baseada em C também se demonstrou familiar e facilitou a compreensão
 A meta-variável $x$ cobre todos os possíveis nomes de variáveis em um programa, e a meta-variável $f$ cobre todos os nomes de funções. O conjunto $PanicCodes$ são os tipos de falhas de memória, divididos em 5 grupos, compreendendo 3 das 5 classes da \autoref{sec:mem-error}, assim como falhas de domínio (acesso ao \emph{nullptr}) e terminação de usuário, da seguinte forma:
 \begin{enumerate}
 	\item $\KW{OutofBoundsRead}$ e $\KW{OutofBoundsWrite}$ são falhas espaciais (\autoref{sec:mem-error:spacial}), sendo leitura e escrita para além dos limites do \emph{buffer} respectivamente.
-	\item $\KW{UseAfterFree}$, $\KW{FreeMemoryNotOnHeap}$, $\KW{PartialFree}$ e $\KW{Double Free}$ são falhas temporais (\autoref{sec:mem-error:temporal}), sendo uso de uma região liberada de memória para o primeiro e corrupção da estrutura alocadora por diversos meios para os demais.
+	\item $\KW{UseAfterFree}$, $\KW{FreeMemoryNotOnHeap}$, $\KW{PartialFree}$ e $\KW{DoubleFree}$ são falhas temporais (\autoref{sec:mem-error:temporal}), sendo uso de uma região liberada de memória para o primeiro e corrupção da estrutura alocadora por diversos meios para os demais.
 	\item $\KW{UninitializedAccess}$ é uma falha de inicialização (\autoref{sec:mem-error:init}), sendo o acesso ao valor alocado, mas não inicializado. 
 	\item $\KW{NullPtrDereference}$ é uma falha específica ao domínio de C, em que essa linguagem se baseia (\autoref{sec:mem-error:temporal:null}), sendo o acesso ao ponteiro nulo.
 	\item $\KW{UserError}$ é uma interrupção manual de usuário, similar a \lstinline[language=C]|exit(1)| em C. É usado como mecanismo de emissão de erros controlados que terminam a execução.
@@ -63,9 +63,10 @@ A meta-variável $x$ cobre todos os possíveis nomes de variáveis em um program
 
 \noindent Acima há a omissão das falhas de Tipos, pois $PCL_{back}$ não é tipado. Os seus valores, locais $l$ e números $n$, encaixam, independentemente do tamanho, em uma célula. Há também omissão das falhas de condição de corrida. Elas não são representáveis em $PCL_{back}$ dado que a linguagem não possui mecanismos de paralelização.
 
-O conjunto de códigos de erro $PanicCodes$ da \autoref{fig:pclback:sintax} servem como interrupções na avaliação da linguagem, indicando uma falha de memória. Eles são um importante componente no processo de compilação e prova. Um método de segurança de memória não precisa ser compreensivo e cobrir todas as falhas geradas, mas se a sua compilação para $PCL_{back}$ não gerar o conjunto de $PanicCodes$ que se almeja evitar, então afirma-se que o método é correto no que se propõe. Ou seja, pretendemos que seja possível demonstrar que um dado código $PCL_{back}$ gerado por compilação a partir de uma linguagem segura nunca atinja as expressões $\KW{panic}\;\KW{OutofBoundsRead}$ e $\KW{panic}\;\KW{OutofBoundsWrite}$ ao ser avaliado.
+O conjunto de códigos de erro $PanicCodes$ da \autoref{fig:pclback:sintax} servem como interrupções na avaliação da linguagem, consumindo o programa e indicando uma falha de memória. Eles são um importante componente no processo de compilação e prova. Um método de segurança de memória não precisa ser compreensivo e cobrir todas as falhas geradas, mas se a sua compilação para $PCL_{back}$ não gerar o conjunto de $PanicCodes$ que se almeja evitar, então afirma-se que o método é correto no que se propõe. Ou seja, pretendemos que seja possível demonstrar que um dado código $PCL_{back}$ gerado por compilação a partir de uma linguagem segura a falhas espaciais, então nenhuma derivação do programa resultaria as expressões $\KW{panic}\;\KW{OutofBoundsRead}$ e $\KW{panic}\;\KW{OutofBoundsWrite}$ ao ser avaliado.
 
-A sintaxe concreta da linguagem, termos que podem ser escritos como código pelo programador, reserva alguns termos que só serão instanciados na sintaxe abstrata, a qual o programador não tem acesso. Ou seja, na hora da escrita de programas da linguagem, certos componentes não são acessíveis: $\KW{pop}$ e $\KW{Fpop}$ são gerados exclusivamente como consequência do operador de escopo $\{\}$ e de chamadas de função $f(\bar x)$ respectivamente; $l$ não pode ser escrita diretamente, para evitar que metadados sejam forjados; $\KW{panic}$ não pode ser escrito para evitar que falhas sejam forjadas. No caso de $l$, utiliza-se a expressão $\KW{NULL}$ para escrever o ponteiro nulo, sendo este o valor $l^m\{0, 0, 0, 0\}$. No caso de $\KW{panic}$, o $\KW{UserError}$ é o único pânico de execução acessível ao programador. Para tal, usa-se a diretiva $\KW{PANIC}$ na sintaxe concreta, que é equivalente a $\KW{panic}\;\KW{UserError}$ na sintaxe abstrata.
+A sintaxe linguagem reserva alguns termos que só serão instanciados na sintaxe abstrata, a qual o programador não tem acesso. Os demais termos, aqueles que podem ser escritos como código pelo programador, são ditos como sintaxe concreta. Ou seja, na hora da escrita de programas da linguagem, certos componentes não são acessíveis: $\KW{pop}$ e $\KW{Fpop}$ são gerados exclusivamente como consequência do operador de escopo $\{\}$ e de chamadas de função $f(\bar x)$ respectivamente; $l$ não pode ser escrita diretamente, para evitar que metadados sejam forjados; $\KW{panic}$ não pode ser escrito para evitar que falhas sejam forjadas. No caso de $l$, utiliza-se a expressão $\KW{NULL}$ para escrever o ponteiro nulo, sendo este o valor $l^m\{0, 0, 0, 0\}$. No caso de $\KW{panic}$, o $\KW{UserError}$ é o único pânico de execução acessível ao programador. Para tal, usa-se a diretiva $\KW{PANIC}$ na sintaxe concreta, que é equivalente a $\KW{panic}\;\KW{UserError}$ na sintaxe abstrata.
+
 
 A Figura \ref{lst:pclback:tree} ilustra a expressividade de $PCL_{back}$ por meio de um exemplo que desenvolve uma árvore binária de pesquisa com suas respectivas operações de inserção e consulta.
 \newpage
@@ -138,9 +139,9 @@ Os outros metadados da localização $l$ são, como descrito na Figura \ref{fig:
 \subsection{Pilha}
 \label{sec:pcl-back:pilha}
 
-A pilha é uma lista de elementos, que podem ser valores $v \in \{l, n, \bot, -\}$ ou códigos de controle $c_{ctrl} \in \{\FN{stack},\FN{func}\}$. Dentre os valores, $l$ e $n$ são os elementos de locais e números da sintaxe da linguagem. Os elementos $\bot$ e $-$, assim como em \citet{WESSEL2019}, são elementos utilizados na representação da inicialização de um valor, representando um espaço alocado, mas ainda não inicializado, e um espaço não alocado, respectivamente. 
+A pilha é uma lista de pares: elemento fechadura. Esse elemento pode ser valores $v \in \{l, n, \bot, -\}$ ou códigos de controle $c_{ctrl} \in \{\FN{stack},\FN{func}\}$. Dentre os valores, $l$ e $n$ são os elementos de locais e números da sintaxe da linguagem. Os elementos $\bot$ e $-$, assim como em \citet{WESSEL2019}, representam espaço alocado, mas ainda não inicializado, e espaço não alocado, respectivamente. 
 
-Junto desses elementos guarda-se uma fechadura $k \in \mathbb{N}\text{*}$. Esse elemento serve para a checagem de falhas temporais, similar ao sistema de \emph{key-lock} (\autoref{sec:mem-error:KeyLock}). Para um acesso ser válido, é necessário que a chave $k$ do local $l$ que tenta acessar a célula seja igual à fechadura $k'$ salva junto ao valor na célula. Valor de controle, junto do $\bot$ e $-$ sempre são empilhados com a chave de valor 0 associada. Uma pilha $p$ da linguagem pode ser definida como uma lista de pares, com o primeiro elemento sendo ou um valor, ou um código de controle, e com o segundo elemento sendo a fechadura de acesso, tal como $p := [(v\,|\,c_{ctrl}, k)]$.
+O outro elemento do par, a fechadura $k' \in \mathbb{N}\text{*}$, serve para a checagem de falhas temporais, similar ao sistema de \emph{key-lock} (\autoref{sec:mem-error:KeyLock}). Para um acesso ser válido, é necessário que a chave $k$ do local $l$ que tenta acessar a célula seja igual à fechadura $k'$ salva junto ao valor na célula. Códigos de controle, junto do $\bot$ e $-$, sempre são empilhados com a chave de valor 0 associada. Uma pilha $p$ da linguagem pode ser definida como uma lista de pares, com o primeiro elemento sendo ou um valor, ou um código de controle, e com o segundo elemento sendo a fechadura de acesso, tal como $p := [(v\,|\,c_{ctrl}, k')]$.
 
 Os códigos de controle citados existem para essa lista se comportar como uma pilha de um sistema. Quando se inicia um escopo, coloca-se no fim da lista um código de controle. Chegando no final desse escopo, removem-se elementos do final da lista até atingir o código escolhido, emulando a impermanência dos elementos de uma pilha. Na semântica, utiliza-se das funções $\FN{pop}_{stack}(p)$ e $\FN{pop}_{func}(p)$, definidas na \autoref{fig:def:pop}, para descrever a ação de remover os elementos da lista até o código de controle $\FN{stack}$ ou $\FN{func}$. 
 
@@ -148,14 +149,15 @@ Os códigos de controle citados existem para essa lista se comportar como uma pi
 	\begin{align}
 		&\FN{pop}_{stack}(p) = \FN{pop}(p, stack) \label{fig:def:pop1}\\
 		&\FN{pop}_{func}(p) = \FN{pop}(p, func) \label{fig:def:pop2}\\
-		&\FN{pop}((v, \_) : t, c_{ctrl}) = \CD{if} \; v \neq c_{ctrl} \;\CD{then} \; \FN{pop}(t, c_{ctrl}) \; \CD{else} \; t  \label{fig:def:pop3}\\
-		&\FN{pop}([], c_{ctrl}) =  [] \label{fig:def:pop4}
+		&\FN{pop}((v, \_) : t, c_{ctrl}') = \FN{pop}(t, c_{ctrl}) \label{fig:def:pop3}\\
+		&\FN{pop}((c_{ctrl}, \_) : t, c_{ctrl}') = \CD{if} \; c_{ctrl} = c_{ctrl}' \;\CD{then} \; t  \; \CD{else} \; \FN{pop}(t, c_{ctrl}) \label{fig:def:pop31}\\
+		&\FN{pop}([], c_{ctrl}') =  [] \label{fig:def:pop4}
 	\end{align}
 	\caption{Função que define a operação $\FN{pop}$}
 	\label{fig:def:pop}
 \end{figure}
 
-A notação para descrever as funções neste projeto é similar à de Haskell \cite{HASKELL}, com casamento de padrões nos argumentos das funções e definições tipicamente recursivas. Para a \autoref{fig:def:pop}, as Equações \ref{fig:def:pop1} e \ref{fig:def:pop2} definem as funções $\FN{pop}_{stack}(p)$ e $\FN{pop}_{func}(p)$ com base na função $\FN{pop}(p, v)$, usando como valor inicial de $v$ os seus elementos subscritos. Nas Equações \ref{fig:def:pop3} e \ref{fig:def:pop4} realiza-se a lógica. Se os argumentos casarem o padrão $h : t$, nesse contexto sendo que a lista pode ser dividida entre o elemento no fim $(v, \_)$ e no restante $t$, então executa-se a função definida pela \autoref{fig:def:pop3}. Se a lista for vazia, representada por $[]$, realiza-se a função definida pela \autoref{fig:def:pop4}. $(v,\_)$ também é um casamento de padrão, que atribui o nome $v$ para o primeiro elemento da dupla, o valor, e descarta o segundo, a chave. Com esses elementos, a \autoref{fig:def:pop3} checa se o valor no fim da lista é igual ao código de controle $c_{ctrl}$, se é, retorna o restante da lista $t$, se não, chama $\FN{pop}(t, c_{ctr})$ recursivamente para o restante da lista. Isso descarta elementos do topo da lista até finalmente descartar o $c_{ctrl}$ ou, pela definição da \autoref{fig:def:pop4}, chegar no final e retorna a lista vazia.
+A notação para descrever as funções neste projeto é similar à de Haskell \cite{HASKELL}, com casamento de padrões nos argumentos das funções e definições tipicamente recursivas. Para a \autoref{fig:def:pop}, as Equações \ref{fig:def:pop1} e \ref{fig:def:pop2} definem as funções $\FN{pop}_{stack}(p)$ e $\FN{pop}_{func}(p)$ com base na função $\FN{pop}(p, v)$, usando como valor inicial de $v$ os seus elementos subscritos. Nas Equações \ref{fig:def:pop3}, \ref{fig:def:pop31} e \ref{fig:def:pop4} realiza-se a lógica. Se os argumentos casarem o padrão $h : t$, nesse contexto sendo que a lista pode ser dividida entre o elemento no fim $(v, \_)$ ou $(c_{ctrl}, \_)$ e no restante $t$, então executa-se a função definida pela \autoref{fig:def:pop3} ou \ref{fig:def:pop31}, dependendo se é código de controle ou valor. Se a lista for vazia, representada por $[]$, realiza-se a função definida pela \autoref{fig:def:pop4}. A função definida pela \autoref{fig:def:pop3} possui termo $(v,\_)$, que contém dois casamentos de padrão. Ela separa a dupla no final da lista em dois elementos, descartando o segundo; e também casa o primeiro elemento como um valor. Nesse caso, descarta esse elemento e chama recursivamente a função. Caso o primeiro elemento do par no fim da lista seja um código de controle, no padrão $(c_{ctrl},\_)$, executa-se a função definida pela \autoref{fig:def:pop31}. Nela, checa se esse código de controle é o mesmo que o buscado, se é, retorna o restante da lista $t$, se não, chama $\FN{pop}(t, c_{ctr})$ recursivamente para o restante da lista. Isso descarta elementos do topo da lista até finalmente descartar o $c_{ctrl}$ ou, pela definição da \autoref{fig:def:pop4}, chegar no final e retorna a lista vazia.
 
 Outras funções similares existem para descrever o acesso, inserção de elementos e edição de elementos na pilha. A inserção no topo da pilha, tal qual em Haskell, utiliza-se o símbolo $:$ como uma operação binária de valor e pilha para pilha. Escreve-se $v : p$ para realizar o empilhamento de $v$ em $p$, retornando $p'$ com $v$ no topo. Caso se deseje empilhar várias cópias de um elemento na pilha, subscreve-se este com um número indicando a quantidade. Dessa forma, escrever $\bot_n : p$ empilha $n$ vezes o valor $\bot$ no topo da pilha. 
 
@@ -193,7 +195,7 @@ Para inserir um valor $v$ na posição $i$ da pilha $p$, escreve-se $p[i \mapsto
 	&p[i \mapsto v] = \FN{set}(i, \FN{top}(p) - 1, v) \label{fig:def:set1}\\
 	&\FN{set}(i, size, (v_p, k_p) : p_r) = \CD{if}\;i = size \;\CD{then} \nonumber\\ 
 	&\quad\quad(v, k_p) : p_r\;\CD{else}\;(v_p, k_p) : \FN{set}(i, size - 1, p_r) \label{fig:def:set2}\\
-	&\FN{get}(\_, \_, []) = [] \label{fig:def:set3}
+	&\FN{set}(\_, \_, []) = [] \label{fig:def:set3}
 	\end{align}
 	\caption{Função que insere o valor $v$ na posição $i$ da pilha $p$.}
 	\label{fig:def:set}
@@ -266,12 +268,12 @@ Dessa forma, um programa $P$ coleta primeiro todas as globais, depois coleta tod
 
 \labelRule{\label{rule:run}}{
 \infrule[Run]
-    {\St{P, \{\}, []} \to_G^* \St{F_0, g, p}\quad\St{F_0, \{\}} \to_F^* \St{\KW{let}\;()\;e , F}}
-    {F \vdash \St{\{e\}, ([],g),p,[]} \to^* \St{v, ([],g), p, m}} 
+    {\St{P, \{\}, []} \to_G^* \St{F_0, g, p}\quad\St{F_0, \{\}} \to_F^* \St{\KW{let}\;()\;e , \mathbb{F}}}
+    {\mathbb{F} \vdash \St{\{e\}, ([],g),p,[]} \to^* \St{v, ([],g), p, m}} 
 }
 \noindent Dizendo que, para avaliar a expressão $e$ sob um escopo $\{\}$, é necessário primeiro avaliar sequencialmente as globais e as funções, usando essas informações na computação de $e$.
 
-Essa computação de $e$ é o fecho transitivo $\to$, que descreve a transição do estado $\St{e, a, p, m}$ para o estado $\St{e', a', p', m'}$ sob a definição do ambiente global de funções $F$. Isso totaliza a expressão $F \vdash \St{e, a, p, m} \to \St{e', a', p', m'}$. Nesse contexto, $F$ é o ambiente global de funções, $e$ é o programa (expressão) a ser computado, $a$ é o ambiente de nomes, $p$ é a pilha, como descrita na \autoref{sec:pcl-back:pilha}, e $m$ é a memória, como descrita na \autoref{sec:pcl-back:mem}.
+Essa computação de $e$ é o fecho transitivo $\to$, que descreve a transição do estado $\St{e, a, p, m}$ para o estado $\St{e', a', p', m'}$ sob a definição do ambiente global de funções $\mathbb{F}$. Isso totaliza a expressão $\mathbb{F} \vdash \St{e, a, p, m} \to \St{e', a', p', m'}$. Nesse contexto, $\mathbb{F}$ é o ambiente global de funções, $e$ é o programa (expressão) a ser computado, $a$ é o ambiente de nomes, $p$ é a pilha, como descrita na \autoref{sec:pcl-back:pilha}, e $m$ é a memória, como descrita na \autoref{sec:pcl-back:mem}.
 
 \subsection{Globais}
 \label{sec:pcl-back:semantica:globals}
@@ -313,11 +315,11 @@ O passo seguinte após a avaliação das globais, é o de captura das funções.
 \labelRule{\label{rule:func-collect}}{
 \infrule[LetFunction-collect]
     {}
-    {\St{\KW{let} \; f(\overline{x_i})\; e \; F_0 ,F} \to_F \St{F_0, F[f \mapsto \St{[\overline{x_i}], e}]}}
+    {\St{\KW{let} \; f(\overline{x_i})\; e \; F_0 ,\F} \to_F \St{F_0, \F[f \mapsto \St{[\overline{x_i}], e}]}}
 }
-\noindent O fecho apenas captura a lista de nomes de argumentos $\bar x_i$ e o corpo da função $e$ e associa eles ao nome $f$ desta no ambiente $F$, tal como $F[f \mapsto \St{[\bar x_i], e}]$. Tanto a notação de atribuição quanto a notação de acesso são iguais ao do ambiente global de nomes $g$, pois $F$ também é um mapa, só que este é um mapa de nomes de funções $f$ para duplas, lista dos nomes dos argumentos - corpo da função, $\St{[\bar x_i], e}$. Ou seja, pode-se definir $F$ com a expressão $F := Map\;f\; \St{[\bar x_i], e}$.
+\noindent O fecho apenas captura a lista de nomes de argumentos $\bar x_i$ e o corpo da função $e$ e associa eles ao nome $f$ desta no ambiente $\F$, tal como $\F[f \mapsto \St{[\bar x_i], e}]$. Tanto a notação de atribuição quanto a notação de acesso são iguais ao do ambiente global de nomes $g$, pois $F$ também é um mapa, só que este é um mapa de nomes de funções $f$ para duplas, lista dos nomes dos argumentos - corpo da função, $\St{[\bar x_i], e}$. Ou seja, pode-se definir $\F$ com a expressão $\F := Map\;f\; \St{[\bar x_i], e}$.
 
-Essa operação de coleta continua até chegar na função principal do programa, escrita como $\KW{let}\;()\; e$. A esse ponto, realiza-se a avaliação do programa sob o ambiente de funções globais $F$ gerado. 
+Essa operação de coleta continua até chegar na função principal do programa, escrita como $\KW{let}\;()\; e$. A esse ponto, realiza-se a avaliação do programa sob o ambiente de funções globais $\F$ gerado. 
 
 \subsection{Expressões}
 
@@ -327,32 +329,32 @@ A avaliação das expressões começa com um ambiente de funções globais já f
 
 \labelRule{\label{rule:compose-s}}{
 	\infrule[Compose-s]
-		{F \vdash \St{e_1,a, p, m} \to \St{e_1',a', p', m'}}
-		{F \vdash \St{e_1;e_2,a, p, m} \to \St{e_1';e_2,a', p', m'}}
+		{\F \vdash \St{e_1,a, p, m} \to \St{e_1',a', p', m'}}
+		{\F \vdash \St{e_1;e_2,a, p, m} \to \St{e_1';e_2,a', p', m'}}
 }
 
 \labelRule{\label{rule:compose}}{
 	\infrule[Compose]
 		{}
-		{F \vdash \St{v;e, a, p, m} \to \St{e, a, p, m}}
+		{\F \vdash \St{v;e, a, p, m} \to \St{e, a, p, m}}
 }
 
 \labelRule{\label{rule:escopo}}{
 	\infrule[Escopo]
 		{}
-		{F \vdash \St{\{e\},(a,g), p, m} \to \\ \St{\KW{pop}\; e,(\{\} : a, g),\CD{stack} : p, m}}
+		{\F \vdash \St{\{e\},(a,g), p, m} \to \\ \St{\KW{pop}\; e,(\{\} : a, g),\CD{stack} : p, m}}
 }
 
 \labelRule{\label{rule:pop-s}}{
 	\infrule[Pop-s]
-		{F \vdash \St{e,a, p, m} \to \St{e',a', p', m'}}
-		{F \vdash \St{\KW{pop}\;e,a, p, m} \to \St{\KW{pop}\;e',a', p', m'}} 
+		{\F \vdash \St{e,a, p, m} \to \St{e',a', p', m'}}
+		{\F \vdash \St{\KW{pop}\;e,a, p, m} \to \St{\KW{pop}\;e',a', p', m'}} 
 }
 
 \labelRule{\label{rule:pop}}{
 	\infrule[Pop]
 		{\FN{pop}_{stack}(p) = p'}
-		{F \vdash \St{\KW{pop}\;v,(frame : a, g), p, m} \to\\\St{v,(a, g), p', m}}
+		{\F \vdash \St{\KW{pop}\;v,(frame : a, g), p, m} \to\\\St{v,(a, g), p', m}}
 }
 
 As regras \hyperref[rule:pop-s]{(COMPOSE-S)} e \hyperref[rule:compose-s]{(POP-S)} indicam o passo (\emph{step}) de avaliação da regra. Assim, a composição, por exemplo, primeiro avalia o primeiro elemento até que este seja um valor, descartando esse e resultando no segunda elemento, como descreve \hyperref[rule:compose]{(COMPOSE)}. Como convenção deste trabalho, regras terminadas por S são regras de passo e se prefixadas com R ou L indicam um passo do elemento da direita (\emph{right}) ou do elemento da esquerda (\emph{left}) respectivamente.
@@ -367,7 +369,7 @@ A regra \hyperref[rule:escopo]{(ESCOPO)} utiliza-se da expressão auxiliar $\KW{
 \labelRule{\label{rule:let}}{
 	\infrule[Let]
 		{\FN{top}(p) = i \andalso \FN{newkey}() = k \andalso l = l^p\{i, k, 0, n\}}
-		{F \vdash \St{\KW{let}\; x[n],(fr : a, g), p, m} \to\\ \St{l, (fr[x \mapsto l] : a, g),(\bot, k)_n : p, m}} 
+		{\F \vdash \St{\KW{let}\; x[n],(fr : a, g), p, m} \to\\ \St{l, (fr[x \mapsto l] : a, g),(\bot, k)_n : p, m}} 
 }
 
 Como $PCL_{back}$ é uma linguagem de expressões, todas elas precisam retornar algum valor. \hyperref[rule:let]{(LET)} avalia para o endereço alocado na pilha $l$. A decisão de qual elemento a expressão seria avaliada, para os casos menos comuns, foi baseada no comportamento de C. Se a expressão equivalente não avalia para um valor em C, decidiu-se basear no comportamento em OCaml, principalmente para as regras \hyperref[rule:if-true]{(IF-TRUE)}, \hyperref[rule:if-false]{(IF-FALSE)} e \hyperref[rule:while]{(WHILE)}.
@@ -376,80 +378,80 @@ Para as atribuições, pode-se realizá-las quando o elemento da esquerda avalia
 
 \labelRule{\label{rule:atribui-deref-ls}}{
 	\infrule[Atribui-deref-ls]
-		{F \vdash \St{e_1,a, p, m} \to \St{e_1', a', p', m'}}
-		{F \vdash \St{\text{*}e_1 := e_2, a, p, m} \to \St{\text{*}e_1' := e_2, a', p', m'}} 
+		{\F \vdash \St{e_1,a, p, m} \to \St{e_1', a', p', m'}}
+		{\F \vdash \St{\text{*}e_1 := e_2, a, p, m} \to \St{\text{*}e_1' := e_2, a', p', m'}} 
 }
 
 \labelRule{\label{rule:atribui-var-rs}}{
 	\infrule[Atribui-var-rs]
-		{F \vdash \St{e, a, p, m} \to \St{e', a', p', m'}}
-		{F \vdash \St{x := e, a, p, m} \to \St{x := e', a', p', m'}} 
+		{\F \vdash \St{e, a, p, m} \to \St{e', a', p', m'}}
+		{\F \vdash \St{x := e, a, p, m} \to \St{x := e', a', p', m'}} 
 }
 
 \labelRule{\label{rule:atribui-deref-rs}}{
 	\infrule[Atribui-deref-rs]
-		{F \vdash \St{e,a, p, m} \to \St{e', a', p', m'}}
-		{F \vdash \St{\text{*}l := e, a, p, m} \to \St{\text{*}l := e', a', p', m'}} 
+		{\F \vdash \St{e,a, p, m} \to \St{e', a', p', m'}}
+		{\F \vdash \St{\text{*}l := e, a, p, m} \to \St{\text{*}l := e', a', p', m'}} 
 }
 
 \labelRule{\label{rule:atribui-var-obe}}{
 	\infrule[Atribui-var-obe]
 		{a(x) = l^p\{i, k, o, s\} \andalso 0 > o \ge s}
-		{F \vdash \St{x := v, a, p, m} \to \\ \St{\KW{panic}\;\KW{OutOfBoundsWrite}, a, p, m}}
+		{\F \vdash \St{x := v, a, p, m} \to \\ \St{\KW{panic}\;\KW{OutOfBoundsWrite}, a, p, m}}
 }
     
 \labelRule{\label{rule:atribui-var-deref}}{
 	\infrule[Atribui-var-uaf]
 		{a(x) = l^p\{i, k, o, s\} \\ 0 \leq o < s\andalso p(i + o) = (v_p, k_p) \andalso k \neq k_p }
-		{F \vdash \St{x := v, a, p, m} \to \\ \St{\KW{panic}\;\KW{UseAfterFree}, a, p, m}}
+		{\F \vdash \St{x := v, a, p, m} \to \\ \St{\KW{panic}\;\KW{UseAfterFree}, a, p, m}}
 }
 
 \labelRule{\label{rule:atribui-var}}{
 	\infrule[Atribui-var]
 		{a(x) = l^p\{i, k, o, s\} \\ 0 \leq o < s\quad p(i + o) = (v_p, k_p) \quad k = k_p }
-		{F \vdash \St{x := v, a, p, m} \to \St{v, a, p[i + o \mapsto v], m}} 
+		{\F \vdash \St{x := v, a, p, m} \to \St{v, a, p[i + o \mapsto v], m}} 
 }
 
 \labelRule{\label{rule:atribui-deref-pilha-obe}}{
 	\infrule[Atribui-deref-pilha-obe]
 		{0 > o \ge s}
-		{F\vdash\St{\text{*}l^p\{i, k, o, s\} := v, a, p, m} \to \\ \St{\KW{panic}\;\KW{OutOfBoundsWrite}, a, p, m}} 
+		{\F \vdash\St{\text{*}l^p\{i, k, o, s\} := v, a, p, m} \to \\ \St{\KW{panic}\;\KW{OutOfBoundsWrite}, a, p, m}} 
 }
 
 \labelRule{\label{rule:atribui-deref-pilha-uaf}}{
 	\infrule[Atribui-deref-pilha-uaf]
 		{0 \leq o < s\quad p(i + o) = (v_p, k_p) \quad k \neq k_p }
-		{F\vdash\St{\text{*}l^p\{i, k, o, s\} := v, a, p, m} \to\\ \St{\KW{panic}\;\KW{UseAfterFree}, a, p, m}} 
+		{\F \vdash\St{\text{*}l^p\{i, k, o, s\} := v, a, p, m} \to\\ \St{\KW{panic}\;\KW{UseAfterFree}, a, p, m}} 
 }
 
 \labelRule{\label{rule:atribui-deref-pilha}}{
 	\infrule[Atribui-deref-pilha]
 		{0 \leq o < s\quad p(i + o) = (v_p, k_p) \quad k = k_p }
-		{F\vdash\St{\text{*}l^p\{i, k, o, s\} := v, a, p, m} \to\\ \St{v, a, p[i + o \mapsto v], m}} 
+		{\F \vdash\St{\text{*}l^p\{i, k, o, s\} := v, a, p, m} \to\\ \St{v, a, p[i + o \mapsto v], m}} 
 }
 
 \labelRule{\label{rule:atribui-deref-mem-npd}}{
 	\infrule[Atribui-deref-mem-npd]
 		{i = 0}
-		{F\vdash\St{\text{*}l^m\{i, k, o, s\} := v, a, p, m} \to\\ \St{\KW{panic}\;\KW{NullPtrDeref}, a, p, m}} 
+		{\F \vdash\St{\text{*}l^m\{i, k, o, s\} := v, a, p, m} \to\\ \St{\KW{panic}\;\KW{NullPtrDeref}, a, p, m}} 
 }
 
 \labelRule{\label{rule:atribui-deref-mem-obe}}{
 \infrule[Atribui-deref-mem-obe]
     {i \neq 0 \quad 0 > o \ge s}
-    {F\vdash\St{\text{*}l^m\{i, k, o, s\} := v, a, p, m} \to\\ \St{\KW{panic}\;\KW{OutOfBoundsWrite}, a, p, m}} 
+    {\F \vdash\St{\text{*}l^m\{i, k, o, s\} := v, a, p, m} \to\\ \St{\KW{panic}\;\KW{OutOfBoundsWrite}, a, p, m}} 
 }
 
 \labelRule{\label{rule:atribui-deref-mem-uaf}}{
 	\infrule[Atribui-deref-mem-uaf]
 		{i \neq 0 \quad 0 \leq o < s\quad m(i + o) = (v_m, k_m) \quad k \neq k_m }
-		{F\vdash\St{\text{*}l^m\{i, k, o, s\} := v, a, p, m} \to\\ \St{\KW{panic}\;\KW{UseAfterFree}, a, p, m}} 
+		{\F \vdash\St{\text{*}l^m\{i, k, o, s\} := v, a, p, m} \to\\ \St{\KW{panic}\;\KW{UseAfterFree}, a, p, m}} 
 }
 
 \labelRule{\label{rule:atribui-deref-mem}}{
 	\infrule[Atribui-deref-mem]
 		{i \neq 0 \quad 0 \leq o < s\quad m(i + o) = (v_m, k_m) \quad k = k_m }
-		{F\vdash\St{\text{*}l^m\{i, k, o, s\} := v, a, p, m} \to \\\St{v, a, p, m[i + o \mapsto v]}}
+		{\F \vdash\St{\text{*}l^m\{i, k, o, s\} := v, a, p, m} \to \\\St{v, a, p, m[i + o \mapsto v]}}
 }
 
 Várias dessas regras tratam do sistema de detecção de memória, que será elaborado em \ref{sec:pcl-back:errors}. Mas a avaliação final de uma atribuição, como na regra \hyperref[rule:atribui-var]{(ATRIBUI-VAR)}, consiste em atribuir o valor no espaço de memória especificado, avaliando para esse mesmo valor a fim de permitir padrões como $x := y := 2$, que atribui para $x$ e $y$ o número 2.
@@ -461,56 +463,56 @@ Várias dessas regras tratam do sistema de detecção de memória, que será ela
 
 \labelRule{\label{rule:malloc-s}}{
 	\infrule[Malloc-s]
-		{F\vdash\St{e, a, p, m} \to\St{e', a', p', m'}}
-		{F\vdash\St{\KW{malloc}(e),a, p, m} \to\St{\KW{malloc}(e'),a', p', m'}}
+		{\F \vdash\St{e, a, p, m} \to\St{e', a', p', m'}}
+		{\F \vdash\St{\KW{malloc}(e),a, p, m} \to\St{\KW{malloc}(e'),a', p', m'}}
 }  
 
 \labelRule{\label{rule:malloc}}{
 	\infrule[Malloc]
 		{\FN{loc}(m, n) = i \quad \FN{newkey}() = k \quad l = l^m\{i, k, 0, n\}}
-		{F\vdash\St{\KW{malloc}(n),a, p, m} \to\St{l, a, p, m[i_{0..n} \mapsto (\bot,k)]}} 
+		{\F\vdash\St{\KW{malloc}(n),a, p, m} \to\St{l, a, p, m[i_{0..n} \mapsto (\bot,k)]}} 
 }
 
 \labelRule{\label{rule:free-ls}}{
 	\infrule[Free-ls]
-		{F\vdash\St{e_1, a, p, m} \to\St{e_1', a', p', m'}}
-		{F\vdash\St{\KW{free}(e_1, e_2),a, p, m} \to\St{\KW{free}(e_1', e_2),a', p', m'}}
+		{\F\vdash\St{e_1, a, p, m} \to\St{e_1', a', p', m'}}
+		{\F\vdash\St{\KW{free}(e_1, e_2),a, p, m} \to\St{\KW{free}(e_1', e_2),a', p', m'}}
 }
     
 \labelRule{\label{rule:free-rs}}{
 	\infrule[Free-rs]
-		{F\vdash\St{e, a, p, m} \to\St{e', a', p', m'}}
-		{F\vdash\St{\KW{free}(l, e),a, p, m} \to\St{\KW{free}(l, e'),a', p', m'}} 
+		{\F\vdash\St{e, a, p, m} \to\St{e', a', p', m'}}
+		{\F\vdash\St{\KW{free}(l, e),a, p, m} \to\St{\KW{free}(l, e'),a', p', m'}} 
 }
 
 \labelRule{\label{rule:free-mnh}}{
 	\infrule[Free-mnh]
 		{}
-		{F\vdash\St{\KW{free}(l^p, n),a, p, m} \to\\ \St{\KW{panic}\;\KW{FreeMemoryNotOnHeap},a, p, m}}
+		{\F\vdash\St{\KW{free}(l^p, n),a, p, m} \to\\ \St{\KW{panic}\;\KW{FreeMemoryNotOnHeap},a, p, m}}
 }
 
 \labelRule{\label{rule:free-null}}{
 	\infrule[Free-null] 
 		{i = 0}
-		{F\vdash\St{\KW{free}(l^m\{i, k, o, s\}, n),a, p, m} \to\\ \St{\KW{panic}\;\KW{FreeMemoryNotOnHeap},a, p, m}}
+		{\F\vdash\St{\KW{free}(l^m\{i, k, o, s\}, n),a, p, m} \to\\ \St{\KW{panic}\;\KW{FreeMemoryNotOnHeap},a, p, m}}
 }
 
 \labelRule{\label{rule:free-partial}}{
 	\infrule[Free-parcial] 
 		{i \neq 0 \quad o \neq 0 \lor s \neq n}
-		{F\vdash\St{\KW{free}(l^m\{i, k, o, s\}, n),a, p, m} \to\\ \St{\KW{panic}\;\KW{PartialFree},a, p, m}}
+		{\F\vdash\St{\KW{free}(l^m\{i, k, o, s\}, n),a, p, m} \to\\ \St{\KW{panic}\;\KW{PartialFree},a, p, m}}
 }
 
 \labelRule{\label{rule:free-double}}{
 \infrule[Free-double]
     {i \neq 0 \quad o = 0 \quad s = n \quad m(i) = (v_m, k_m) \quad k \neq k_m}
-    {F\vdash\St{\KW{free}(l^m\{i, k, o, s\}, n),a, p, m} \to\\ \St{\KW{panic}\;\KW{DoubleFree},a, p, m}}
+    {\F\vdash\St{\KW{free}(l^m\{i, k, o, s\}, n),a, p, m} \to\\ \St{\KW{panic}\;\KW{DoubleFree},a, p, m}}
 }
 
 \labelRule{\label{rule:free}}{
 	\infrule[Free]
 		{i \neq 0 \quad o = 0 \quad s = n \quad m(i) = (v_m, k_m) \quad k = k_m}
-		{F\vdash\St{\KW{free}(l^m\{i, k, o, s\}, n),a, p, m} \to\St{n,a, p, m[i_{0..n} \mapsto (-,0)]}}
+		{\F\vdash\St{\KW{free}(l^m\{i, k, o, s\}, n),a, p, m} \to\St{n,a, p, m[i_{0..n} \mapsto (-,0)]}}
 }
 
 A operação de $\KW{malloc}(n)$, assim como nas declarações globais, gera um local para o acesso, desta vez na memória, com os metadados associados. Esse local é da forma $l^m\{i, k, 0, n\}$, com $i$ sendo o início da região de memória encontrada por $\FN{loc}$, $k$ a chave única gerada por $\FN{newkey}$, 0 como o desvio $o$ inicial e $n$ como o tamanho da região alocada $s$.
@@ -522,8 +524,8 @@ $\mathcal{N}(n)$ é a função que converte o símbolo da linguagem $n$ em um n�
 \begin{figure}[ht]
 	\begin{align}
 		& \FN{binop}(op, n_1, n_2) = \mathcal{N}^{-1}(\FN{binop}'(op, \mathcal{N}(n_1), \mathcal{N}(n_2))) \\
-		& \FN{binop}(op, n, l^{local}\{i, k, o, s\}) = l^{local}\{i, k, \FN{binopnptr}(op, \mathcal{N}(n), o), s\} \\
-		& \FN{binop}(op, l^{local}\{i, k, o, s\}, n) = l^{local}\{i, k, \FN{binopnptr}(op, \mathcal{N}(n), o), s\} \\
+		& \FN{binop}(op, n, l\{i, k, o, s\}) = l\{i, k, \FN{binopnptr}(op, \mathcal{N}(n), o), s\} \\
+		& \FN{binop}(op, l\{i, k, o, s\}, n) = l\{i, k, \FN{binopnptr}(op, \mathcal{N}(n), o), s\} \\
 		& \FN{binop}(op, l^p\{i_1, k_1, o_1, s_1\}, l^p\{i_2, k_2, o_2, s_2\}) = \nonumber \\ 
 		&\quad\quad\mathcal{N}^{-1}(\FN{binopcomp}(op, i_1 + o_1, i_2 + o_2)) \\
 		& \FN{binop}(op, l^m\{i_1, k_1, o_1, s_1\}, l^m\{i_2, k_2, o_2, s_2\}) = \nonumber \\ 
@@ -572,32 +574,32 @@ Com essas funções, pode-se definir as regras da seguinte forma:
 
 \labelRule{\label{rule:binop-ls}}{
 	\infrule[BinOp-ls]
-		{F \vdash \St{e_1,a, p, m} \to \St{e_1', a', p', m'}}
-		{F \vdash \St{e_1 \;op\; e_2, a, p, m} \to \St{e_1' \;op\; e_2, a', p', m'}} 
+		{\F \vdash \St{e_1,a, p, m} \to \St{e_1', a', p', m'}}
+		{\F \vdash \St{e_1 \;op\; e_2, a, p, m} \to \St{e_1' \;op\; e_2, a', p', m'}} 
 }
 
 \labelRule{\label{rule:binop-rs}}{
 	\infrule[BinOp-rs]
-		{F \vdash \St{e,a, p, m} \to \St{e', a', p', m'}}
-		{F \vdash \St{v \;op\; e, a, p, m} \to \St{v \;op\; e', a', p', m'}}
+		{\F \vdash \St{e,a, p, m} \to \St{e', a', p', m'}}
+		{\F \vdash \St{v \;op\; e, a, p, m} \to \St{v \;op\; e', a', p', m'}}
 }
 
 \labelRule{\label{rule:binop}}{
 	\infrule[BinOp]
 		{\FN{binop}(op, v_1, v_2) = v'}
-		{F \vdash \St{v_1 \;op\; v_2, a, p, m} \to \St{v', a, p, m}}
+		{\F \vdash \St{v_1 \;op\; v_2, a, p, m} \to \St{v', a, p, m}}
 }
 
 \labelRule{\label{rule:not-s}}{
 	\infrule[Not-s]
-		{F \vdash \St{e,a, p, m} \to \St{e', a', p', m'}}
-		{F \vdash \St{!e, a, p, m} \to \St{!e', a', p', m'}}
+		{\F \vdash \St{e,a, p, m} \to \St{e', a', p', m'}}
+		{\F \vdash \St{!e, a, p, m} \to \St{!e', a', p', m'}}
 }
 
 \labelRule{\label{rule:not}}{
 	\infrule[Not]
 		{\FN{not}(n) = n'}
-		{F \vdash \St{!n, a, p, m} \to \St{n', a, p, m}}
+		{\F \vdash \St{!n, a, p, m} \to \St{n', a, p, m}}
 }
 
 \phantomsection
@@ -607,91 +609,91 @@ Com essas funções, pode-se definir as regras da seguinte forma:
 \labelRule{\label{rule:var-obr}}{
 	\infrule[Var-obr]
 		{a(x) = l^p\{i, k, o, s\} \quad 0 > o \ge s}
-		{F \vdash \St{x, a, p, m} \to\\ \St{\KW{panic}\;\KW{OutOfBoundsRead}, a, p, m}}
+		{\F \vdash \St{x, a, p, m} \to\\ \St{\KW{panic}\;\KW{OutOfBoundsRead}, a, p, m}}
 }
     
 \labelRule{\label{rule:var-uaf}}{
 	\infrule[Var-uaf]
 		{a(x) = l^p\{i, k, o, s\} \\ 0 \leq o < s\quad p(i + o) = (v_p, k_p) \quad k \neq k_p}
-		{F \vdash \St{x, a, p, m} \to \St{\KW{panic}\;\KW{UseAfterFree}, a, p, m}}
+		{\F \vdash \St{x, a, p, m} \to \St{\KW{panic}\;\KW{UseAfterFree}, a, p, m}}
 }
 
 \labelRule{\label{rule:var-ua}}{
 	\infrule[Var-ua]
 		{a(x) = l^p\{i, k, o, s\} \\ 0 \leq o < s\quad p(i + o) = (v_p, k_p) \quad k = k_p \quad v_p = \bot}
-		{F \vdash \St{x, a, p, m} \to \\ \St{\KW{panic}\;\KW{UninitializedAcess}, a, p, m}} 
+		{\F \vdash \St{x, a, p, m} \to \\ \St{\KW{panic}\;\KW{UninitializedAcess}, a, p, m}} 
 }
 
 \labelRule{\label{rule:var}}{
 	\infrule[Var]
 		{a(x) = l^p\{i, k, o, s\} \\ 0 \leq o < s\quad p(i + o) = (v_p, k_p) \quad k = k_p \quad v_p \neq \bot}
-		{F \vdash \St{x, a, p, m} \to \St{v_p, a, p, m}}
+		{\F \vdash \St{x, a, p, m} \to \St{v_p, a, p, m}}
 }
 
 \labelRule{\label{rule:deref-s}}{
 	\infrule[Deref-s]
-		{F \vdash \St{e,a, p, m} \to \St{e', a', p', m'}}
-		{F \vdash \St{\text{*}e, a, p, m} \to \St{\text{*}e', a', p', m'}} 
+		{\F \vdash \St{e,a, p, m} \to \St{e', a', p', m'}}
+		{\F \vdash \St{\text{*}e, a, p, m} \to \St{\text{*}e', a', p', m'}} 
 }
 
 \labelRule{\label{rule:deref-pilha-obr}}{
 	\infrule[Deref-pilha-obr]
 		{0 > o \ge s}
-		{F \vdash \St{\text{*}l^p\{i, k, o, s\}, a, p, m} \to \\ \St{\KW{panic}\;\KW{OutOfBoundsRead}, a, p, m}}
+		{\F \vdash \St{\text{*}l^p\{i, k, o, s\}, a, p, m} \to \\ \St{\KW{panic}\;\KW{OutOfBoundsRead}, a, p, m}}
 }
     
 \labelRule{\label{rule:deref-pilha-uaf}}{
 	\infrule[Deref-pilha-uaf]
 		{0 \leq o < s\quad p(i + o) = (v_p, k_p) \quad k \neq k_p}
-		{F \vdash \St{\text{*}l^p\{i, k, o, s\}, a, p, m} \to\\ \St{\KW{panic}\;\KW{UseAfterFree}, a, p, m}} 
+		{\F \vdash \St{\text{*}l^p\{i, k, o, s\}, a, p, m} \to\\ \St{\KW{panic}\;\KW{UseAfterFree}, a, p, m}} 
 }
 
 \labelRule{\label{rule:deref-pilha-ua}}{
 	\infrule[Deref-pilha-ua]
 		{0 \leq o < s\quad p(i + o) = (v_p, k_p) \quad k = k_p \quad v_p = \bot}
-		{F \vdash \St{\text{*}l^p\{i, k, o, s\}, a, p, m} \to\\ \St{\KW{panic}\;\KW{UninitializedAcess}, a, p, m}}
+		{\F \vdash \St{\text{*}l^p\{i, k, o, s\}, a, p, m} \to\\ \St{\KW{panic}\;\KW{UninitializedAcess}, a, p, m}}
 }
 
 \labelRule{\label{rule:deref-pilha}}{
 	\infrule[Deref-pilha]
 		{0 \leq o < s\quad p(i + o) = (v_p, k_p) \quad k = k_p \quad v_p \neq \bot}
-		{F \vdash \St{\text{*}l^p\{i, k, o, s\}, a, p, m} \to \St{v_p, a, p, m}}
+		{\F \vdash \St{\text{*}l^p\{i, k, o, s\}, a, p, m} \to \St{v_p, a, p, m}}
 }
 
 \labelRule{\label{rule:deref-mem-null}}{
 	\infrule[Deref-mem-null]
 		{i = 0}
-		{F \vdash \St{\text{*}l^m\{i, k, o, s\}, a, p, m} \to\\ \St{\KW{panic}\;\KW{NullPtrDeref}, a, p, m}}
+		{\F \vdash \St{\text{*}l^m\{i, k, o, s\}, a, p, m} \to\\ \St{\KW{panic}\;\KW{NullPtrDeref}, a, p, m}}
 }
 
 \labelRule{\label{rule:deref-mem-obr}}{
 	\infrule[Deref-mem-obr]
 		{i \neq 0 \quad 0 > o \ge s}
-		{F \vdash \St{\text{*}l^m\{i, k, o, s\}, a, p, m} \to\\ \St{\KW{panic}\;\KW{OutOfBoundsRead}, a, p, m}}
+		{\F \vdash \St{\text{*}l^m\{i, k, o, s\}, a, p, m} \to\\ \St{\KW{panic}\;\KW{OutOfBoundsRead}, a, p, m}}
 }
 
 \labelRule{\label{rule:deref-mem-uaf}}{
 	\infrule[Deref-mem-uaf]
 		{i \neq 0 \quad 0 \leq o < s\quad m(i + o) = (v_m, k_m) \quad k \neq k_m}
-		{F \vdash \St{\text{*}l^m\{i, k, o, s\}, a, p, m} \to\\ \St{\KW{panic}\;\KW{UseAfterFree}, a, p, m}}
+		{\F \vdash \St{\text{*}l^m\{i, k, o, s\}, a, p, m} \to\\ \St{\KW{panic}\;\KW{UseAfterFree}, a, p, m}}
 }
 
 \labelRule{\label{rule:deref-mem-ua}}{
 	\infrule[Deref-mem-ua]
 		{i \neq 0 \quad 0 \leq o < s\quad m(i + o) = (v_m, k_m) \quad k = k_m \quad v_m = \bot}
-		{F \vdash \St{\text{*}l^m\{i, k, o, s\}, a, p, m} \to\\ \St{\KW{panic}\;\KW{UninitializedAcess}, a, p, m}} 
+		{\F \vdash \St{\text{*}l^m\{i, k, o, s\}, a, p, m} \to\\ \St{\KW{panic}\;\KW{UninitializedAcess}, a, p, m}} 
 }
     
 \labelRule{\label{rule:deref-mem}}{
 	\infrule[Deref-memória]
 		{i \neq 0 \quad 0 \leq o < s\quad m(i + o) = (v_m, k_m) \quad k = k_m \quad v_m \neq \bot}
-		{F \vdash \St{\text{*}l^m\{i, k, o, s\}, a, p, m} \to \St{v_m, a, p, m}}
+		{\F \vdash \St{\text{*}l^m\{i, k, o, s\}, a, p, m} \to \St{v_m, a, p, m}}
 }
 
 \labelRule{\label{rule:ref}}{
 	\infrule[Ref]
 		{a(x) = l^p}
-		{F \vdash \St{\&x, a, p, m} \to \St{l^p, a, p, m}}
+		{\F \vdash \St{\&x, a, p, m} \to \St{l^p, a, p, m}}
 }
 
 Adicionalmente há a regra para se obter o endereço de uma variável \hyperref[rule:ref]{(REF)}. Ela é similar a \hyperref[rule:var]{(VAR)}, porém ao invés de pegar o valor do local associado ao nome $x$, ela retorna esse local.
@@ -701,26 +703,26 @@ Adicionalmente há a regra para se obter o endereço de uma variável \hyperref[
 
 \labelRule{\label{rule:if-s}}{
 	\infrule[If-s]
-		{F \vdash \St{e_1,a, p, m} \to \St{e_1', a', p', m'}}
-		{F \vdash \St{\KW{if}\;(e_1)\; e_2\; \KW{else}\; e_3 ,a, p, m} \to\\ \St{\KW{if}\;(e_1')\; e_2\; \KW{else}\; e_3 ,a', p', m'}}
+		{\F \vdash \St{e_1,a, p, m} \to \St{e_1', a', p', m'}}
+		{\F \vdash \St{\KW{if}\;(e_1)\; e_2\; \KW{else}\; e_3 ,a, p, m} \to\\ \St{\KW{if}\;(e_1')\; e_2\; \KW{else}\; e_3 ,a', p', m'}}
 }
 
 \labelRule{\label{rule:if-true}}{
 	\infrule[If-true]
 		{\mathcal{N}(n) \neq 0}
-		{F \vdash \St{\KW{if}\;(n)\; e_1\; \KW{else}\; e_2 ,a, p, m} \to \St{e_1, a, p, m}} 
+		{\F \vdash \St{\KW{if}\;(n)\; e_1\; \KW{else}\; e_2 ,a, p, m} \to \St{e_1, a, p, m}} 
 }
 
 \labelRule{\label{rule:if-false}}{
 	\infrule[If-false]
 		{\mathcal{N}(n) = 0}
-		{F \vdash \St{\KW{if}\;(n)\; e_1\; \KW{else}\; e_2 ,a, p, m} \to \St{e_2, a, p, m}} 
+		{\F \vdash \St{\KW{if}\;(n)\; e_1\; \KW{else}\; e_2 ,a, p, m} \to \St{e_2, a, p, m}} 
 }
     
 \labelRule{\label{rule:while}}{
 	\infrule[While]
 		{}
-		{F \vdash \St{\KW{while}\;(e_1)\; e_2, a, p, m} \to \\ \St{\KW{if}\;(e_1)\; (e_2;\KW{while}\;(e_1)\; e_2)\; \KW{else}\; 0, a, p, m}} 
+		{\F \vdash \St{\KW{while}\;(e_1)\; e_2, a, p, m} \to \\ \St{\KW{if}\;(e_1)\; (e_2;\KW{while}\;(e_1)\; e_2)\; \KW{else}\; 0, a, p, m}} 
 }
 
 O $\KW{while}$ é definido em função do $\KW{if}$, tal qual a regra \hyperref[rule:while]{(WHILE)} descreve. Ele se deriva em um passo para um condicional que se verdadeiro resulta no corpo do $\KW{while}$ seguido da expressão inicial e se falso no valor 0. Seguindo o modelo OCaml \cite{leroy3ocaml}, $\KW{while}$ deveria retornar o tipo $Unit$. Como $PCL_{back}$ não possui tipos, pode-se interpretar o 0 como o $Unit$. Talvez uma interpretação melhor para o retorno de 0 no caso falso é que 0 é o valor da condicional computada quando se para de iterar o \emph{loop}.
@@ -731,31 +733,31 @@ Com todos os argumentos avaliados, realiza-se a regra \hyperref[rule:callfunc]{(
 
 \labelRule{\label{rule:callfunc-s(j,0)}}{
 	\infrule[CallFunc-s(j,0)]
-		{F \vdash \St{e_0,a, p, m} \to \St{e_0',a', p', m'}}
-		{F \vdash \St{f(e_0, e_{1..j}), a, p, m} \to \St{f(e_0', e_{1..j}), a, p, m}} 
+		{\F \vdash \St{e_0,a, p, m} \to \St{e_0',a', p', m'}}
+		{\F \vdash \St{f(e_0, e_{1..j}), a, p, m} \to \St{f(e_0', e_{1..j}), a, p, m}} 
 }
 
 \labelRule{\label{rule:callfunc-s(j,i)}}{
 	\infrule[CallFunc-s(j,i)]
-		{F \vdash \St{e_i,a, p, m} \to \St{e_i',a', p', m'}}
-		{F \vdash \St{f(v_{0..i}, e_i, e_{(i + 1)..j}), a, p, m} \to\\ \St{f(v_{0..i}, e_i', e_{(i + 1)..j}), a', p', m'}}
+		{\F \vdash \St{e_i,a, p, m} \to \St{e_i',a', p', m'}}
+		{\F \vdash \St{f(v_{0..i}, e_i, e_{(i + 1)..j}), a, p, m} \to\\ \St{f(v_{0..i}, e_i', e_{(i + 1)..j}), a', p', m'}}
 }
 
 \labelRule{\label{rule:callfunc}}{
 	\infrule[CallFunc]
-		{F(f) = \St{[\overline{x_i}], e}}
-		{F \vdash \St{f(\overline{v_i}), a, p, m} \to \\\St{\KW{Fpop}\,\{\ \overline{\KW{let}\;x_i[1]; x_i := v_i;} e\}, (STOP : a, g), \CD{func} : p, m}} 
+		{\F(f) = \St{[\overline{x_i}], e}}
+		{\F \vdash \St{f(\overline{v_i}), a, p, m} \to \\\St{\KW{Fpop}\,\{\ \overline{\KW{let}\;x_i[1]; x_i := v_i;} e\}, (STOP : a, g), \CD{func} : p, m}} 
 }
 \labelRule{\label{rule:fpop-s}}{
 	\infrule[Fpop-s]
-		{F \vdash \St{e,a, p, m} \to \St{e',a', p', m'}}
-		{F \vdash \St{\KW{Fpop}\;e,a, p, m} \to \St{\KW{Fpop}\;e',a', p', m'}} 
+		{\F \vdash \St{e,a, p, m} \to \St{e',a', p', m'}}
+		{\F \vdash \St{\KW{Fpop}\;e,a, p, m} \to \St{\KW{Fpop}\;e',a', p', m'}} 
 }
 
 \labelRule{\label{rule:fpop}}{
 	\infrule[Fpop]
 		{\FN{pop}_{func}(p) = p'}
-		{F \vdash \St{\FN{Fpop}\; v, (h : a, g), p, m} \to \St{v, (a, g), p', m}} 
+		{\F \vdash \St{\FN{Fpop}\; v, (h : a, g), p, m} \to \St{v, (a, g), p', m}} 
 }
 
 A palavra-chave $\KW{Fpop}$ empilhada é utilizada no ambiente de nomes $a$, como descrito em \ref{sec:pcl-back:semantica:globals}. A regra \hyperref[rule:callfunc]{(CALLFUNC)} adiciona $STOP$ no ambiente de nomes locais $a_l$ e cabe a regra final de $\KW{Fpop}$ \hyperref[rule:fpop]{(FPOP)} remover esse elemento do topo.
