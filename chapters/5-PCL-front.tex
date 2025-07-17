@@ -2,7 +2,7 @@
 \chapter{PCL-front}
 \label{chap5}
 
-O propósito deste projeto é utilizar a linguagem $PCL_{back}$ como um meio de prova para estratégias de solução de memória. Para demonstrar essa capacidade, desenvolveu-se a linguagem de \emph{front-end}, $PCL_{front}$, que implementa um sistema de \emph{Borrow Checker} como elaborado no Capítulo \ref{chap4}. A linguagem $PCL_{front}$ é definida por meio de sintaxe formal, sistema de tipos (o qual incorpora as regras de validação do \emph{Borrow Checker}) e semântica de compilação para $PCL_{back}$.
+O propósito deste projeto é utilizar a linguagem $PCL_{back}$ como um meio de prova para estratégias de solução de memória. Para demonstrar essa capacidade, desenvolveu-se a linguagem de \emph{front-end}, $PCL_{front}$, que implementa um sistema de \emph{Borrow Checker} descrito no Capítulo \ref{chap4}. A linguagem $PCL_{front}$ é definida por meio de sintaxe formal, sistema de tipos (o qual incorpora as regras de validação do \emph{Borrow Checker}) e semântica de compilação para $PCL_{back}$.
 
 O \emph{design} de $PCL_{front}$ partiu do formato de $PCL_{back}$, focando em gerar o menor número de modificações sintáticas para que a compilação fosse simples de se definir. Duas decisões foram tomadas que alteraram o funcionamento do \emph{Borrow Checker} de $PCL_{back}$ comparado com o de Rust, a fim de manter a simplicidade da linguagem. (a) Ao invés de se utilizar um sistema de Rust que evoca tipos lineares, decidiu-se usá-los propriamente, voltando a alocações e desalocações manuais, regidas pela regra do uso exatamente uma vez. Na linguagem, o tipo $\text{*}\tau$ é linear enquanto os demais são não lineares. Isso simplifica a compilação por evitar as chamadas implícitas de liberação de memória que existem em Rust, mas ainda modela o comportamento deste, com liberações sendo necessárias no fim de escopos para que um programa seja bem tipado. (b) Sem paralelismo, há menos necessidade de utilizar a regra de apenas um empréstimo mutável ou, exclusivamente, vários empréstimos imutáveis. Assim, $PCL_{front}$ permite várias referências mutáveis, chamadas \emph{alias} ($@\tau'a$) no sistema de tipos. 
 
@@ -11,7 +11,7 @@ O objetivo dessa linguagem é, quando um dado programa $PCL_{front}$ é compilad
 % 	5.1 Syntax
 \section{Sintaxe}
 
-A sintaxe da linguagem é bem próxima de um $PCL_{back}$ tipado. O modelo de linearidade necessitou de alguns operadores adicionais, sendo eles a troca $:=:$ e troca com dereferência $:=:\!\!\text{*}$; o incremento $+\!\!=$ e decremento $-\!\!=$; e a cópia de ponteiro $\KW{alias}$ e a cópia de ponteiro que dereferência $\KW{alias}\!\text{*}$. Os termos $\KW{new}$ e $\KW{delete}$ substituem o $\KW{malloc}$ e $\KW{free}$ com a mesma funcionalidade, mas com nomes que indicam uma operação de mais alto nível. Por fim, os \emph{macros} \emph{PANIC} e \emph{NULL} se tornaram as expressões $\KW{stop}$ e $\KW{nullptr}\typearg{\tau}$ respectivamente. Tem-se também $\KW{nullalias}\typearg{\tau}$ como o \emph{alias} nulo da linguagem. 
+A sintaxe da linguagem é bem próxima de um $PCL_{back}$ tipado. O modelo de linearidade necessitou de alguns operadores adicionais, sendo eles a troca $:=:$ e troca com dereferência $:=:\!\!\text{*}$; o incremento $+\!\!=$ e decremento $-\!\!=$; e a cópia de ponteiro $\KW{alias}$ e a cópia de ponteiro que dereferência $\KW{alias}\!\text{*}$. Os termos $\KW{new}$ e $\KW{delete}$ substituem o $\KW{malloc}$ e $\KW{free}$ com a mesma funcionalidade, mas com nomes que indicam uma operação de mais alto nível. Por fim, os \emph{macros} \emph{PANIC} e \emph{NULL} se tornaram as expressões $\KW{stop}$ e $\KW{nullptr}\typearg{\tau}$ respectivamente. Tem-se também $\KW{nullalias}\typearg{\tau}$ como o \emph{alias} nulo da linguagem. A sintaxe é descrita pela Figura \ref{fig:pcl-front:sintax}.
 
 \def\notmov#1{\color{blue}\underline{{\color{black}#1}}\color{black}}
 
@@ -44,9 +44,9 @@ A sintaxe da linguagem é bem próxima de um $PCL_{back}$ tipado. O modelo de li
 	\legend{Fonte: Os Autores.}
 \end{figure}
 
-A sintaxe é descrita na Figura \ref{fig:pcl-front:sintax}. As meta-variáveis \noindent$'a$, $x$ e $f$ cobrem as regiões, nomes de variáveis e nomes de funções de um programa, respectivamente. Os nomes de variáveis $x$ também são usados como o nome dos empréstimos, visto que nesta versão do \emph{Borrow Checker} não se precisa anotar o modo de acesso: todos os acessos são mutáveis.
+\noindent As meta-variáveis $'a$, $x$ e $f$ cobrem as regiões, nomes de variáveis e nomes de funções de um programa, respectivamente. Os nomes de variáveis $x$ também são usados como o nome dos empréstimos, visto que nesta versão do \emph{Borrow Checker} não se precisa anotar o modo de acesso: todos os acessos são mutáveis.
  
-Há algumas omissões relevantes. Não há tipos tupla ou recursivos. Mesmo que $PCL_{back}$ pudesse representar eles, eles complicam o \emph{Borrow Checker} e o passo de compilação. Entretanto, a omissão é principalmente por limite de tempo e escopo do projeto. Essa é a mesma razão pela omissão do operador $\KW{while}$ e declarações globais. Ainda assim pode-se gerar programas bem complexos, como o porte do Programa \ref{lst:pclback:spacial} em $PCL_{back}$ para $PCL_{front}$, descrito no Programa \ref{lst:pclfront:spacial}. Essa nova versão ainda é suscetível a erros espaciais, pois esse não é o tipo de falha em foque para $PCL_{front}$ evitar.
+Há algumas omissões relevantes. Não há tipos tupla ou recursivos, impedindo a representação de estruturas de dados não homogêneas e de grafos. Mesmo que $PCL_{back}$ pudesse representar eles, eles complicam o \emph{Borrow Checker} e o passo de compilação. Entretanto, a omissão é principalmente por limite de tempo e escopo do projeto. Essa é a mesma razão pela omissão do operador $\KW{while}$ e declarações globais. Ainda assim pode-se gerar programas bem complexos, como o porte do Programa \ref{lst:pclback:spacial} em $PCL_{back}$ para $PCL_{front}$, descrito no Programa \ref{lst:pclfront:spacial}. Essa nova versão ainda é suscetível a erros espaciais, pois esse não é o tipo de falha que $PCL_{front}$ evitar.
 
 \begin{lstlisting}[language=PCLfront, caption={Porte do Programa \ref{lst:pclback:spacial} de $PCL_{back}$ para $PCL_{front}$}, label={lst:pclfront:spacial}]
 fn sanitization_loop(src: @int'a, dst:@int'a,
@@ -472,7 +472,7 @@ A definição via compilação é relativamente simples. A linguagem foi criada 
 	\begin{align}
 		&\compe{\KW{let}\; x: \text{*}\tau = \KW{new}(e)} \Rightarrow \KW{let}\;\TMP[1]; \TMP := \compe{e} + 1;\KW{let}\;x[1]; x := \KW{malloc}(\TMP);\nonumber\\
 		&\quad\quad \KW{while}(\TMP := \TMP - 1; \TMP > 0)\; \text{*}(x + \TMP - 1) := \DEF; 1 \label{fig:def:compilation:new} \\
-		&\compe{\KW{delete}(x, e)} \Rightarrow \KW{free}(x,\compe{e}); 1 \\
+		&\compe{\KW{delete}(x, e)} \Rightarrow \KW{if}\;(x = \KW{NULL})\; 1\;\KW{else}\; (\KW{free}(x,\compe{e}); 1) \\
 		&\compe{\KW{var}\; x: \tau = e} \Rightarrow \KW{let}\;x[1]; x := \compe{e}; 1 \\
 		&\compe{x_1 :=: x_2} \Rightarrow \KW{let}\;\TMP[1]; \TMP := x_1; x_1 := x_2; x_2 := \TMP; 1 \label{fig:def:compilation:swap}\\
 		&\compe{x_1 :=:\!\!\text{*}\,x_2} \Rightarrow \KW{let}\;\TMP[1]; \TMP := x_1; x_1 := \text{*}x_2; \text{*}x_2 := \TMP; 1 \label{fig:def:compilation:swapderef}\\
@@ -503,6 +503,6 @@ As definições de troca \ref{fig:def:compilation:swap} e \ref{fig:def:compilati
 
 \section{Implementação}
 
-A linguagem $PCL_{front}$ foi implementada como uma AST, função de checagem de tipos dessa e função de compilação dessa a AST de $PCL_{back}$. Dessa forma, todas as regras apresentadas para o \emph{Borrow Checker} de $PCL_{front}$ foram implementadas como funções Haskell. Mesmo sem ser possível atingir a etapa de prova desse sistema, vários exemplos foram gerados para testar o \emph{Borrow Checker} e validar que esse se comporta como esperado. Dos testes gerados, a lógica do sistema se mantém. Faltou-se ainda cavar exceções para a região estática do programa ($0$) e testar essa inclusão.
+A linguagem $PCL_{front}$ foi implementada como uma AST, função de checagem de tipos dessa e função de compilação dessa a AST de $PCL_{back}$. Dessa forma, todas as regras apresentadas para o \emph{Borrow Checker} de $PCL_{front}$ foram implementadas como funções Haskell. A etapa de prova desse sistema acabou ficando fora do escopo deste projeto. Mesmo assim, vários exemplos foram gerados para testar o \emph{Borrow Checker} e validar que esse se comporta como esperado. Dos testes gerados, a lógica do sistema se mantém. Faltou-se ainda cavar exceções para a região estática do programa ($0$) e testar essa inclusão.
 
-O código se encontra hospedado junto ao de $PCL_{back}$, na pasta \texttt{app/front}. A integração com a linha de comando ainda não foi feita, assim como o \emph{Lexer} e o\emph{Parse} da linguagem, de forma que a execução desse módulo precisa alterar o código associado a função \texttt{main}. Com a introdução de \emph{Lexer} e \emph{Parse} para a linguagem, uma forma de executar o programa de forma mais direta e com opções será adicionado.
+O código se encontra hospedado junto ao de $PCL_{back}$, na pasta \texttt{app/front}. A integração com a linha de comando ainda não foi feita, assim como o \emph{Lexer} e o \emph{Parser} da linguagem, de forma que a execução desse módulo precisa alterar o código associado a função \texttt{main}. 
